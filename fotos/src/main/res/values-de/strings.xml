@@ -805,4 +805,10 @@
     <string name="kalendarz_minione_sub">"Geburtstage und Jahrestage der letzten 2 Monate"</string>
     <string name="kalendarz_wczoraj">"gestern"</string>
     <string name="kalendarz_temu">"vor %d Tagen"</string>
+    <string name="sectie_rocznice">"Jahrestage"</string>
+    <string name="rocznice_sekcja_sub">"Geburtstage und Album-Jahrestage"</string>
+    <string name="rocznice_brak">"Keine Geburtstage oder Jahrestage in nächster Zeit"</string>
+    <string name="rocznice_brak_tip">"Geburtsdaten unter Personen → Person → Person bearbeiten → Geburtsdatum."</string>
+    <string name="urodziny_osoby">"Geburtstag: %1$s"</string>
+    <string name="urodziny_osoby_sub">"%1$s · Fotos rund um den Geburtstag aus jedem Jahr"</string>
 </resources>

@@ -812,4 +812,10 @@
     <string name="kalendarz_minione_sub">"cumpleaños y aniversarios de los últimos 2 meses"</string>
     <string name="kalendarz_wczoraj">"ayer"</string>
     <string name="kalendarz_temu">"hace %d días"</string>
+    <string name="sectie_rocznice">"Aniversarios"</string>
+    <string name="rocznice_sekcja_sub">"Cumpleaños y aniversarios de álbumes"</string>
+    <string name="rocznice_brak">"No hay cumpleaños ni aniversarios próximos"</string>
+    <string name="rocznice_brak_tip">"Las fechas de nacimiento se ponen en Personas → persona → Editar persona → Fecha de nacimiento."</string>
+    <string name="urodziny_osoby">"Cumpleaños: %1$s"</string>
+    <string name="urodziny_osoby_sub">"%1$s · fotos de alrededor del cumpleaños de cada año"</string>
 </resources>

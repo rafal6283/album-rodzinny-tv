@@ -853,4 +853,10 @@
     <string name="kalendarz_minione_sub">"urodziny i rocznice z ostatnich 2 miesięcy"</string>
     <string name="kalendarz_wczoraj">"wczoraj"</string>
     <string name="kalendarz_temu">"%d dni temu"</string>
+    <string name="sectie_rocznice">"Rocznice"</string>
+    <string name="rocznice_sekcja_sub">"Urodziny i rocznice albumów"</string>
+    <string name="rocznice_brak">"Brak urodzin i rocznic w najbliższym czasie"</string>
+    <string name="rocznice_brak_tip">"Daty urodzenia ustawisz w Ludzie → osoba → Edytuj osobę → Data urodzenia."</string>
+    <string name="urodziny_osoby">"Urodziny: %1$s"</string>
+    <string name="urodziny_osoby_sub">"%1$s · zdjęcia z okolic urodzin z każdego roku"</string>
 </resources>

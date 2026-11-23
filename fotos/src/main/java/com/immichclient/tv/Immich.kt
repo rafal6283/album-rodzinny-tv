@@ -415,6 +415,15 @@ object Immich {
         List(a.length()) { asset(a.getJSONObject(it)) }
     }
 
+    /** Zdjęcia i filmy osoby z dni [od, do] (urodziny z różnych lat), najwyżej [n]. */
+    suspend fun osobaWDniach(osobaId: String, od: LocalDate, doDnia: LocalDate, n: Int = 200): List<Asset> = withContext(Dispatchers.Default) {
+        val body = JSONObject().put("size", n).put("page", 1).put("order", "asc").put("withExif", true)
+            .put("personIds", JSONArray(listOf(osobaId)))
+            .put("takenAfter", "${od}T00:00:00.000Z").put("takenBefore", "${doDnia}T23:59:59.999Z")
+        val a = JSONObject(post("/search/metadata", body)).getJSONObject("assets").getJSONArray("items")
+        List(a.length()) { asset(a.getJSONObject(it)) }
+    }
+
     /** Pierwsza strona twarzy bez imienia (ekran „Kto to jest?”), w kolejności Immich (najczęstsze najpierw). */
     suspend fun osobyBezImienia(): List<Persoon> = wszystkieOsoby().filter { it.naam.isBlank() }
 

@@ -653,7 +653,7 @@ private fun UrodzinyKarta(w: Urodziny.Wpis, nav: Nav) {
     val lat = pluralStringResource(R.plurals.lat, w.lat, w.lat)
     val kiedy = when (w.zaIle) { 0 -> stringResource(R.string.urodziny_dzis, lat); 1 -> stringResource(R.string.urodziny_jutro, lat); else -> stringResource(R.string.urodziny_za, w.zaIle, lat) }
     Card(
-        onClick = { nav.open(Scherm.Tijdlijn(w.osoba.naam, kiedy, Filter(persoonId = w.osoba.id), true, false, nav.scope)) },
+        onClick = { otworzUrodziny(nav, w.osoba, w.osoba.naam) },
         modifier = Modifier.width(250.dp).height(112.dp),
         shape = CardDefaults.shape(RoundedCornerShape(18.dp)),
         scale = CardDefaults.scale(focusedScale = 1.06f),

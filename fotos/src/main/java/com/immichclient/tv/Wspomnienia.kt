@@ -284,7 +284,7 @@ fun KalendarzRij(nav: Nav, minione: Boolean = false) {
                 val nazwa = w.osoba?.let { Edycja.imie(it) } ?: w.album?.naam.orEmpty()
                 Card(
                     onClick = {
-                        w.osoba?.let { nav.open(Scherm.Tijdlijn(nazwa, opis, Filter(persoonId = it.id), true, false, nav.scope)) }
+                        w.osoba?.let { otworzUrodziny(nav, it, nazwa) }
                         w.album?.let { nav.open(Scherm.Tijdlijn(it.naam, opis, Filter(albumId = it.id), !it.oudsteEerst, false, nav.scope)) }
                     },
                     modifier = Modifier.width(260.dp).height(120.dp),
@@ -310,5 +310,48 @@ fun KalendarzRij(nav: Nav, minione: Boolean = false) {
                 }
             }
         }
+    }
+}
+
+/**
+ * Zdjęcia osoby z okolic jej urodzin (±3 dni) z każdego roku, od najnowszych: tort, goście, prezenty przez lata.
+ * Rok po roku od roku urodzenia (najwyżej 40 lat wstecz); zapytania idą po kolei, pierwsze lata widać od razu.
+ */
+fun otworzUrodziny(nav: Nav, osoba: Persoon, nazwa: String) {
+    val ur = osoba.urodziny ?: return
+    val teraz = LocalDate.now()
+    val tytul = Taal.s(R.string.urodziny_osoby, nazwa)
+    val sub = Taal.s(R.string.urodziny_osoby_sub, ur.format(java.time.format.DateTimeFormatter.ofPattern("d MMMM", Taal.locale)))
+    fun wRoku(r: Int) = runCatching { ur.withYear(r) }.getOrElse { LocalDate.of(r, 2, 28) }
+    val ostatni = if (wRoku(teraz.year).isAfter(teraz)) teraz.year - 1 else teraz.year
+    val najstarszy = maxOf(ur.year, ostatni - 40)
+    var nastepny = ostatni
+    nav.open(Scherm.Lijst(tytul, sub, true, nav.scope) { strona ->
+        // kolejne lata wstecz, aż uzbiera się choć kilkanaście zdjęć (w niektórych latach nie ma żadnych)
+        if (strona == 1) nastepny = ostatni
+        val zdjecia = ArrayList<Asset>()
+        while (nastepny >= najstarszy && zdjecia.size < 15) {
+            val d = wRoku(nastepny)
+            zdjecia += runCatching { Immich.osobaWDniach(osoba.id, d.minusDays(3), d.plusDays(3)) }.getOrDefault(emptyList())
+            nastepny--
+        }
+        Pagina(zdjecia.sortedByDescending { it.datum }, if (nastepny >= najstarszy) strona + 1 else null)
+    })
+}
+
+/** Sekcja Rocznice: nadchodzące i niedawne urodziny oraz rocznice albumów. */
+@Composable
+fun RoczniceScherm(nav: Nav) {
+    LaunchedEffect(Unit) { Kalendarz.laduj() }
+    val pusto = Kalendarz.lista.isEmpty() && Kalendarz.minione.isEmpty()
+    androidx.compose.foundation.lazy.LazyColumn(
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 80.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        item { SchermKop(stringResource(R.string.sectie_rocznice), stringResource(R.string.rocznice_sekcja_sub), etykieta = stringResource(R.string.etyk_wspomnienia)) }
+        item(key = "nadchodzace") { KalendarzRij(nav) }
+        item(key = "minione") { KalendarzRij(nav, minione = true) }
+        if (pusto) item { Melding(stringResource(R.string.rocznice_brak), stringResource(R.string.rocznice_brak_tip)) }
     }
 }
