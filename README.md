@@ -29,6 +29,14 @@ Fork aplikacji [TV Client for Immich](https://github.com/neforce/android-tv-immi
 - **Albumy z telewizora**: w przeglądarce ▼ → „Do albumu” dodaje zdjęcie (albo wszystkie zaznaczone przez ▼ → „Zaznacz”)
   do istniejącego lub nowego albumu; w albumie ▼ → „Usuń z albumu” (z możliwością przywrócenia) i „Zmień nazwę”.
   Usuwania zdjęć z biblioteki celowo nie ma. Wymaga nowych uprawnień klucza — aplikacja podpowie ponowne połączenie.
+- **Mapa cieplna i podświetlone kraje** jak w Immichin (Ustawienia → Mapa, oba do wyłączenia).
+- **Wyszukiwanie z filtrami**: osoba + miejsce + rok, z tekstem albo bez (np. wszystkie zdjęcia Oli z Antalyi w 2025).
+- **Kiedyś i dziś**: na osi czasu osoby zdjęcie sprzed roku (◀ ▶ zmienia liczbę lat) obok najnowszego.
+- **Pokaz osoby / albumu** jednym przyciskiem; **opisy z Immich** jako napisy w pokazie; **wznawianie filmów**.
+- **Rocznice albumów** („3 lata temu: Bułgaria”) na osi czasu i opcjonalny pokaz **„Tego dnia” na start**.
+- **„Kto to jest?”** w sekcji Ludzie: twarze bez imienia po kolei — przypisz do osoby, nadaj imię, ukryj albo pomiń.
+- **Klawiatura ekranowa** z polskimi literami, wielkimi literami w imionach i mikrofonem.
+- **PIN profilu** (4 cyfry) przy przełączaniu na profil domownika i przy starcie.
 - **Kolejność menu**: Ustawienia → Wygląd → Kolejność menu; OK chwyta sekcję, ▲▼ ją przesuwają (Ustawienia zostają na dole).
 - **Mapa w stylu Immichin**: nagłówek „Miejsca, w których byliście” z podsumowaniem (elementy · miejsca · kraje) i karta
   wybranej grupy po prawej: zdjęcie, rodzaj (kontynent / region / kraj / miejsce), kraj i liczba miejsc, liczba
