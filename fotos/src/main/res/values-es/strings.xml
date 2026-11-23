@@ -605,4 +605,6 @@
     <string name="kanaly_uitleg">Fotos recientes, fotos al azar y recuerdos de hoy como filas en la pantalla de inicio de Android TV</string>
     <string name="kanaly_pokaz">Mostrar canales en el inicio</string>
     <string name="kanaly_pokaz_uitleg">Pide al launcher que muestre cada fila; también puedes añadirlas en los ajustes de la pantalla de inicio</string>
+    <string name="mapa_szczegoly">Mapa en los detalles</string>
+    <string name="mapa_szczegoly_uitleg">Pequeño mapa del país al final de la ficha de detalles de la foto</string>
 </resources>

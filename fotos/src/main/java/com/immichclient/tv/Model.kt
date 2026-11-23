@@ -47,7 +47,8 @@ class Markers(
 }
 data class Details(
     val bestand: String, val camera: String?, val lens: String?, val instellingen: String?, val plaats: String?,
-    val mensen: List<String>, val omschrijving: String?, val afmeting: String?,
+    /** rozpoznane osoby (id do miniatury twarzy + imię); bez imienia pomijane */
+    val mensen: List<Persoon>, val omschrijving: String?, val afmeting: String?,
     /** „2.5 MP · 1920 × 1281 · 375.1 KB” (jak w Immichin) */
     val plikSub: String? = null,
     /** „64.0482, -16.1795” */

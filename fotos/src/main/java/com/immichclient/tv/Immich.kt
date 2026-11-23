@@ -391,7 +391,8 @@ object Immich {
             ).joinToString("  ·  ").ifEmpty { null },
             plaats = listOfNotNull(s("city"), s("state"), s("country")?.let(Landnaam::vertaal)).distinct().joinToString(", ").ifEmpty { null },
             mensen = if (mensen == null) emptyList() else
-                List(mensen.length()) { mensen.getJSONObject(it).optString("name") }.filter { it.isNotBlank() },
+                List(mensen.length()) { mensen.getJSONObject(it).let { p -> Persoon(p.optString("id"), p.optString("name"), p.optBoolean("isFavorite")) } }
+                    .filter { it.naam.isNotBlank() && it.id.isNotBlank() }.distinctBy { it.id },
             omschrijving = s("description"),
             afmeting = wymiary(o, e)?.let { (w, h) -> "$w × $h" },
             plikSub = run {

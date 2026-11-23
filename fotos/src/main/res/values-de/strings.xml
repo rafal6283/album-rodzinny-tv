@@ -598,4 +598,6 @@
     <string name="kanaly_uitleg">Neueste Fotos, zufällige Fotos und heutige Erinnerungen als Reihen auf dem Android-TV-Startbildschirm</string>
     <string name="kanaly_pokaz">Kanäle auf dem Startbildschirm zeigen</string>
     <string name="kanaly_pokaz_uitleg">Bittet den Launcher, jede Reihe anzuzeigen; du kannst sie auch in den Startbildschirm-Einstellungen hinzufügen</string>
+    <string name="mapa_szczegoly">Karte in den Details</string>
+    <string name="mapa_szczegoly_uitleg">Kleine Länderkarte unten in der Detailkarte des Fotos</string>
 </resources>

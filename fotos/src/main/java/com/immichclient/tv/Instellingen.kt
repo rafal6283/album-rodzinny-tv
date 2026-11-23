@@ -66,6 +66,8 @@ object Instellingen {
     var balkMs by getal("balk_ms", 3500)
     val BALK_TIJDEN = listOf(2000, 3500, 6000, 10000, 0)
     var teller by bool("teller", true)
+    /** mała mapa kraju w karcie szczegółów (przeglądarka, ▲) */
+    var mapaSzczegoly by bool("mapa_szczegoly", true)
     /** album(s) van de foto in de balk en het infopaneel (handig vanuit een persoon of de tijdlijn) */
     var albumNaam by bool("album_naam", true)
     /** wazige thumbhash-achtergrond rond foto's/video's die het scherm niet vullen (viewer + screensaver); uit = zwart */

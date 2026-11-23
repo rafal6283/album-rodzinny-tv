@@ -634,4 +634,6 @@
     <string name="kanaly_uitleg">Najnowsze zdjęcia, losowe zdjęcia i dzisiejsze wspomnienia jako rzędy na ekranie głównym Android TV</string>
     <string name="kanaly_pokaz">Pokaż kanały na ekranie głównym</string>
     <string name="kanaly_pokaz_uitleg">Prosi launcher o pokazanie każdego rzędu; możesz je też dodać w ustawieniach ekranu głównego</string>
+    <string name="mapa_szczegoly">Mapa w szczegółach</string>
+    <string name="mapa_szczegoly_uitleg">Mała mapa kraju na dole karty szczegółów zdjęcia</string>
 </resources>

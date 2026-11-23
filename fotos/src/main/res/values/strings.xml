@@ -615,4 +615,6 @@
     <string name="kanaly_uitleg">Newest photos, random photos and today\'s memories as rows on the Android TV home screen</string>
     <string name="kanaly_pokaz">Show rows on the home screen</string>
     <string name="kanaly_pokaz_uitleg">Asks the launcher to show each row; you can also add them in the home screen settings</string>
+    <string name="mapa_szczegoly">Map in details</string>
+    <string name="mapa_szczegoly_uitleg">Small country map at the bottom of the photo details card</string>
 </resources>

@@ -605,4 +605,6 @@
     <string name="kanaly_uitleg">Photos récentes, photos au hasard et souvenirs du jour en rangées sur l\'écran d\'accueil Android TV</string>
     <string name="kanaly_pokaz">Afficher les chaînes sur l\'accueil</string>
     <string name="kanaly_pokaz_uitleg">Demande au lanceur d\'afficher chaque rangée ; vous pouvez aussi les ajouter dans les réglages de l\'accueil</string>
+    <string name="mapa_szczegoly">Carte dans les détails</string>
+    <string name="mapa_szczegoly_uitleg">Petite carte du pays en bas de la fiche détails de la photo</string>
 </resources>

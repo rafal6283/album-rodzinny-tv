@@ -30,6 +30,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -655,20 +656,21 @@ private fun InfoPaneel(a: Asset, staat: KijkerStaat, metKaartSprong: Boolean) {
                 }
                 val d = details
                 if (d != null) {
+                    // najpierw ludzie (twarze), potem plik, aparat, miejsce…; mapka na końcu, bo zajmuje najwięcej miejsca
+                    if (d.mensen.isNotEmpty()) OsobyRegel(d.mensen)
                     InfoRegel(
                         if (d.wideo) Icons.Filled.Videocam else Icons.Filled.Image, d.bestand.ifEmpty { "—" },
                         listOfNotNull(d.dlugosc, d.plikSub ?: d.afmeting).joinToString("  ·  ").ifEmpty { null },
                     )
                     d.camera?.let { InfoRegel(Icons.Filled.CameraAlt, it, listOfNotNull(d.instellingen, d.lens).joinToString("\n").ifEmpty { null }) }
                     (d.plaats ?: d.wspolrzedne)?.let { InfoRegel(Icons.Filled.Place, it, d.wspolrzedne.takeIf { d.plaats != null }) }
-                    if (a.lat != null && a.lon != null) {
-                        KaartKlein(a.lat, a.lon, Modifier.padding(start = 56.dp).fillMaxWidth().height(130.dp).background(Kleur.vlak, RoundedCornerShape(14.dp)))
-                    }
                     if (d.ulubione || a.favoriet) InfoRegel(Icons.Filled.Favorite, stringResource(R.string.w_ulubionych), null, kolorIkony = Color(0xFFFF5C8A))
-                    if (d.mensen.isNotEmpty()) InfoRegel(Icons.Filled.People, d.mensen.joinToString(", "), null, maxRegels = 3)
                     val albums = albumNamen(a.id)
                     if (albums.isNotEmpty()) InfoRegel(Icons.Filled.PhotoLibrary, albums.joinToString(", "), null, maxRegels = 3)
                     d.omschrijving?.let { InfoRegel(Icons.Filled.Description, it, null, maxRegels = 5) }
+                    if (a.lat != null && a.lon != null && Instellingen.mapaSzczegoly) {
+                        KaartKlein(a.lat, a.lon, Modifier.padding(start = 56.dp).fillMaxWidth().height(100.dp).background(Kleur.vlak, RoundedCornerShape(14.dp)))
+                    }
                 } else {
                     Text(stringResource(R.string.laden), style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht)
                 }
@@ -691,6 +693,31 @@ private fun InfoRegel(icoon: ImageVector, titel: String, sub: String?, maxRegels
         Column(Modifier.padding(start = 16.dp, top = if (sub == null) 0.dp else 1.dp)) {
             Text(titel, style = MaterialTheme.typography.titleMedium, maxLines = maxRegels, overflow = TextOverflow.Ellipsis)
             sub?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht, modifier = Modifier.padding(top = 2.dp)) }
+        }
+    }
+}
+
+/**
+ * Rozpoznane osoby jak w Immichin: okrągłe miniatury twarzy (z Immich, /people/{id}/thumbnail) z imieniem pod spodem,
+ * w rzędzie przewijanym, gdy osób jest dużo.
+ */
+@Composable
+private fun OsobyRegel(osoby: List<Persoon>) {
+    Row(verticalAlignment = Alignment.Top) {
+        Box(Modifier.size(40.dp).background(Color(0x1FFFFFFF), androidx.compose.foundation.shape.CircleShape), contentAlignment = Alignment.Center) {
+            Icon(Icons.Filled.People, null, Modifier.size(20.dp), tint = Color(0xDDFFFFFF))
+        }
+        Row(
+            Modifier.padding(start = 16.dp).horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            for (p in osoby) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(64.dp)) {
+                    Box(Modifier.border(2.dp, Color(0x33FFFFFF), androidx.compose.foundation.shape.CircleShape).padding(2.dp)) { Gezicht(p, 52.dp) }
+                    Text(p.naam, style = MaterialTheme.typography.labelMedium, color = Kleur.tekst, maxLines = 1,
+                        overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp))
+                }
+            }
         }
     }
 }

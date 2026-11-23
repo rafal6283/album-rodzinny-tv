@@ -598,4 +598,6 @@
     <string name="kanaly_uitleg">Nieuwste foto\'s, willekeurige foto\'s en herinneringen van vandaag als rijen op het Android TV-startscherm</string>
     <string name="kanaly_pokaz">Rijen tonen op het startscherm</string>
     <string name="kanaly_pokaz_uitleg">Vraagt de launcher elke rij te tonen; je kunt ze ook toevoegen in de instellingen van het startscherm</string>
+    <string name="mapa_szczegoly">Kaart bij details</string>
+    <string name="mapa_szczegoly_uitleg">Kleine landkaart onderaan de detailkaart van de foto</string>
 </resources>
