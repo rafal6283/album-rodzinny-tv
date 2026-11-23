@@ -60,7 +60,7 @@ def baner(nazwa="Album Rodzinny"):
     return im.resize((640, 360), Image.LANCZOS)
 
 
-def ikona():
+def ikona(px=192):
     w = 192 * S
     im = tlo(w, w)
     m = Image.new("L", (w, w), 0)
@@ -69,14 +69,18 @@ def ikona():
     logo(im, 34 * S, 30 * S, 124 * S)
     out = Image.new("RGBA", (w, w), (0, 0, 0, 0))
     out.paste(im, (0, 0), m)
-    return out.resize((192, 192), Image.LANCZOS)
+    return out.resize((px, px), Image.LANCZOS)
 
 
 if __name__ == "__main__":
+    # Własne nazwy zasobów (nie ic_fotos / banner z aplikacji źródłowej): launcher Android TV trzyma ikony i banery w
+    # pamięci podręcznej i przy tych samych nazwach potrafił dalej pokazywać stare logo, także po reinstalacji.
     b = baner()
-    for d in os.listdir(RES):
-        if d.startswith("drawable") and d.endswith("nodpi") and os.path.exists(os.path.join(RES, d, "banner.png")):
-            b.save(os.path.join(RES, d, "banner.png"))
-            print("baner:", d)
-    ikona().save(os.path.join(RES, "mipmap-xhdpi/ic_fotos.png"))
-    print("ikona: mipmap-xhdpi/ic_fotos.png")
+    b.save(os.path.join(RES, "drawable-nodpi/banner_album_rodzinny.png"))
+    print("baner: drawable-nodpi/banner_album_rodzinny.png")
+    # ikona w każdej gęstości (xhdpi = 192 px jak dotąd), żeby launcher nie skalował ani nie sięgał po inny zasób
+    for gestosc, px in [("mdpi", 96), ("hdpi", 144), ("xhdpi", 192), ("xxhdpi", 288), ("xxxhdpi", 384)]:
+        d = os.path.join(RES, "mipmap-" + gestosc)
+        os.makedirs(d, exist_ok=True)
+        ikona(px).save(os.path.join(d, "ic_album_rodzinny.png"))
+        print("ikona:", d, px)
