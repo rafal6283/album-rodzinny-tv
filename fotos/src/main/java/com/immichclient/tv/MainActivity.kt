@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Photo
@@ -134,6 +135,7 @@ sealed class Scherm {
     /** een map uit de mappenboom (null = het startpunt van de boom, zodra die geladen is) */
     class Mappen(boom: MappenBoom, knoop: MapKnoop?, scope: CoroutineScope) : Scherm() { val staat = MapStaat(boom, knoop, scope) }
     data object Instellingen : Scherm()
+    data object Rocznice : Scherm()
     /** sekcja Filmy: kolejność, przejście do daty, losowo */
     class Filmy(scope: CoroutineScope) : Scherm() { val staat = FilmyStaat(scope) }
     class Lijst(val titel: String, val sub: String?, val perDag: Boolean, scope: CoroutineScope, laad: suspend (Int) -> Pagina) : Scherm() {
@@ -185,6 +187,8 @@ object Toetsen {
 enum class Sectie(@StringRes val label: Int, val icoon: ImageVector) {
     FOTOS(R.string.sectie_fotos, Icons.Filled.Photo),
     HERINNERINGEN(R.string.sectie_herinneringen, Icons.Filled.AutoAwesome),
+    /** urodziny i rocznice albumów: nadchodzące i niedawne */
+    ROCZNICE(R.string.sectie_rocznice, Icons.Filled.Cake),
     ZOEKEN(R.string.sectie_zoeken, Icons.Filled.Search),
     VERKENNEN(R.string.sectie_verkennen, Icons.Filled.Explore),
     KAART(R.string.sectie_kaart, Icons.Filled.Map),
@@ -199,7 +203,7 @@ enum class Sectie(@StringRes val label: Int, val icoon: ImageVector) {
 
     companion object {
         /** Kolejność w bocznej szynie, jak w Immichin: szukaj, zdjęcia+wideo, wspomnienia, ulubione, albumy, ludzie, mapa… */
-        val KOLEJNOSC = listOf(ZOEKEN, FOTOS, FILMY, HERINNERINGEN, FAVORIETEN, ALBUMS, LUDZIE, VERKENNEN, KAART, MAPPEN, INSTELLINGEN)
+        val KOLEJNOSC = listOf(ZOEKEN, FOTOS, FILMY, HERINNERINGEN, ROCZNICE, FAVORIETEN, ALBUMS, LUDZIE, VERKENNEN, KAART, MAPPEN, INSTELLINGEN)
     }
 }
 
@@ -363,6 +367,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         when (s) {
             Sectie.FOTOS -> Scherm.Tijdlijn(naamApp, null, Filter(), Instellingen.nieuwsteEerst, true, scope)
             Sectie.HERINNERINGEN -> Scherm.Herinneringen(scope)
+            Sectie.ROCZNICE -> Scherm.Rocznice
             Sectie.ZOEKEN -> Scherm.Zoeken(scope)
             Sectie.VERKENNEN -> Scherm.Verkennen(scope)
             Sectie.KAART -> Scherm.Kaart(scope)
@@ -565,6 +570,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         is Scherm.Mappen -> MappenScherm(scherm, nav)
                         is Scherm.Lijst -> LijstScherm(scherm, nav)
                         is Scherm.Filmy -> FilmyScherm(scherm.staat, nav)
+                        is Scherm.Rocznice -> RoczniceScherm(nav)
                         is Scherm.Instellingen -> InstellingenScherm(opnieuwKoppelen = { instellen = true }, ontkoppeld = { sectie = Sectie.FOTOS }, toetsen = { toetsen = true })
                     }
                 }

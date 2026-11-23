@@ -812,4 +812,11 @@
     <string name="kalendarz_minione_sub">"anniversaires des 2 derniers mois"</string>
     <string name="kalendarz_wczoraj">"hier"</string>
     <string name="kalendarz_temu">"il y a %d jours"</string>
+    <string name="sectie_rocznice">"Anniversaires"</string>
+    <string name="rocznice_sekcja_sub">"Anniversaires et dates d’albums"</string>
+    <string name="rocznice_brak">"Aucun anniversaire à venir"</string>
+    <string name="rocznice_brak_tip">"Dates de naissance : Personnes → personne → Modifier la personne → Date de naissance."</string>
+    <string name="urodziny_osoby">"Anniversaire : %1$s"</string>
+    <string name="urodziny_osoby_sub">"%1$s · photos autour de l’anniversaire, chaque année"</string>
+    <string name="wspomnienia_wyroznione">"À la une"</string>
 </resources>

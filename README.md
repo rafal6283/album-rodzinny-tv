@@ -37,6 +37,7 @@ Fork aplikacji [TV Client for Immich](https://github.com/neforce/android-tv-immi
 - **„Kto to jest?”** w sekcji Ludzie: twarze bez imienia po kolei — przypisz do osoby, nadaj imię, ukryj albo pomiń.
 - **Klawiatura ekranowa** z polskimi literami, wielkimi literami w imionach i mikrofonem.
 - **PIN profilu** (4 cyfry) przy przełączaniu na profil domownika i przy starcie.
+- **Rocznice**: osobna sekcja z nadchodzącymi i niedawnymi urodzinami oraz rocznicami albumów; OK na osobie pokazuje jej zdjęcia z okolic urodzin z każdego roku.
 - **Kolejność menu**: Ustawienia → Wygląd → Kolejność menu; OK chwyta sekcję, ▲▼ ją przesuwają (Ustawienia zostają na dole).
 - **Mapa w stylu Immichin**: nagłówek „Miejsca, w których byliście” z podsumowaniem (elementy · miejsca · kraje) i karta
   wybranej grupy po prawej: zdjęcie, rodzaj (kontynent / region / kraj / miejsce), kraj i liczba miejsc, liczba

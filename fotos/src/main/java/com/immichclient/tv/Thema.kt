@@ -127,7 +127,7 @@ fun Tlo(odcien: Color, modifier: Modifier = Modifier) {
 fun odcienSekcji(s: Sectie): Color = when (s) {
     Sectie.FOTOS, Sectie.FAVORIETEN -> Color(0xFF5A2230)
     Sectie.FILMY -> Color(0xFF1F3A4F)
-    Sectie.HERINNERINGEN -> Color(0xFF4A2A55)
+    Sectie.HERINNERINGEN, Sectie.ROCZNICE -> Color(0xFF4A2A55)
     Sectie.ZOEKEN -> Color(0xFF5C3418)
     Sectie.ALBUMS, Sectie.MAPPEN -> Color(0xFF2C3E58)
     Sectie.VERKENNEN, Sectie.LUDZIE -> Color(0xFF22404A)

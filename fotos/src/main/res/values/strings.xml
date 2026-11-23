@@ -827,4 +827,11 @@
     <string name="kalendarz_minione_sub">"birthdays and anniversaries of the last 2 months"</string>
     <string name="kalendarz_wczoraj">"yesterday"</string>
     <string name="kalendarz_temu">"%d days ago"</string>
+    <string name="sectie_rocznice">"Anniversaries"</string>
+    <string name="rocznice_sekcja_sub">"Birthdays and album anniversaries"</string>
+    <string name="rocznice_brak">"No birthdays or anniversaries coming up"</string>
+    <string name="rocznice_brak_tip">"Set birth dates in People → person → Edit person → Birth date."</string>
+    <string name="urodziny_osoby">"Birthday: %1$s"</string>
+    <string name="urodziny_osoby_sub">"%1$s · photos around the birthday from every year"</string>
+    <string name="wspomnienia_wyroznione">"Highlights"</string>
 </resources>

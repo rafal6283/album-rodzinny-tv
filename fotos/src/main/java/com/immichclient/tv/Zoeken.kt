@@ -571,10 +571,19 @@ fun HerinneringenScherm(staat: HerinneringStaat, nav: Nav) {
                 )
             }
         }
-        // nadchodzące urodziny i rocznice albumów
-        item(key = "kalendarz") { KalendarzRij(nav) }
-        item(key = "minione") { KalendarzRij(nav, minione = true) }
-        if (staat.klaar && staat.dagen.all { it.second.isEmpty() }) item { Melding(stringResource(R.string.geen_herinneringen), null) }
+        // wspomnienia z tytułem z serwera (np. „Urodziny Daniel” — jak w aplikacji Immich na telefon)
+        if (staat.inne.isNotEmpty()) item(key = "inne") {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(R.string.wspomnienia_wyroznione), style = MaterialTheme.typography.displaySmall)
+                LazyRow(
+                    Modifier.offset(x = (-10).dp), horizontalArrangement = Arrangement.spacedBy(18.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp),
+                ) {
+                    items(staat.inne, key = { it.id }) { h -> HerinneringKaart(h, nav, breedte = 240f, hoogte = 135f) }
+                }
+            }
+        }
+        if (staat.klaar && staat.inne.isEmpty() && staat.dagen.all { it.second.isEmpty() }) item { Melding(stringResource(R.string.geen_herinneringen), null) }
         staat.dagen.forEachIndexed { di, (dag, lijst) ->
             if (lijst.isEmpty()) return@forEachIndexed
             item(key = dag.toString()) {
@@ -603,8 +612,16 @@ fun HerinneringenScherm(staat: HerinneringStaat, nav: Nav) {
 class HerinneringStaat(scope: CoroutineScope) {
     var dagen by mutableStateOf<List<Pair<java.time.LocalDate, List<Herinnering>>>>(emptyList())
     var klaar by mutableStateOf(false)
+    /** pozostałe wspomnienia z serwera (np. urodziny z tytułem), których nie ma wśród „tego dnia” z ostatnich 2 tygodni */
+    var inne by mutableStateOf<List<Herinnering>>(emptyList())
 
     init {
+        scope.launch {
+            runCatching { Immich.wszystkieWspomnienia() }.onSuccess { w ->
+                val wDniach = dagen.flatMap { it.second }.map { it.id }.toSet()
+                inne = w.filter { it.id !in wDniach && (it.typ != "on_this_day" || it.tytul != null) }
+            }.onFailure { android.util.Log.w("Fotos", "wszystkie wspomnienia", it) }
+        }
         scope.launch {
             val vandaag = java.time.LocalDate.now()
             // dwa ostatnie tygodnie (Immichin pokazuje tylko dzisiejszy dzień)
