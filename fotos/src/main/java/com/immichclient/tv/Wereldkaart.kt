@@ -682,10 +682,10 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
         val ctxW = LocalContext.current
         LaunchedEffect(staat.markers) { staat.markers?.let { m -> warstwy = runCatching { zbudujWarstwy(ctxW, m) }.getOrNull() } }
         val heat = Instellingen.kaartHeat; val kraje = Instellingen.kaartKraje
-        LaunchedEffect(stijlWersja, warstwy, heat, kraje, motor.kaart) {
+        LaunchedEffect(stijlWersja, warstwy, kraje, motor.kaart) {
             val d = warstwy ?: return@LaunchedEffect
             if (stijlWersja == 0) return@LaunchedEffect
-            motor.kaart?.style?.takeIf { it.isFullyLoaded }?.let { ustawWarstwy(it, d, heat, kraje) }
+            motor.kaart?.style?.takeIf { it.isFullyLoaded }?.let { ustawWarstwy(it, d, kraje) }
         }
         // clusterindex klaar: clusteren
         LaunchedEffect(staat.index) { if (staat.index != null) motor.hercluster(stil = true, altijd = true) }
@@ -764,6 +764,8 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
             if (stijlFout && !stijlKlaar) LandenLaag(staat.camera, w, h)
 
             val m = staat.markers
+            // mapa cieplna pod znacznikami (Compose, tania: tylko widoczne grupy)
+            if (heat && m != null) MapaCieplna(staat.clusters) { motor.schermPlek(it) }
             if (m != null) for (c in staat.clusters) key(c.sleutel) {
                 Marker(c, m, focus = c.sleutel == staat.focus, cam = staat.camera, w = w, h = h)
             }
