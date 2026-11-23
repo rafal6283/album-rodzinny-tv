@@ -756,14 +756,31 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
                 Marker(c, m, focus = c.sleutel == staat.focus, cam = staat.camera, w = w, h = h)
             }
             // karta wybranej grupy po prawej (jak w Immichin): zdjęcie, nazwa, liczby, miniatury, podpowiedzi
+            // Karta zawsze nad znacznikami (zIndex) i zawsze po przeciwnej stronie niż wybrana grupa, więc nigdy jej nie
+            // zasłania: grupa w prawej części ekranu → karta po lewej (nagłówek wtedy znika). Karta zajmuje ~44 % szerokości z
+            // każdej strony, więc próg z histerezą (47–53 %) mieści się w wolnym pasie pośrodku,
+            // żeby karta nie skakała, gdy grupa jest blisko środka.
+            val strona by remember {
+                androidx.compose.runtime.derivedStateOf {
+                    val x = motor.focusCluster()?.let { motor.schermPlek(it).x / w } ?: 0.5f
+                    when { x > 0.53f -> 1; x < 0.47f -> -1; else -> 0 }
+                }
+            }
+            var kartaLewo by remember { mutableStateOf(false) }
+            LaunchedEffect(strona) { if (strona == 1) kartaLewo = true else if (strona == -1) kartaLewo = false }
+            val kartaX by animateFloatAsState(if (kartaLewo) 0f else 1f, tween(320), label = "kartaStrona")
             motor.focusCluster()?.let { c ->
-                KaartKarta(c, staat, Modifier.align(Alignment.CenterEnd).padding(end = 24.dp))
+                KaartKarta(
+                    c, staat,
+                    Modifier.align(androidx.compose.ui.BiasAlignment(kartaX * 2f - 1f, 0f)).padding(horizontal = 24.dp).zIndex(5f),
+                )
             }
 
             // kop linksboven (op een lichte of satellietkaart met een donker vlak erachter, anders onleesbaar)
             val donkereKaart = stijlKeuze == KaartStijl.DONKER
+            val kopZicht by animateFloatAsState(if (kartaLewo && motor.focusCluster() != null) 0f else 1f, tween(250), label = "kop")
             Column(
-                Modifier.padding(start = 24.dp, top = 20.dp)
+                Modifier.padding(start = 24.dp, top = 20.dp).graphicsLayer { alpha = kopZicht }
                     .then(if (donkereKaart) Modifier else Modifier.background(Color(0xB3000000), RoundedCornerShape(14.dp)).padding(horizontal = 14.dp, vertical = 8.dp)),
             ) {
                 Text(stringResource(R.string.kaart_etykieta).uppercase(Taal.locale), style = EtykietaStyl, maxLines = 1, modifier = Modifier.padding(bottom = 2.dp))
