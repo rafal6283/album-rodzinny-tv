@@ -24,6 +24,11 @@ Fork aplikacji [TV Client for Immich](https://github.com/neforce/android-tv-immi
   (po każdym klawiszu i na pauzie).
 - **Ludzie** jako osobna sekcja w menu: wszystkie twarze rozpoznane przez Immich, także bez imienia, z filtrem
   Wszyscy / Z imieniem / Bez imienia, wyszukiwaniem i sortowaniem.
+- **Edycja osób z telewizora**: na osi czasu osoby przycisk „Edytuj osobę” — imię (klawiatura ekranowa lub głos),
+  data urodzenia (◀ ▶ pole, ▲ ▼ wartość), ukrywanie obcych twarzy i łączenie osoby rozpoznanej dwa razy.
+- **Albumy z telewizora**: w przeglądarce ▼ → „Do albumu” dodaje zdjęcie (albo wszystkie zaznaczone przez ▼ → „Zaznacz”)
+  do istniejącego lub nowego albumu; w albumie ▼ → „Usuń z albumu” (z możliwością przywrócenia) i „Zmień nazwę”.
+  Usuwania zdjęć z biblioteki celowo nie ma. Wymaga nowych uprawnień klucza — aplikacja podpowie ponowne połączenie.
 - **Kolejność menu**: Ustawienia → Wygląd → Kolejność menu; OK chwyta sekcję, ▲▼ ją przesuwają (Ustawienia zostają na dole).
 - **Mapa w stylu Immichin**: nagłówek „Miejsca, w których byliście” z podsumowaniem (elementy · miejsca · kraje) i karta
   wybranej grupy po prawej: zdjęcie, rodzaj (kontynent / region / kraj / miejsce), kraj i liczba miejsc, liczba
