@@ -842,4 +842,6 @@
         <item quantity="many">%d lat temu</item>
         <item quantity="other">%d roku temu</item>
     </plurals>
+    <string name="filmy_od">"od %1$s"</string>
+    <string name="filmy_od_poczatku">"Od początku"</string>
 </resources>

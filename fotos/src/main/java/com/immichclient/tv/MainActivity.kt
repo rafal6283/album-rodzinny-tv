@@ -134,6 +134,8 @@ sealed class Scherm {
     /** een map uit de mappenboom (null = het startpunt van de boom, zodra die geladen is) */
     class Mappen(boom: MappenBoom, knoop: MapKnoop?, scope: CoroutineScope) : Scherm() { val staat = MapStaat(boom, knoop, scope) }
     data object Instellingen : Scherm()
+    /** sekcja Filmy: kolejność, przejście do daty, losowo */
+    class Filmy(scope: CoroutineScope) : Scherm() { val staat = FilmyStaat(scope) }
     class Lijst(val titel: String, val sub: String?, val perDag: Boolean, scope: CoroutineScope, laad: suspend (Int) -> Pagina) : Scherm() {
         val res = Resultaten(scope).also { it.start(laad) }
     }
@@ -367,9 +369,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             Sectie.LUDZIE -> Scherm.Personen(PersonenStaat(emptyList(), scope) { Immich.wszystkieOsoby() })
             Sectie.ALBUMS -> Scherm.Albums(scope)
             Sectie.MAPPEN -> Scherm.Mappen(MappenBoom(scope), null, scope)
-            Sectie.FILMY -> Scherm.Lijst(ctx.getString(R.string.sectie_filmy), ctx.getString(R.string.filmy_sub), false, scope) { p ->
-                Immich.zoekTekst(null, "originalFileName", p, alleenVideo = true)
-            }
+            Sectie.FILMY -> Scherm.Filmy(scope)
             Sectie.FAVORIETEN -> Scherm.Tijdlijn(ctx.getString(R.string.sectie_favorieten), null, Filter(favorieten = true), Instellingen.nieuwsteEerst, false, scope)
             Sectie.INSTELLINGEN -> Scherm.Instellingen
         }
@@ -564,6 +564,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         is Scherm.Personen -> PersonenScherm(scherm.staat, nav)
                         is Scherm.Mappen -> MappenScherm(scherm, nav)
                         is Scherm.Lijst -> LijstScherm(scherm, nav)
+                        is Scherm.Filmy -> FilmyScherm(scherm.staat, nav)
                         is Scherm.Instellingen -> InstellingenScherm(opnieuwKoppelen = { instellen = true }, ontkoppeld = { sectie = Sectie.FOTOS }, toetsen = { toetsen = true })
                     }
                 }

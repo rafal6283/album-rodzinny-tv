@@ -801,4 +801,6 @@
         <item quantity="one">hace %d año</item>
         <item quantity="other">hace %d años</item>
     </plurals>
+    <string name="filmy_od">"desde %1$s"</string>
+    <string name="filmy_od_poczatku">"Desde el principio"</string>
 </resources>

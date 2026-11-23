@@ -816,4 +816,6 @@
         <item quantity="one">%d year ago</item>
         <item quantity="other">%d years ago</item>
     </plurals>
+    <string name="filmy_od">"from %1$s"</string>
+    <string name="filmy_od_poczatku">"From the start"</string>
 </resources>

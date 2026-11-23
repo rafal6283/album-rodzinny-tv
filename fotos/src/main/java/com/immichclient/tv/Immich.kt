@@ -273,9 +273,10 @@ object Immich {
     }
 
     /** Losowe zdjęcia I filmy z osi czasu (przycisk „Losowo”); [ulubione] = tylko ulubione. */
-    suspend fun losowe(n: Int, ulubione: Boolean = false): List<Asset> = withContext(Dispatchers.Default) {
+    suspend fun losowe(n: Int, ulubione: Boolean = false, tylkoFilmy: Boolean = false): List<Asset> = withContext(Dispatchers.Default) {
         val q = JSONObject().put("size", n).put("visibility", "timeline").put("withExif", true)
         if (ulubione) q.put("isFavorite", true)
+        if (tylkoFilmy) q.put("type", "VIDEO")
         val a = JSONArray(post("/search/random", q))
         List(a.length()) { asset(a.getJSONObject(it)) }
     }
@@ -416,6 +417,17 @@ object Immich {
 
     /** Pierwsza strona twarzy bez imienia (ekran „Kto to jest?”), w kolejności Immich (najczęstsze najpierw). */
     suspend fun osobyBezImienia(): List<Persoon> = wszystkieOsoby().filter { it.naam.isBlank() }
+
+    /** Filmy z osi czasu (sekcja Filmy): od najnowszych albo najstarszych, opcjonalnie od wybranego miesiąca. */
+    suspend fun filmy(pagina: Int, nieuwsteEerst: Boolean, odMiesiaca: java.time.YearMonth?): Pagina {
+        val body = JSONObject().put("size", 250).put("page", pagina).put("order", if (nieuwsteEerst) "desc" else "asc")
+            .put("visibility", "timeline").put("type", "VIDEO")
+        odMiesiaca?.let {
+            if (nieuwsteEerst) body.put("takenBefore", "${it.atEndOfMonth()}T23:59:59.999Z")
+            else body.put("takenAfter", "${it.atDay(1)}T00:00:00.000Z")
+        }
+        return pagina(JSONObject(post("/search/metadata", body)))
+    }
 
     // ---- Edycja: osoby i albumy (uprawnienia person.update / person.merge / album.create / album.update / albumAsset.*) ----
 
