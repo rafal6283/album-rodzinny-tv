@@ -41,6 +41,7 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.nativeKeyCode
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -141,6 +142,15 @@ class Nav(
         toon(bron, index, titel, diashow, raster, naTerug)
 }
 
+/** Kliknięty kafelek kanału z ekranu głównego: (kanał, id zdjęcia lub null = sam kanał). */
+object WejscieKanal {
+    var zadanie by mutableStateOf<Pair<String, String?>?>(null)
+    fun z(intent: android.content.Intent?) {
+        val k = intent?.getStringExtra(Kanaly.EXTRA_KANAL) ?: return
+        zadanie = k to intent.getStringExtra(Kanaly.EXTRA_ZASOB)
+    }
+}
+
 /** Signalen van toetsen die de activity afvangt (Terug lang ingedrukt). */
 object Toetsen {
     var langeTerug by androidx.compose.runtime.mutableIntStateOf(0)
@@ -161,7 +171,12 @@ enum class Sectie(@StringRes val label: Int, val icoon: ImageVector) {
     ALBUMS(R.string.sectie_albums, Icons.Filled.PhotoLibrary),
     MAPPEN(R.string.sectie_mappen, Icons.Filled.Folder),
     FAVORIETEN(R.string.sectie_favorieten, Icons.Filled.Favorite),
-    INSTELLINGEN(R.string.sectie_instellingen, Icons.Filled.Settings),
+    INSTELLINGEN(R.string.sectie_instellingen, Icons.Filled.Settings);
+
+    companion object {
+        /** Kolejność w bocznej szynie, jak w Immichin: szukaj, zdjęcia+wideo, wspomnienia, ulubione, albumy, ludzie, mapa… */
+        val KOLEJNOSC = listOf(ZOEKEN, FOTOS, HERINNERINGEN, FAVORIETEN, ALBUMS, VERKENNEN, KAART, MAPPEN, INSTELLINGEN)
+    }
 }
 
 class MainActivity : ComponentActivity() {
@@ -177,6 +192,7 @@ class MainActivity : ComponentActivity() {
         start = android.os.SystemClock.uptimeMillis()
         // een eigen launcher kan het profiel meegeven ("kijker"); per profiel kan dan een eigen Immich-account gelden
         Immich.kiesAccount(this, intent.getStringExtra("kijker"))
+        if (savedInstanceState == null) WejscieKanal.z(intent)
         // Test-extra's alleen bij een verse start vanaf de shell (`am start`, referrer com.android.shell). Bij een herstart
         // van de taak (proces opgeruimd door geheugennood, daarna de tegel in de launcher) geeft Android het óórspronkelijke
         // intent van de taak opnieuw mee (savedInstanceState != null) en zou `--ei test_index` blijven plakken: de app
@@ -243,6 +259,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         okGezien = false
+        WejscieKanal.z(intent)
         val oud = Immich.sleutel
         Immich.kiesAccount(this, intent.getStringExtra("kijker"))
         if (Immich.sleutel != oud) recreate()
@@ -313,6 +330,23 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         }
     }
     val scherm = stapel.lastOrNull() ?: wortel(sectie)
+    // kanały na ekranie głównym: odśwież przy starcie (i zaplanuj okresowo); po zmianie ustawienia od razu
+    val kanalyWl = Instellingen.kanaly
+    androidx.compose.runtime.LaunchedEffect(kanalyWl) { kotlinx.coroutines.delay(2500); Kanaly.odswiezWTle(appCtx) }
+    // kafelek kanału kliknięty: przeglądarka na tym zdjęciu, ◀ ▶ przegląda resztę kanału
+    val zKanalu = WejscieKanal.zadanie
+    androidx.compose.runtime.LaunchedEffect(zKanalu) {
+        val (kanal, id) = zKanalu ?: return@LaunchedEffect
+        // żądanie zerujemy dopiero na końcu: zmiana klucza w trakcie anulowałaby ten efekt przed wczytaniem zdjęć
+        val wynik = runCatching { Kanaly.zasoby(appCtx, kanal) }.onFailure { Log.w("Fotos", "kanał $kanal", it) }.getOrNull()
+        if (wynik != null && wynik.second.isNotEmpty()) {
+            val (tytul, lista) = wynik
+            val i = lista.indexOfFirst { it.id == id }.coerceAtLeast(0)
+            kijker = null; stapel.clear()
+            nav.bekijk(LijstBron(lista), i, tytul, id == null, null)
+        }
+        WejscieKanal.zadanie = null
+    }
     if (testIndex >= 0) androidx.compose.runtime.LaunchedEffect(Unit) {
         val s = (wortel(Sectie.FOTOS) as Scherm.Tijdlijn).staat
         while (s.aantal == 0) kotlinx.coroutines.delay(100)
@@ -355,6 +389,8 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             }
         },
     ) {
+        // tło z poświatą w odcieniu bieżącej sekcji (jak w Immichin)
+        Tlo(odcienSekcji(sectie))
         val lade = rememberDrawerState(DrawerValue.Closed)
         val ladeInstap = remember { androidx.compose.runtime.mutableIntStateOf(0) }
         // een frame later: tv-material zet zelf nog een focus bij het binnengaan
@@ -400,7 +436,11 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             modifier = Modifier.graphicsLayer { alpha = if (kijker != null) 0f else 1f },
             drawerContent = { waarde ->
                 Column(
-                    Modifier.fillMaxHeight().background(if (waarde == DrawerValue.Open) Kleur.vlak else Kleur.achtergrond)
+                    Modifier.fillMaxHeight()
+                        .background(
+                            if (waarde == DrawerValue.Open) androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(Color(0xF5101018), Color(0xE6101018)))
+                            else androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(Color(0xCC07070C), Color(0x0007070C))),
+                        )
                         .focusProperties { canFocus = !ladeDicht }
                         // binnenkomen (◀ aan de rand, lang Terug) = altijd focus op het item van de huidige sectie, niet op wat het
                         // dichtstbij ligt of het laatst gefocust was; daarna loopt de focus gewoon item voor item
@@ -410,8 +450,9 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         }
                         .padding(12.dp).selectableGroup(),
                 ) {
-                    Spacer(Modifier.height(24.dp))
-                    for (s in Sectie.entries) {
+                    // logo u góry szyny, jak w Immichin
+                    Logo(Modifier.padding(start = 16.dp, top = 12.dp, bottom = 8.dp))
+                    for (s in Sectie.KOLEJNOSC) {
                         if (s == Sectie.INSTELLINGEN) Spacer(Modifier.weight(1f))
                         NavigationDrawerItem(
                             selected = sectie == s && stapel.isEmpty(),
@@ -423,10 +464,12 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                             },
                             leadingContent = { Icon(s.icoon, null) },
                             colors = NavigationDrawerItemDefaults.colors(
-                                selectedContainerColor = Kleur.primair.copy(alpha = 0.18f), selectedContentColor = Kleur.primair,
-                                focusedContainerColor = Kleur.primair, focusedContentColor = MaterialTheme.colorScheme.onPrimary,
+                                containerColor = Color.Transparent, contentColor = Kleur.zacht, inactiveContentColor = Kleur.zacht,
+                                selectedContainerColor = Color.Transparent, selectedContentColor = Kleur.pinezka,
+                                focusedContainerColor = Color.White, focusedContentColor = Color(0xFF101018),
+                                focusedSelectedContainerColor = Color.White, focusedSelectedContentColor = Color(0xFF101018),
                             ),
-                        ) { Text(if (s == Sectie.FOTOS) naamApp else stringResource(s.label)) }
+                        ) { Text(if (s == Sectie.FOTOS) naamApp else stringResource(s.label), color = androidx.tv.material3.LocalContentColor.current) }
                     }
                     Spacer(Modifier.height(12.dp))
                 }

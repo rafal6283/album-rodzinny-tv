@@ -208,7 +208,7 @@ fun MappenScherm(scherm: Scherm.Mappen, nav: Nav) {
                 fotos.size.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.items, it, it) },
             )
             val pad = boom.start?.let { k.relatief(it) }.orEmpty()
-            SchermKop(titel, listOfNotNull(pad.takeIf { it.isNotEmpty() && it != titel }, delen.joinToString("  ·  ").ifEmpty { null }).joinToString("   —   ").ifEmpty { null }) {
+            SchermKop(etykieta = stringResource(R.string.etyk_kolekcje), titel = titel, sub = listOfNotNull(pad.takeIf { it.isNotEmpty() && it != titel }, delen.joinToString("  ·  ").ifEmpty { null }).joinToString("   —   ").ifEmpty { null }) {
                 if (mappen.size > 1) Keuze(
                     selected = false, onClick = { boom.omgekeerd = !boom.omgekeerd; staat.focusDoel = 0 },
                     tekst = if (boom.omgekeerd) "Z–A" else "A–Z",

@@ -566,4 +566,36 @@
         <item>Datumsformat: Tag zuerst oder Monat zuerst („So, Sep. 3, 2023“)</item>
         <item>Zeitformat: automatisch, 24 Stunden oder 12 Stunden</item>
     </string-array>
+
+    <!-- Immichin-stijl -->
+    <string name="op_deze_dag">An diesem Tag</string>
+    <string name="uklad">Raster</string>
+    <string name="uklad_uitleg">Quadratische Kacheln pro Monat oder das Immich-Layout nach Tagen</string>
+    <string name="uklad_kwadraty">Quadrate</string>
+    <string name="uklad_immich">Nach Tag (Immich)</string>
+    <string name="etyk_biblioteka">Deine Bibliothek</string>
+    <string name="etyk_ulubione">Deine Favoriten</string>
+    <string name="etyk_kolekcje">Sammlungen</string>
+    <string name="etyk_odkrywaj">Personen und Orte</string>
+    <string name="etyk_aplikacja">App</string>
+    <string name="etyk_wspomnienia">Erinnerungen</string>
+    <string name="szczegoly">Details</string>
+    <string name="odtworz_wszystkie">Alle abspielen</string>
+    <plurals name="filmy">
+        <item quantity="one">%s Video</item>
+        <item quantity="other">%s Videos</item>
+    </plurals>
+    <string name="z_ilu">%1$s von %2$s</string>
+    <string name="w_ulubionych">In deinen Favoriten</string>
+    <string name="powieksz">Zoomen</string>
+    <string name="diashow_pauze_kort">Pause</string>
+    <string name="zoom_hint">◀▶▲▼ verschieben   ·   OK näher   ·   Zurück beenden</string>
+    <string name="kanal_najnowsze">Neueste Fotos</string>
+    <string name="kanal_losowe">Zufällige Fotos</string>
+    <string name="kanal_wspomnienia">An diesem Tag</string>
+    <string name="groep_ekran_glowny">Startbildschirm</string>
+    <string name="kanaly">Kanäle auf dem Startbildschirm</string>
+    <string name="kanaly_uitleg">Neueste Fotos, zufällige Fotos und heutige Erinnerungen als Reihen auf dem Android-TV-Startbildschirm</string>
+    <string name="kanaly_pokaz">Kanäle auf dem Startbildschirm zeigen</string>
+    <string name="kanaly_pokaz_uitleg">Bittet den Launcher, jede Reihe anzuzeigen; du kannst sie auch in den Startbildschirm-Einstellungen hinzufügen</string>
 </resources>

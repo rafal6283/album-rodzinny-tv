@@ -1,5 +1,6 @@
 package com.immichclient.tv
 
+import androidx.compose.material.icons.filled.Favorite
 import android.content.Context
 import android.os.Handler
 import android.util.Log
@@ -27,6 +28,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +49,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.ZoomIn
+import androidx.compose.material.icons.filled.Slideshow
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Pause
@@ -133,6 +140,32 @@ class KijkerStaat(val bron: BeeldBron, start: Int, val titel: String?, diashow: 
     var speeltVideo by mutableStateOf(false)
     var videoFout by mutableStateOf(false)
     var speler: ExoPlayer? = null
+    /** dolny pasek akcji (▼): pokaz, szczegóły, powiększ, mapa */
+    var pasek by mutableStateOf(false)
+    var pasekWybor by mutableIntStateOf(0)
+    /** powiększenie zdjęcia (1 = brak); przesunięcie w px względem środka */
+    var zoom by mutableFloatStateOf(1f)
+    var przesX by mutableFloatStateOf(0f)
+    var przesY by mutableFloatStateOf(0f)
+
+    fun zoomUstaw(z: Float, szer: Float, wys: Float) {
+        zoom = z.coerceIn(1f, ZOOM_MAX)
+        if (zoom == 1f) { przesX = 0f; przesY = 0f } else przesun(0f, 0f, szer, wys)
+    }
+
+    /** Przesuń widok o (dx, dy) px ekranu, w granicach powiększonego zdjęcia. */
+    fun przesun(dx: Float, dy: Float, szer: Float, wys: Float) {
+        // granice wg zdjęcia, nie ekranu: pionowe zdjęcie jest węższe od ekranu, więc nie wolno wyjechać w czarne pasy
+        val r = bron.op(index)?.ratio?.takeIf { it > 0f } ?: (szer / wys)
+        val zdjW = minOf(szer, wys * r)
+        val zdjH = minOf(wys, szer / r)
+        val maxX = ((zoom * zdjW - szer) / 2f).coerceAtLeast(0f)
+        val maxY = ((zoom * zdjH - wys) / 2f).coerceAtLeast(0f)
+        przesX = (przesX + dx).coerceIn(-maxX, maxX)
+        przesY = (przesY + dy).coerceIn(-maxY, maxY)
+    }
+
+    companion object { const val ZOOM_MAX = 4f }
     /** volgende foto van de diashow, alvast gekozen (en vooraf geladen) zodra de huidige in beeld staat */
     var diaVolgende = -1
 
@@ -165,7 +198,18 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     val ctx = LocalContext.current
     val fr = remember { FocusRequester() }
     val huidig = staat.bron.op(staat.index)
-    BackHandler { if (staat.info) staat.info = false else sluit(staat.bron.op(staat.index)) }
+    BackHandler {
+        when {
+            staat.zoom > 1f -> { staat.zoom = 1f; staat.przesX = 0f; staat.przesY = 0f }
+            staat.pasek -> staat.pasek = false
+            staat.info -> staat.info = false
+            else -> sluit(staat.bron.op(staat.index))
+        }
+    }
+    // nowe zdjęcie = bez powiększenia
+    LaunchedEffect(staat.index) { staat.zoom = 1f; staat.przesX = 0f; staat.przesY = 0f }
+    // pasek akcji chowa się sam po chwili bez klawiszy
+    LaunchedEffect(staat.pasek, staat.actief) { if (staat.pasek) { delay(8000); staat.pasek = false } }
     LaunchedEffect(Unit) { fr.requestFocus() }
     // Tijdens een diashow het scherm aan houden: anders start de systeem-screensaver (op o.a. de Google TV
     // Streamer niet uit te zetten) midden in de diashow. Gepauzeerd of gestopt geldt weer de gewone timeout.
@@ -216,15 +260,61 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
         staat.diaVerder()
     }
 
+    val ekran = with(LocalDensity.current) { androidx.compose.ui.platform.LocalConfiguration.current.let { it.screenWidthDp.dp.toPx() to it.screenHeightDp.dp.toPx() } }
+    val akcje = akcjeDla(huidig, opKaart != null)
+    fun wykonaj(ak: Akcja) {
+        staat.pasek = false
+        when (ak) {
+            Akcja.POKAZ -> staat.diashow = !staat.diashow
+            Akcja.SZCZEGOLY -> staat.info = !staat.info
+            Akcja.POWIEKSZ -> { staat.diashow = false; staat.info = false; staat.zoomUstaw(2f, ekran.first, ekran.second) }
+            Akcja.MAPA -> if (opKaart != null && huidig != null) opKaart(huidig)
+        }
+    }
+
     BoxWithConstraints(
         Modifier.fillMaxSize().background(Color.Black).focusRequester(fr).focusable().onPreviewKeyEvent { e ->
             if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
             val k = e.key.nativeKeyCode
+            staat.actief = System.currentTimeMillis()
+            // --- tryb powiększenia: strzałki przesuwają, OK/⏩ bliżej, ⏪ dalej ---
+            if (staat.zoom > 1f) {
+                val krok = 0.18f
+                val (sz, wy) = ekran
+                return@onPreviewKeyEvent when (k) {
+                    // w prawo = pokaż prawą część zdjęcia = przesuń obraz w lewo
+                    KeyEvent.KEYCODE_DPAD_LEFT -> { staat.przesun(sz * krok, 0f, sz, wy); true }
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> { staat.przesun(-sz * krok, 0f, sz, wy); true }
+                    KeyEvent.KEYCODE_DPAD_UP -> { staat.przesun(0f, wy * krok, sz, wy); true }
+                    KeyEvent.KEYCODE_DPAD_DOWN -> { staat.przesun(0f, -wy * krok, sz, wy); true }
+                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD ->
+                        { staat.zoomUstaw(if (staat.zoom >= KijkerStaat.ZOOM_MAX) 1f else staat.zoom + 1f, sz, wy); true }
+                    KeyEvent.KEYCODE_MEDIA_REWIND -> { staat.zoomUstaw(staat.zoom - 1f, sz, wy); true }
+                    else -> false
+                }
+            }
+            // --- pasek akcji: ◀ ▶ wybór, OK wykonaj, ▲ schowaj ---
+            if (staat.pasek) {
+                return@onPreviewKeyEvent when (k) {
+                    KeyEvent.KEYCODE_DPAD_LEFT -> { staat.pasekWybor = (staat.pasekWybor - 1).coerceAtLeast(0); true }
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> { staat.pasekWybor = (staat.pasekWybor + 1).coerceAtMost(akcje.lastIndex); true }
+                    KeyEvent.KEYCODE_DPAD_UP -> { staat.pasek = false; true }
+                    KeyEvent.KEYCODE_DPAD_DOWN -> true
+                    KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { akcje.getOrNull(staat.pasekWybor)?.let(::wykonaj); true }
+                    else -> false
+                }
+            }
             when (k) {
                 KeyEvent.KEYCODE_DPAD_LEFT -> { staat.diashow = false; ga(-1); true }
                 KeyEvent.KEYCODE_DPAD_RIGHT -> { staat.diashow = false; ga(1); true }
-                KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_INFO -> {
-                    staat.info = !staat.info; staat.actief = System.currentTimeMillis(); true
+                // ▼ = pasek akcji (przy otwartych szczegółach: zamknij je)
+                KeyEvent.KEYCODE_DPAD_DOWN -> {
+                    if (staat.info) staat.info = false
+                    else { staat.pasek = true; staat.pasekWybor = 0 }
+                    true
+                }
+                KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_INFO -> {
+                    staat.info = !staat.info; true
                 }
                 KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
                 KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PAUSE -> {
@@ -275,7 +365,7 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
         val schoon = staat.diashow && Instellingen.diaBeeld == DiaBeeld.ALLEEN_FOTO
         val kaartMaat = Instellingen.viewerKaart.schaal
         KaartLaag(
-            doel = huidig?.takeIf { kaartMaat > 0f && !it.video && it.lat != null && it.lon != null && !staat.info && !schoon },
+            doel = huidig?.takeIf { kaartMaat > 0f && !it.video && it.lat != null && it.lon != null && !staat.info && !schoon && staat.zoom == 1f && !staat.pasek },
             breedtePx = breedtePx, hoogtePx = hoogtePx, maat = kaartMaat,
         )
 
@@ -283,7 +373,7 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
         var balk by remember { mutableStateOf(true) }
         LaunchedEffect(staat.actief, staat.index) { balk = true; val ms = Instellingen.balkMs; if (ms > 0) { delay(ms.toLong()); balk = false } }
         AnimatedVisibility(
-            ((balk && !schoon) || staat.info) && huidig != null && !staat.speeltVideo, Modifier.align(Alignment.BottomStart),
+            ((balk && !schoon) || staat.info || staat.pasek) && huidig != null && !staat.speeltVideo && staat.zoom == 1f, Modifier.align(Alignment.TopStart),
             enter = fadeIn(), exit = fadeOut(),
         ) {
             if (huidig != null) OnderBalk(huidig, staat, metKaart = huidig.lat != null && !huidig.video && kaartMaat > 0f)
@@ -292,8 +382,13 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
             staat.info && huidig != null, Modifier.align(Alignment.CenterEnd),
             enter = slideInHorizontally { it } + fadeIn(), exit = slideOutHorizontally { it } + fadeOut(),
         ) {
-            if (huidig != null) InfoPaneel(huidig, opKaart != null && huidig.lat != null)
+            if (huidig != null) InfoPaneel(huidig, staat, opKaart != null && huidig.lat != null)
         }
+        AnimatedVisibility(
+            staat.pasek && staat.zoom == 1f, Modifier.align(Alignment.BottomCenter),
+            enter = fadeIn() + androidx.compose.animation.slideInVertically { it / 3 }, exit = fadeOut(),
+        ) { PasekAkcji(staat, akcje) }
+        AnimatedVisibility(staat.zoom > 1f, Modifier.align(Alignment.BottomCenter), enter = fadeIn(), exit = fadeOut()) { ZoomPodpowiedz(staat) }
         // Diashow rechtsboven: een badge (play-icoon + "Diashow") bij het starten, en kort "Diashow gepauzeerd" bij het
         // stoppen (OK, of handmatig bladeren); niet bij elke automatische wissel. Hij vervaagt na een paar seconden.
         // Het voortgangsringetje houdt zijn vaste plek: de badge vervaagt alleen (alpha) en houdt zijn ruimte.
@@ -348,7 +443,14 @@ private fun Beeld(a: Asset, staat: KijkerStaat, actief: Boolean, zicht: () -> Fl
             if (staat.diashow && Instellingen.kenBurns) { if (actief) zoom.animateTo(1.06f, tween((Instellingen.diaMs + 1500).toInt(), easing = LinearEasing)) }
             else if (zoom.value != 1f) zoom.animateTo(1f, tween(500, easing = FastOutSlowInEasing))
         }
-        val mod = Modifier.fillMaxSize().graphicsLayer { scaleX = zoom.value; scaleY = zoom.value }
+        // powiększenie ręczne (tylko bieżące zdjęcie) płynnie animowane, razem z Ken Burns
+        val reczny by animateFloatAsState(if (actief) staat.zoom else 1f, tween(260), label = "zoom")
+        val px by animateFloatAsState(if (actief) staat.przesX else 0f, tween(220), label = "px")
+        val py by animateFloatAsState(if (actief) staat.przesY else 0f, tween(220), label = "py")
+        val mod = Modifier.fillMaxSize().graphicsLayer {
+            scaleX = zoom.value * reczny; scaleY = zoom.value * reczny
+            translationX = px; translationY = py
+        }
         // 1) thumbhash 2) thumbnail (al in de cache van het raster) 3) preview: er staat dus altijd meteen iets
         val hash = remember(a.thumbhash) { a.thumbhash?.let { ThumbHash.bitmap(it) } }
         if (hash != null && Instellingen.wazig) {
@@ -360,6 +462,15 @@ private fun Beeld(a: Asset, staat: KijkerStaat, actief: Boolean, zicht: () -> Fl
         }
         AsyncImage(beeld(Immich.thumb(a.id)), null, mod, contentScale = ContentScale.Fit)
         if (!a.video) AsyncImage(preview(a.id), null, mod, contentScale = ContentScale.Fit)
+        // powiększone: wersja w pełnej rozdzielczości (Immich „fullsize”, do 4K) nad podglądem, gdy się wczyta
+        if (!a.video && actief && staat.zoom > 1f) {
+            val ctx = LocalContext.current
+            val pelny = remember(a.id) {
+                coil3.request.ImageRequest.Builder(ctx).data(Immich.pelny(a.id)).size(3840, 3840)
+                    .precision(coil3.size.Precision.INEXACT).build()
+            }
+            AsyncImage(pelny, null, mod, contentScale = ContentScale.Fit)
+        }
         if (a.video && actief) Video(a, staat)
     }
 }
@@ -464,23 +575,42 @@ private fun Video(a: Asset, staat: KijkerStaat) {
     }
 }
 
+/**
+ * Nagłówek w stylu Immichin (lewy górny róg): mała etykieta „Album · 5 / 8”, wielka data szeryfem („30 September 2025”),
+ * pod nią „Tuesday · 22:56 · 📍 Hornafjörður, Iceland” i ewentualnie albumy.
+ */
 @Composable
-private fun OnderBalk(a: Asset, staat: KijkerStaat, metKaart: Boolean) {
-    Box(Modifier.fillMaxWidth().height(170.dp).background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xCC000000))))) {
-        Column(Modifier.align(Alignment.BottomStart).padding(start = 40.dp, bottom = 28.dp)) {
-            // teller bij de titel, links: rechtsonder staat de landkaart (die liep over de teller heen)
-            Row(verticalAlignment = Alignment.Bottom) {
-                staat.titel?.let { Text(it, style = MaterialTheme.typography.labelLarge, color = Kleur.primair, modifier = Modifier.padding(end = 12.dp)) }
-                if (Instellingen.teller) Text("${staat.index + 1} / ${Taal.getal(staat.bron.aantal)}", style = MaterialTheme.typography.labelMedium, color = Color(0xAAFFFFFF), modifier = Modifier.padding(bottom = 1.dp))
+private fun OnderBalk(a: Asset, staat: KijkerStaat, @Suppress("UNUSED_PARAMETER") metKaart: Boolean) {
+    Box(Modifier.fillMaxWidth().height(230.dp).background(Brush.verticalGradient(listOf(Color(0xB0000000), Color(0x40000000), Color.Transparent)))) {
+        Column(Modifier.padding(start = 40.dp, top = 26.dp, end = 40.dp)) {
+            val etykieta = listOfNotNull(
+                staat.titel,
+                if (Instellingen.teller) "${Taal.getal(staat.index + 1)} / ${Taal.getal(staat.bron.aantal)}" else null,
+            ).joinToString("  ·  ")
+            if (etykieta.isNotEmpty()) Text(etykieta.uppercase(Taal.locale), style = EtykietaStyl, maxLines = 1, modifier = Modifier.padding(bottom = 4.dp))
+            val wzor = if (Formaat.datum == Formaat.Datum.MAAND_DAG) "MMMM d, yyyy" else "d MMMM yyyy"
+            Text(
+                a.datum.format(java.time.format.DateTimeFormatter.ofPattern(wzor, Taal.locale)),
+                style = TytulStyl.copy(fontSize = androidx.compose.ui.unit.TextUnit(40f, androidx.compose.ui.unit.TextUnitType.Sp)), color = Color.White, maxLines = 1,
+            )
+            Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                val dzien = a.datum.format(java.time.format.DateTimeFormatter.ofPattern("EEEE", Taal.locale)).replaceFirstChar { it.titlecase(Taal.locale) }
+                Text("$dzien  ·  ${a.datum.format(Formaat.tijd)}", style = MaterialTheme.typography.titleMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Normal), color = Color(0xDDFFFFFF))
+                val plaats = listOfNotNull(a.stad, a.land).joinToString(", ")
+                if (plaats.isNotEmpty()) {
+                    Text("  ·  ", style = MaterialTheme.typography.titleMedium, color = Color(0xDDFFFFFF))
+                    Icon(Icons.Filled.Place, null, Modifier.size(18.dp), tint = Kleur.pinezka)
+                    Text(" $plaats", style = MaterialTheme.typography.titleMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Normal), color = Color(0xDDFFFFFF), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                if (a.favoriet) {
+                    Spacer(Modifier.width(16.dp))
+                    Icon(androidx.compose.material.icons.Icons.Filled.Favorite, null, Modifier.size(18.dp), tint = Color(0xFFFF5C8A))
+                }
             }
-            Text(datumLang(a.datum), style = MaterialTheme.typography.titleLarge, color = Color.White)
-            val plaats = listOfNotNull(a.stad, a.land).joinToString(", ")
-            // met kaart (foto met GPS) staat de plaats zo bij de stip
-            if (plaats.isNotEmpty() && !metKaart) Text(plaats, style = MaterialTheme.typography.bodyLarge, color = Color(0xDDFFFFFF))
             // album(s) van de foto; het album dat je nu bekijkt niet nog eens
             if (Instellingen.albumNaam) {
                 val namen = albumNamen(a.id).filter { it != staat.titel }
-                if (namen.isNotEmpty()) Row(Modifier.padding(top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (namen.isNotEmpty()) Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.PhotoLibrary, null, Modifier.size(16.dp), tint = Color(0xBBFFFFFF))
                     Text("  " + albumRegel(namen), style = MaterialTheme.typography.bodyMedium, color = Color(0xBBFFFFFF), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
@@ -489,49 +619,127 @@ private fun OnderBalk(a: Asset, staat: KijkerStaat, metKaart: Boolean) {
     }
 }
 
+/**
+ * Karta „SZCZEGÓŁY” jak w Immichin: pływająca, zaokrąglona, wyśrodkowana pionowo po prawej. U góry etykieta i licznik
+ * („5 z 8”), wielka data szeryfem, „wtorek · 22:56 · UTC+2”; potem wiersze z okrągłymi ikonami: plik (MP · wymiary ·
+ * rozmiar), aparat (przysłona · czas · ISO · ogniskowa, obiektyw), miejsce (+ współrzędne i mała mapa), ulubione,
+ * ludzie, albumy, opis.
+ */
 @Composable
-private fun InfoPaneel(a: Asset, metKaartSprong: Boolean) {
+private fun InfoPaneel(a: Asset, staat: KijkerStaat, metKaartSprong: Boolean) {
     val details by produceState<Details?>(null, a.id) { value = runCatching { Immich.details(a.id) }.getOrNull() }
-    Column(Modifier.fillMaxHeight().width(380.dp).background(Color(0xF0121214)).padding(28.dp)) {
-        // De hintregel staat vast onderaan; de inhoud erboven mag langer zijn dan het scherm (veel personen, lange
-        // omschrijving) en scrolt dan weg, in plaats van de hint uit beeld te duwen. Lange lijsten worden afgekapt.
+    Box(Modifier.fillMaxHeight().padding(vertical = 24.dp, horizontal = 32.dp), contentAlignment = Alignment.CenterEnd) {
         Column(
-            Modifier.weight(1f).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
+            Modifier.width(380.dp)
+                .background(Color(0xE6121220), RoundedCornerShape(30.dp))
+                .border(1.dp, Color(0x24FFFFFF), RoundedCornerShape(30.dp))
+                .padding(start = 26.dp, end = 26.dp, top = 22.dp, bottom = 18.dp),
         ) {
-            Text(stringResource(R.string.info), style = MaterialTheme.typography.headlineSmall)
-            InfoRegel(Icons.Filled.Schedule, datumLang(a.datum), null)
-            val d = details
-            if (d != null) {
-                d.omschrijving?.let { Text(it, style = MaterialTheme.typography.bodyLarge, maxLines = 4, overflow = TextOverflow.Ellipsis) }
-                if (d.mensen.isNotEmpty()) InfoRegel(Icons.Filled.People, d.mensen.joinToString(", "), null, maxRegels = 3)
-                val albums = albumNamen(a.id)
-                if (albums.isNotEmpty()) InfoRegel(Icons.Filled.PhotoLibrary, albums.joinToString(", "), null, maxRegels = 3)
-                d.plaats?.let { InfoRegel(Icons.Filled.Place, it, null) }
-                if (a.lat != null && a.lon != null) {
-                    KaartKlein(a.lat, a.lon, Modifier.fillMaxWidth().height(150.dp).background(Kleur.vlak, RoundedCornerShape(12.dp)))
+            // Inhoud mag langer zijn dan het scherm (veel personen, lange omschrijving) en scrolt dan; de hint blijft onderaan.
+            Column(
+                Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.szczegoly).uppercase(Taal.locale), style = EtykietaStyl, modifier = Modifier.weight(1f))
+                        Text(stringResource(R.string.z_ilu, Taal.getal(staat.index + 1), Taal.getal(staat.bron.aantal)), style = MaterialTheme.typography.labelLarge, color = Kleur.zacht)
+                    }
+                    Text(
+                        a.datum.format(java.time.format.DateTimeFormatter.ofPattern(if (Formaat.datum == Formaat.Datum.MAAND_DAG) "MMMM d, yyyy" else "d MMMM yyyy", Taal.locale)),
+                        style = MaterialTheme.typography.displaySmall, modifier = Modifier.padding(top = 8.dp), maxLines = 1,
+                    )
+                    val dzien = a.datum.format(java.time.format.DateTimeFormatter.ofPattern("EEEE", Taal.locale)).replaceFirstChar { it.titlecase(Taal.locale) }
+                    Text(listOfNotNull(dzien, a.datum.format(Formaat.tijd), details?.strefa).joinToString("  ·  "),
+                        style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht, modifier = Modifier.padding(top = 2.dp))
                 }
-                InfoRegel(Icons.Filled.Image, d.bestand, d.afmeting)
-                d.camera?.let { InfoRegel(Icons.Filled.CameraAlt, it, listOfNotNull(d.lens, d.instellingen).joinToString("\n").ifEmpty { null }) }
-            } else {
-                Text(stringResource(R.string.laden), style = MaterialTheme.typography.bodySmall)
+                val d = details
+                if (d != null) {
+                    InfoRegel(
+                        if (d.wideo) Icons.Filled.Videocam else Icons.Filled.Image, d.bestand.ifEmpty { "—" },
+                        listOfNotNull(d.dlugosc, d.plikSub ?: d.afmeting).joinToString("  ·  ").ifEmpty { null },
+                    )
+                    d.camera?.let { InfoRegel(Icons.Filled.CameraAlt, it, listOfNotNull(d.instellingen, d.lens).joinToString("\n").ifEmpty { null }) }
+                    (d.plaats ?: d.wspolrzedne)?.let { InfoRegel(Icons.Filled.Place, it, d.wspolrzedne.takeIf { d.plaats != null }) }
+                    if (a.lat != null && a.lon != null) {
+                        KaartKlein(a.lat, a.lon, Modifier.padding(start = 56.dp).fillMaxWidth().height(130.dp).background(Kleur.vlak, RoundedCornerShape(14.dp)))
+                    }
+                    if (d.ulubione || a.favoriet) InfoRegel(Icons.Filled.Favorite, stringResource(R.string.w_ulubionych), null, kolorIkony = Color(0xFFFF5C8A))
+                    if (d.mensen.isNotEmpty()) InfoRegel(Icons.Filled.People, d.mensen.joinToString(", "), null, maxRegels = 3)
+                    val albums = albumNamen(a.id)
+                    if (albums.isNotEmpty()) InfoRegel(Icons.Filled.PhotoLibrary, albums.joinToString(", "), null, maxRegels = 3)
+                    d.omschrijving?.let { InfoRegel(Icons.Filled.Description, it, null, maxRegels = 5) }
+                } else {
+                    Text(stringResource(R.string.laden), style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht)
+                }
             }
-        }
-        Row(Modifier.padding(top = 14.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Info, null, Modifier.size(16.dp), tint = Kleur.zacht)
-            Text("  " + stringResource(if (metKaartSprong) R.string.hint_info_kaart else R.string.hint_info), style = MaterialTheme.typography.bodySmall)
+            Row(Modifier.padding(top = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Info, null, Modifier.size(16.dp), tint = Kleur.zacht)
+                Text("  " + stringResource(if (metKaartSprong) R.string.hint_info_kaart else R.string.hint_info), style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
 }
 
 @Composable
-private fun InfoRegel(icoon: ImageVector, titel: String, sub: String?, maxRegels: Int = Int.MAX_VALUE) {
-    Row {
-        Icon(icoon, null, Modifier.size(22.dp).padding(top = 2.dp), tint = Kleur.zacht)
-        Column(Modifier.padding(start = 14.dp)) {
-            Text(titel, style = MaterialTheme.typography.bodyLarge, maxLines = maxRegels, overflow = TextOverflow.Ellipsis)
-            sub?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+private fun InfoRegel(icoon: ImageVector, titel: String, sub: String?, maxRegels: Int = Int.MAX_VALUE, kolorIkony: Color = Color(0xDDFFFFFF)) {
+    Row(verticalAlignment = if (sub == null) Alignment.CenterVertically else Alignment.Top) {
+        // ikona w okrągłym, półprzezroczystym tle (jak w Immichin)
+        Box(Modifier.size(40.dp).background(Color(0x1FFFFFFF), androidx.compose.foundation.shape.CircleShape), contentAlignment = Alignment.Center) {
+            Icon(icoon, null, Modifier.size(20.dp), tint = kolorIkony)
         }
+        Column(Modifier.padding(start = 16.dp, top = if (sub == null) 0.dp else 1.dp)) {
+            Text(titel, style = MaterialTheme.typography.titleMedium, maxLines = maxRegels, overflow = TextOverflow.Ellipsis)
+            sub?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht, modifier = Modifier.padding(top = 2.dp)) }
+        }
+    }
+}
+
+/** Akcje dolnego paska przeglądarki (▼), jak okrągłe przyciski w Immichin. */
+enum class Akcja { POKAZ, SZCZEGOLY, POWIEKSZ, MAPA }
+
+fun akcjeDla(a: Asset?, zMapa: Boolean): List<Akcja> = buildList {
+    add(Akcja.POKAZ); add(Akcja.SZCZEGOLY)
+    if (a != null && !a.video) add(Akcja.POWIEKSZ)
+    if (zMapa && a?.lat != null) add(Akcja.MAPA)
+}
+
+@Composable
+private fun PasekAkcji(staat: KijkerStaat, akcje: List<Akcja>) {
+    Box(Modifier.fillMaxWidth().height(200.dp).background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xB3000000))))) {
+        Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 22.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            akcje.forEachIndexed { i, ak ->
+                val wybrany = i == staat.pasekWybor.coerceIn(0, akcje.lastIndex)
+                val (ikona, napis) = when (ak) {
+                    Akcja.POKAZ -> (if (staat.diashow) Icons.Filled.Pause else Icons.Filled.Slideshow) to stringResource(if (staat.diashow) R.string.diashow_pauze_kort else R.string.diashow)
+                    Akcja.SZCZEGOLY -> Icons.Filled.Info to stringResource(R.string.szczegoly)
+                    Akcja.POWIEKSZ -> Icons.Filled.ZoomIn to stringResource(R.string.powieksz)
+                    Akcja.MAPA -> Icons.Filled.Map to stringResource(R.string.sectie_kaart)
+                }
+                val skala by animateFloatAsState(if (wybrany) 1.08f else 1f, tween(140), label = "akcja")
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(84.dp)) {
+                    Box(
+                        Modifier.size(56.dp).graphicsLayer { scaleX = skala; scaleY = skala }
+                            .background(if (wybrany) Color.White else Color(0x33FFFFFF), androidx.compose.foundation.shape.CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) { Icon(ikona, null, Modifier.size(24.dp), tint = if (wybrany) Color(0xFF101018) else Color.White) }
+                    Text(napis, style = MaterialTheme.typography.titleSmall, color = if (wybrany) Color.White else Color(0xB3FFFFFF),
+                        maxLines = 1, modifier = Modifier.padding(top = 10.dp))
+                }
+            }
+        }
+    }
+}
+
+/** Podpowiedź w trybie powiększenia: „2× · ◀▶▲▼ przesuń · OK bliżej · Wstecz wyjdź”. */
+@Composable
+private fun ZoomPodpowiedz(staat: KijkerStaat) {
+    Row(
+        Modifier.padding(bottom = 32.dp).background(Color(0xCC101018), RoundedCornerShape(24.dp)).padding(horizontal = 20.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Filled.ZoomIn, null, Modifier.size(20.dp), tint = Kleur.pinezka)
+        Text("  ${"%.0f".format(staat.zoom)}×   ·   " + stringResource(R.string.zoom_hint), style = MaterialTheme.typography.labelLarge, color = Color.White)
     }
 }
 

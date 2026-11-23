@@ -48,6 +48,16 @@ class Markers(
 data class Details(
     val bestand: String, val camera: String?, val lens: String?, val instellingen: String?, val plaats: String?,
     val mensen: List<String>, val omschrijving: String?, val afmeting: String?,
+    /** „2.5 MP · 1920 × 1281 · 375.1 KB” (jak w Immichin) */
+    val plikSub: String? = null,
+    /** „64.0482, -16.1795” */
+    val wspolrzedne: String? = null,
+    /** strefa czasowa z EXIF („UTC+2”, „Europe/Warsaw”) */
+    val strefa: String? = null,
+    val ulubione: Boolean = false,
+    val wideo: Boolean = false,
+    /** długość filmu („1:23”) */
+    val dlugosc: String? = null,
 )
 
 /** Welke foto's de tijdlijn toont: alles, een album, een persoon of de favorieten. */

@@ -1,5 +1,6 @@
 package com.immichclient.tv
 
+import androidx.compose.material.icons.filled.PlayCircle
 import android.util.Log
 import android.view.KeyEvent
 import androidx.compose.animation.AnimatedVisibility
@@ -155,8 +156,11 @@ class TijdlijnStaat(val filter: Filter, nieuwsteEerst: Boolean, private val scop
 
     fun regels(m: Maand, breedte: Float, hoogte: Float): List<Regel>? {
         val a = geladen[m.sleutel] ?: return null
-        return regelCache.getOrPut("${m.sleutel}|$breedte|$hoogte") {
-            Opmaak.regels(m.sleutel, Opmaak.perDag(a, metJaar = false), breedte, hoogte, TUSSEN, GROEP_TUSSEN)
+        val kw = Instellingen.kwadraty
+        return regelCache.getOrPut("${m.sleutel}|$breedte|$hoogte|$kw") {
+            // Immichin: jeden blok kwadratów na miesiąc (bez nagłówków dni); klasycznie: dni w układzie „justified”
+            if (kw) Opmaak.kwadraty(m.sleutel, a, breedte, hoogte * KWADRAT_SKALA, TUSSEN)
+            else Opmaak.regels(m.sleutel, Opmaak.perDag(a, metJaar = false), breedte, hoogte, TUSSEN, GROEP_TUSSEN)
         }
     }
 
@@ -166,8 +170,8 @@ class TijdlijnStaat(val filter: Filter, nieuwsteEerst: Boolean, private val scop
         val maandVan = ArrayList<Int>()
         maanden.forEachIndexed { i, m ->
             val geladenAl = geladen.containsKey(m.sleutel)
-            val r = rijCache.getOrPut("${m.sleutel}|$breedte|$hoogte|$geladenAl|${m.aantal}") {
-                val kop = RijKop("k-${m.sleutel}", maandTitel(m.sleutel), Taal.meervoud(R.plurals.items, m.aantal, m.aantal))
+            val r = rijCache.getOrPut("${m.sleutel}|$breedte|$hoogte|$geladenAl|${m.aantal}|${Instellingen.kwadraty}") {
+                val kop = RijKop("k-${m.sleutel}", maandTitel(m.sleutel), Taal.meervoud(R.plurals.items, m.aantal, m.aantal), geladen[m.sleutel]?.let { miejscaTekst(it) })
                 val regels = regels(m, breedte, hoogte)
                 if (regels == null) listOf(kop, RijWacht("w-${m.sleutel}", m.sleutel, Opmaak.schatHoogte(m.aantal, breedte, hoogte, KOP_HOOGTE)))
                 else listOf(kop) + regels.map { RijFotos(it) }
@@ -215,7 +219,8 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
         val breedte = breedteVoor(maxWidth.value)
         // rijhoogte = instelling; alleen hier gelezen, zodat een wijziging één keer alle rijen opnieuw opmaakt
         val rijHoogte = Instellingen.rijMaat.hoogte
-        val (rijen, maandVan) = remember(staat.maanden, staat.geladen.size, breedte, rijHoogte) { staat.rijen(breedte, rijHoogte) }
+        val kwadraty = Instellingen.kwadraty
+        val (rijen, maandVan) = remember(staat.maanden, staat.geladen.size, breedte, rijHoogte, kwadraty) { staat.rijen(breedte, rijHoogte) }
         val boven = 1 // kop-item (titel + knoppen + herinneringen)
 
         // laad wat (bijna) in beeld is
@@ -302,7 +307,10 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                     Column {
                         // begroeting (instelling) boven de hoofdtijdlijn: automatisch ("Goedemiddag, <voornaam>") of eigen tekst
                         val groet = if (scherm.metHerinneringen) groetTekst() else null
-                        SchermKop(groet ?: titel, if (groet != null) titel else scherm.sub) {
+                        SchermKop(
+                            groet ?: titel, if (groet != null) titel else scherm.sub,
+                            etykieta = if (scherm.metHerinneringen) stringResource(R.string.etyk_biblioteka) else if (scherm.staat.filter.favorieten) stringResource(R.string.etyk_ulubione) else null,
+                        ) {
                             Keuze(
                                 selected = false, onClick = { staat.draaiVolgorde() }, modifier = Modifier.focusRequester(eerste),
                                 leadingIcon = { Icon(Icons.Filled.SwapVert, null, Modifier.width(18.dp)) },
@@ -470,14 +478,19 @@ fun Knop(titel: String, sub: String?, modifier: Modifier = Modifier, onKlik: () 
     }
 }
 
+/**
+ * Nagłówek ekranu w stylu Immichin: mała etykieta wersalikami w kolorze akcentu („COLLECTIONS”), pod nią wielki tytuł
+ * szeryfem („Albums”) i szary podpis („9 albums · 1 shared with you”); przyciski po prawej.
+ */
 @Composable
-fun SchermKop(titel: String, sub: String?, knoppen: @Composable () -> Unit = {}) {
-    Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+fun SchermKop(titel: String, sub: String?, etykieta: String? = null, knoppen: @Composable () -> Unit = {}) {
+    Row(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 14.dp), verticalAlignment = Alignment.Bottom) {
         Column(Modifier.weight(1f)) {
-            Text(titel, style = MaterialTheme.typography.displaySmall, maxLines = 1)
-            sub?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht, maxLines = 1) }
+            etykieta?.let { Text(it.uppercase(Taal.locale), style = EtykietaStyl, maxLines = 1, modifier = Modifier.padding(bottom = 6.dp)) }
+            Text(titel, style = TytulStyl, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+            sub?.let { Text(it, style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht, maxLines = 1, modifier = Modifier.padding(top = 6.dp)) }
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) { knoppen() }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(bottom = 4.dp)) { knoppen() }
     }
 }
 
@@ -499,32 +512,62 @@ fun HerinneringenRij(nav: Nav) {
     val lijst = Herinneringen.vandaag
     LaunchedEffect(Unit) { Herinneringen.laadVandaag() }
     if (lijst.isEmpty()) return
-    // iets naar links + binnenmarge: anders valt de vergrote focusrand van de eerste kaart buiten de rij
-    LazyRow(
-        Modifier.fillMaxWidth().offset(x = (-10).dp).padding(top = 2.dp),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        items(lijst, key = { it.id }) { h -> HerinneringKaart(h, nav) }
+    // Immichin: po lewej „On this day” + data, obok poziome karty „1 year ago / 2025 · 3 photos · 1 video”
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.width(150.dp)) {
+            Text(stringResource(R.string.op_deze_dag), style = MaterialTheme.typography.displaySmall, maxLines = 2)
+            Text(
+                LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("EEEE, d MMMM", Taal.locale)).replaceFirstChar { it.titlecase(Taal.locale) },
+                style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht, modifier = Modifier.padding(top = 4.dp),
+            )
+        }
+        // binnenmarge: anders valt de vergrote focusrand van de eerste kaart buiten de rij
+        LazyRow(
+            Modifier.weight(1f),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            items(lijst, key = { it.id }) { h -> HerinneringKaart(h, nav) }
+        }
     }
 }
 
+/** „3 photos · 1 video”: zdjęcia i filmy razem, każde policzone osobno. */
 @Composable
-fun HerinneringKaart(h: Herinnering, nav: Nav, breedte: Float = 168f) {
-    val omslag = h.assets[h.assets.size / 2]
+fun licznikMix(assets: List<Asset>): String {
+    val filmy = assets.count { it.video }
+    val zdjecia = assets.size - filmy
+    return listOfNotNull(
+        zdjecia.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.fotos, it, Taal.getal(it)) },
+        filmy.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.filmy, it, Taal.getal(it)) },
+    ).joinToString(" · ")
+}
+
+/**
+ * Karta wspomnienia: pozioma, zaokrąglona, z okładką; tytuł szeryfem („1 year ago”), pod nim rok i liczby.
+ * OK = pokaz slajdów ze zdjęciami ORAZ filmami tego wspomnienia (filmy grają w pokazie, zob. Instellingen.diaVideos).
+ */
+@Composable
+fun HerinneringKaart(h: Herinnering, nav: Nav, breedte: Float = 200f, hoogte: Float = 112f) {
+    // okładka: najlepiej zdjęcie (miniatura filmu bywa czarna), środkowe z listy
+    val omslag = h.assets.filter { !it.video }.let { f -> f.getOrNull(f.size / 2) } ?: h.assets[h.assets.size / 2]
     Card(
         onClick = { nav.bekijk(LijstBron(h.assets), 0, jarenGeleden(h.jarenGeleden), true, null) },
-        modifier = Modifier.width(breedte.dp).height((breedte * 1.25f).dp),
-        shape = CardDefaults.shape(RoundedCornerShape(12.dp)),
-        scale = CardDefaults.scale(focusedScale = 1.05f),
+        modifier = Modifier.width(breedte.dp).height(hoogte.dp),
+        shape = CardDefaults.shape(RoundedCornerShape(18.dp)),
+        scale = CardDefaults.scale(focusedScale = 1.06f),
+        border = CardDefaults.border(focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, Color.White), shape = RoundedCornerShape(18.dp))),
     ) {
         Box(Modifier.fillMaxSize().background(Kleur.vlakHoog)) {
             AsyncImage(kaartBeeld(omslag.id), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             Box(Modifier.fillMaxSize().background(onderVerloop))
-            Column(Modifier.align(Alignment.BottomStart).padding(12.dp)) {
-                Text("${h.jaar}", style = MaterialTheme.typography.displaySmall, color = Color.White)
-                Text(jarenGeleden(h.jarenGeleden), style = MaterialTheme.typography.labelLarge, color = Color.White)
-                Text(pluralStringResource(R.plurals.fotos, h.assets.size, Taal.getal(h.assets.size)), style = MaterialTheme.typography.labelSmall, color = Color(0xCCFFFFFF))
+            if (h.assets.any { it.video }) Icon(
+                androidx.compose.material.icons.Icons.Filled.PlayCircle, null,
+                Modifier.align(Alignment.TopEnd).padding(10.dp).width(22.dp).height(22.dp), tint = Color.White,
+            )
+            Column(Modifier.align(Alignment.BottomStart).padding(horizontal = 16.dp, vertical = 12.dp)) {
+                Text(jarenGeleden(h.jarenGeleden), style = MaterialTheme.typography.headlineSmall, color = Color.White, maxLines = 1)
+                Text("${h.jaar}  ·  ${licznikMix(h.assets)}", style = MaterialTheme.typography.labelMedium, color = Color(0xDDFFFFFF), maxLines = 1)
             }
         }
     }

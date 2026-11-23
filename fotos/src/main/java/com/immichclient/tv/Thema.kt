@@ -67,18 +67,20 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.nativeKeyCode
 import androidx.compose.ui.input.key.type
 
-/** Kleuren van Immich (donker thema). */
+/** Kleuren w stylu Immichin: granatowo-czarne tło z miękkim, kolorowym poblaskiem. */
 object Kleur {
-    val achtergrond = Color(0xFF0A0A0A)
-    val vlak = Color(0xFF1B1B1D)
-    val vlakHoog = Color(0xFF262629)
+    val achtergrond = Color(0xFF09090F)
+    val vlak = Color(0xFF181822)
+    val vlakHoog = Color(0xFF242431)
     // accentkleur = instelling (Compose-state): wie hem leest, hercomponeert bij een andere keuze
     val primair get() = Instellingen.accent.primair
     val primairDonker get() = Instellingen.accent.donker
     /** donkere tekst op de accentkleur */
     val opPrimair get() = Instellingen.accent.opPrimair
-    val tekst = Color(0xFFE5E7EB)
-    val zacht = Color(0xFFA1A1AA)
+    val tekst = Color(0xFFF1F1F6)
+    val zacht = Color(0xFFA3A3B5)
+    /** kolor pinezki miejsca i małych etykiet (jak w Immichin) */
+    val pinezka = Color(0xFF9EA3FF)
 }
 
 @OptIn(ExperimentalTextApi::class)
@@ -87,7 +89,63 @@ private fun overpass(w: Int) =
 
 val Overpass = FontFamily(overpass(400), overpass(500), overpass(600), overpass(700))
 
-private val basis = TextStyle(fontFamily = Overpass, color = Kleur.tekst)
+/** Szeryfowy krój nagłówków (Instrument Serif, OFL) — „September 2026”, „Albums”. */
+val Szeryf = FontFamily(Font(R.font.instrument_serif, FontWeight.Normal))
+
+/** Tekst zwykły: bezszeryfowy systemowy (Roboto), bliski Inter z Immichin. */
+private val basis = TextStyle(fontFamily = FontFamily.SansSerif, color = Kleur.tekst)
+private val kop = TextStyle(fontFamily = Szeryf, color = Kleur.tekst, fontWeight = FontWeight.Normal)
+
+/** Styl wielkiego tytułu ekranu („Albums”, „Search”). */
+val TytulStyl = kop.copy(fontSize = 46.sp, lineHeight = 50.sp, letterSpacing = (-0.3).sp)
+/** Mała etykieta nad tytułem („COLLECTIONS”). */
+val EtykietaStyl = basis.copy(fontSize = 11.sp, fontWeight = FontWeight(600), letterSpacing = 1.6.sp, color = Kleur.pinezka)
+
+/**
+ * Tło całej aplikacji: ciemny granat z rozmytą, kolorową poświatą u góry (każda sekcja ma swój odcień, jak w Immichin:
+ * bordo na osi czasu, łupek w albumach, brąz w wyszukiwaniu).
+ */
+@Composable
+fun Tlo(odcien: Color, modifier: Modifier = Modifier) {
+    val kolor by androidx.compose.animation.animateColorAsState(odcien, tween(700), label = "tlo")
+    Box(
+        modifier.fillMaxSize()
+            .background(Kleur.achtergrond)
+            .background(
+                Brush.radialGradient(
+                    0f to kolor.copy(alpha = 0.55f), 0.55f to kolor.copy(alpha = 0.18f), 1f to Color.Transparent,
+                    center = androidx.compose.ui.geometry.Offset(1100f, -200f), radius = 1900f,
+                ),
+            )
+            .background(Brush.verticalGradient(0f to Color.Transparent, 0.7f to Color.Transparent, 1f to Color(0x66000000))),
+    )
+}
+
+/** Odcień tła per sekcja. */
+fun odcienSekcji(s: Sectie): Color = when (s) {
+    Sectie.FOTOS, Sectie.FAVORIETEN -> Color(0xFF5A2230)
+    Sectie.HERINNERINGEN -> Color(0xFF4A2A55)
+    Sectie.ZOEKEN -> Color(0xFF5C3418)
+    Sectie.ALBUMS, Sectie.MAPPEN -> Color(0xFF2C3E58)
+    Sectie.VERKENNEN -> Color(0xFF22404A)
+    Sectie.KAART -> Color(0xFF1E2050)
+    Sectie.INSTELLINGEN -> Color(0xFF2A2A36)
+}
+
+/** Logo: cztery zaokrąglone kafelki w kolorach (czerwony, żółty, różowy, niebieski). */
+@Composable
+fun Logo(modifier: Modifier = Modifier) {
+    androidx.compose.foundation.Canvas(modifier.size(28.dp)) {
+        val g = size.width
+        val r = androidx.compose.ui.geometry.CornerRadius(g * 0.07f)
+        fun kafel(c: Color, x: Float, y: Float, w: Float, h: Float) =
+            drawRoundRect(c, androidx.compose.ui.geometry.Offset(x * g, y * g), androidx.compose.ui.geometry.Size(w * g, h * g), r)
+        kafel(Color(0xFFEF3B36), 0f, 0f, 0.56f, 0.40f)
+        kafel(Color(0xFFFBBC1F), 0.62f, 0f, 0.38f, 0.46f)
+        kafel(Color(0xFFEE7BB8), 0f, 0.46f, 0.36f, 0.54f)
+        kafel(Color(0xFF2F7BF5), 0.42f, 0.52f, 0.58f, 0.48f)
+    }
+}
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -101,8 +159,10 @@ fun FotosThema(inhoud: @Composable () -> Unit) {
             surfaceVariant = Kleur.vlakHoog, onSurfaceVariant = Kleur.zacht, border = Kleur.primair,
         ),
         typography = Typography(
-            displaySmall = basis.copy(fontSize = 34.sp, fontWeight = FontWeight(700)),
-            headlineSmall = basis.copy(fontSize = 24.sp, fontWeight = FontWeight(600)),
+            displayLarge = kop.copy(fontSize = 46.sp, lineHeight = 50.sp),
+            displayMedium = kop.copy(fontSize = 34.sp, lineHeight = 38.sp),
+            displaySmall = kop.copy(fontSize = 30.sp, lineHeight = 34.sp),
+            headlineSmall = kop.copy(fontSize = 24.sp, lineHeight = 28.sp),
             titleLarge = basis.copy(fontSize = 20.sp, fontWeight = FontWeight(600)),
             titleMedium = basis.copy(fontSize = 16.sp, fontWeight = FontWeight(600)),
             titleSmall = basis.copy(fontSize = 14.sp, fontWeight = FontWeight(600)),
@@ -156,7 +216,7 @@ fun FotoVak(
     focusDoel: Boolean = false,
     onFocusDoelKlaar: () -> Unit = {},
     onFocus: () -> Unit = {},
-    vorm: Shape = RoundedCornerShape(5.dp),
+    vorm: Shape = RoundedCornerShape(12.dp),
 ) {
     val fr = remember { FocusRequester() }
     if (focusDoel) LaunchedEffect(asset.id) {

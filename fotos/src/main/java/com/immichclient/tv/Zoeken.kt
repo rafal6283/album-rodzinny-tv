@@ -1,5 +1,6 @@
 package com.immichclient.tv
 
+import androidx.compose.material.icons.filled.PlayArrow
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -201,7 +202,7 @@ fun ZoekScherm(staat: ZoekStaat, nav: Nav) {
         ) {
             item(key = "boven") {
                 Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    SchermKop(stringResource(R.string.zoeken), null)
+                    SchermKop(stringResource(R.string.zoeken), stringResource(R.string.zoek_hint), etykieta = stringResource(R.string.modus_slim))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Surface(
                             onClick = { invoer = true },
@@ -472,20 +473,38 @@ fun HerinneringenScherm(staat: HerinneringStaat, nav: Nav) {
         verticalArrangement = Arrangement.spacedBy(18.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
-        item { SchermKop(stringResource(R.string.sectie_herinneringen), stringResource(R.string.herinneringen_sub)) }
+        item {
+            // wszystkie zdjęcia i filmy ze wspomnień tych dni w jednym pokazie (od najstarszego roku)
+            val wszystko = staat.dagen.flatMap { it.second }.sortedBy { it.jaar }.flatMap { it.assets }
+            val tytulPokazu = stringResource(R.string.sectie_herinneringen)
+            SchermKop(
+                stringResource(R.string.sectie_herinneringen),
+                listOfNotNull(stringResource(R.string.herinneringen_sub), wszystko.takeIf { it.isNotEmpty() }?.let { licznikMix(it) }).joinToString("  ·  "),
+                etykieta = stringResource(R.string.etyk_wspomnienia),
+            ) {
+                if (wszystko.isNotEmpty()) Keuze(
+                    selected = false, onClick = { nav.bekijk(LijstBron(wszystko), 0, tytulPokazu, true, null) },
+                    leadingIcon = { androidx.tv.material3.Icon(androidx.compose.material.icons.Icons.Filled.PlayArrow, null, Modifier.size(18.dp)) },
+                    tekst = stringResource(R.string.odtworz_wszystkie),
+                )
+            }
+        }
         if (staat.klaar && staat.dagen.all { it.second.isEmpty() }) item { Melding(stringResource(R.string.geen_herinneringen), null) }
         staat.dagen.forEachIndexed { di, (dag, lijst) ->
             if (lijst.isEmpty()) return@forEachIndexed
             item(key = dag.toString()) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(dagTitel(dag, false), style = MaterialTheme.typography.titleLarge)
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(dagTitel(dag, false), style = MaterialTheme.typography.displaySmall)
+                        Text("   " + licznikMix(lijst.flatMap { it.assets }), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht, modifier = Modifier.padding(bottom = 6.dp))
+                    }
                     LazyRow(
-                        Modifier.offset(x = (-10).dp), horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+                        Modifier.offset(x = (-10).dp), horizontalArrangement = Arrangement.spacedBy(18.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp),
                     ) {
                         items(lijst, key = { it.id }) { h ->
                             Box(if (di == staat.dagen.indexOfFirst { it.second.isNotEmpty() } && h == lijst.first()) Modifier.focusRequester(eerste) else Modifier) {
-                                HerinneringKaart(h, nav, breedte = 190f)
+                                HerinneringKaart(h, nav, breedte = 240f, hoogte = 135f)
                             }
                         }
                     }
@@ -503,7 +522,8 @@ class HerinneringStaat(scope: CoroutineScope) {
     init {
         scope.launch {
             val vandaag = java.time.LocalDate.now()
-            val l = (0..6).map { vandaag.minusDays(it.toLong()) }
+            // dwa ostatnie tygodnie (Immichin pokazuje tylko dzisiejszy dzień)
+            val l = (0..13).map { vandaag.minusDays(it.toLong()) }
             dagen = l.map { it to emptyList() }
             l.forEachIndexed { i, d ->
                 runCatching { Immich.herinneringen(d) }.onSuccess { h -> dagen = dagen.toMutableList().also { it[i] = d to h } }

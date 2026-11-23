@@ -73,6 +73,10 @@ object Instellingen {
 
     // ---- Tijdlijn ----
     var rijMaat by keuze("rij", RijMaat.NORMAAL)
+    /** kanały na ekranie głównym Android TV (najnowsze, losowe, tego dnia) */
+    var kanaly by bool("kanaly", true)
+    /** siatka kwadratów jak w Immichin (jeden blok na miesiąc); wyłączone = układ Immich z dniami */
+    var kwadraty by bool("kwadraty", true)
     var nieuwsteEerst by bool("nieuwste_eerst", true)
     var partners by bool("partners", true)
     var herinneringen by bool("herinneringen", true)
@@ -91,7 +95,7 @@ object Instellingen {
     /** alle instellingen tonen (anders alleen de basis); per apparaat */
     var alleInstellingen by bool("alle_instellingen", false, perApparaat = true)
     /** bij het starten kijken of er een nieuwe versie op GitHub staat; per apparaat */
-    var updateCheck by bool("update_check", true, perApparaat = true)
+    var updateCheck by bool("update_check", false, perApparaat = true) // wyłączone: wersja z GitHuba nadpisałaby wygląd Immichin
 
     // ---- Uiterlijk ----
     var accent by keuze("accent", Accent.BLAUW)

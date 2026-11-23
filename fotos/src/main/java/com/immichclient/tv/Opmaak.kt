@@ -59,6 +59,17 @@ object Opmaak {
         return uit
     }
 
+    /**
+     * Siatka kwadratów jak w Immichin: stała liczba kafelków w rzędzie (ile mieści się przy [rozmiar]), wszystkie
+     * jednakowe i dokładnie wypełniające szerokość; ostatni rząd może być krótszy.
+     */
+    fun kwadraty(prefix: String, assets: List<Asset>, breedte: Float, rozmiar: Float, tussen: Float): List<Regel> {
+        if (assets.isEmpty()) return emptyList()
+        val n = ((breedte + tussen) / (rozmiar + tussen)).toInt().coerceAtLeast(1)
+        val bok = (breedte - tussen * (n - 1)) / n
+        return assets.chunked(n).mapIndexed { i, rij -> Regel("$prefix-$i", listOf(Stuk(null, rij.map { Vak(it, bok) })), bok, false) }
+    }
+
     /** Ruwe schatting van de hoogte van een maand die nog niet geladen is (alleen voor de scrollbalk/plaatshouder). */
     fun schatHoogte(aantal: Int, breedte: Float, rijHoogte: Float, kopHoogte: Float): Float {
         val rijen = kotlin.math.ceil(aantal * 1.25f * rijHoogte / breedte).coerceAtLeast(1f)

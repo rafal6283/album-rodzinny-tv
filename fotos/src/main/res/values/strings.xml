@@ -76,8 +76,8 @@
     <string name="diashow_pauze">Slideshow paused</string>
     <string name="video_fout">This video can\'t be played</string>
     <string name="info">Info</string>
-    <string name="hint_info_kaart">"OK show on map   ·   ◀ ▶ browse   ·   ⏩ skip 10"</string>
-    <string name="hint_info">"◀ ▶ browse   ·   OK slideshow   ·   ⏩ skip 10"</string>
+    <string name="hint_info_kaart">"OK show on map   ·   ▼ close   ·   ◀ ▶ browse"</string>
+    <string name="hint_info">"▼ menu   ·   ▲ details   ·   ◀ ▶ browse   ·   OK slideshow"</string>
 
     <!-- Search -->
     <string name="zoeken">Search</string>
@@ -583,4 +583,36 @@
         <item>Date format: day first or month first (“Sun, Sep 3, 2023”)</item>
         <item>Time format: automatic, 24 hours or 12 hours</item>
     </string-array>
+
+    <!-- Immichin-stijl -->
+    <string name="op_deze_dag">On this day</string>
+    <string name="uklad">Grid layout</string>
+    <string name="uklad_uitleg">Square tiles per month, or the Immich layout grouped by day</string>
+    <string name="uklad_kwadraty">Squares</string>
+    <string name="uklad_immich">By day (Immich)</string>
+    <string name="etyk_biblioteka">Your library</string>
+    <string name="etyk_ulubione">Your favorites</string>
+    <string name="etyk_kolekcje">Collections</string>
+    <string name="etyk_odkrywaj">People and places</string>
+    <string name="etyk_aplikacja">App</string>
+    <string name="etyk_wspomnienia">Relive</string>
+    <string name="szczegoly">Details</string>
+    <string name="odtworz_wszystkie">Play all</string>
+    <plurals name="filmy">
+        <item quantity="one">%s video</item>
+        <item quantity="other">%s videos</item>
+    </plurals>
+    <string name="z_ilu">%1$s of %2$s</string>
+    <string name="w_ulubionych">In your favorites</string>
+    <string name="powieksz">Zoom</string>
+    <string name="diashow_pauze_kort">Pause</string>
+    <string name="zoom_hint">◀▶▲▼ move   ·   OK closer   ·   Back exit</string>
+    <string name="kanal_najnowsze">Newest photos</string>
+    <string name="kanal_losowe">Random photos</string>
+    <string name="kanal_wspomnienia">On this day</string>
+    <string name="groep_ekran_glowny">Home screen</string>
+    <string name="kanaly">Home screen rows</string>
+    <string name="kanaly_uitleg">Newest photos, random photos and today\'s memories as rows on the Android TV home screen</string>
+    <string name="kanaly_pokaz">Show rows on the home screen</string>
+    <string name="kanaly_pokaz_uitleg">Asks the launcher to show each row; you can also add them in the home screen settings</string>
 </resources>

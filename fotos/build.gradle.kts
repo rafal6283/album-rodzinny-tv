@@ -14,13 +14,13 @@ android {
         applicationId = "com.immichclient.tv"
         minSdk = 26
         targetSdk = 35
-        versionCode = 25
-        versionName = "2.9"
+        versionCode = 26
+        versionName = "2.9-immichin"
         // MapLibre heeft native code: 32-bit (NVIDIA Shield: abilist armeabi-v7a) én 64-bit voor andere boxen; x86 niet.
         // Elke ABI kost ~8 MB in de APK.
-        ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a") }
+        ndk { abiFilters += listOf("armeabi-v7a", "arm64-v8a") + if (project.hasProperty("emu")) listOf("x86", "x86_64") else emptyList() }
         // alleen de talen van de app meenemen (anders ~80 vertalingen van de bibliotheken in de APK)
-        resourceConfigurations += listOf("en", "nl", "de", "fr", "es")
+        resourceConfigurations += listOf("en", "nl", "de", "fr", "es", "pl")
     }
 
     // Vaste release-sleutel, zodat een nieuwe versie over een oude heen geïnstalleerd kan worden.
@@ -88,4 +88,6 @@ dependencies {
     // Video's
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     implementation("androidx.media3:media3-datasource-okhttp:1.4.1")
+    // Kanały na ekranie głównym Android TV (PreviewChannel / PreviewProgram)
+    implementation("androidx.tvprovider:tvprovider:1.0.0")
 }

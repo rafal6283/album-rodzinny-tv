@@ -80,7 +80,7 @@ fun PersonenScherm(staat: PersonenStaat, nav: Nav) {
         ) {
             item(span = { GridItemSpan(maxLineSpan) }, key = "kop") {
                 Column {
-                    SchermKop(stringResource(R.string.personen), Taal.getal(lijst.size) + if (staat.zoek.isNotBlank()) "  ·  “${staat.zoek}”" else "")
+                    SchermKop(etykieta = stringResource(R.string.etyk_odkrywaj), titel = stringResource(R.string.personen), sub = Taal.getal(lijst.size) + if (staat.zoek.isNotBlank()) "  ·  “${staat.zoek}”" else "")
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                         Keuze(
                             selected = staat.zoek.isNotBlank(), onClick = { zoekOpen = true }, modifier = Modifier.focusRequester(zoekKnop),

@@ -86,6 +86,8 @@ object Immich {
 
     fun thumb(id: String) = "$api/assets/$id/thumbnail?size=thumbnail"
     fun preview(id: String) = "$api/assets/$id/thumbnail?size=preview"
+    /** pełna rozdzielczość (konwersja JPEG z Immich ≥ 1.133); wystarcza uprawnienie asset.view */
+    fun pelny(id: String) = "$api/assets/$id/thumbnail?size=fullsize"
     fun video(id: String) = "$api/assets/$id/video/playback"
     fun gezicht(id: String) = "$api/people/$id/thumbnail"
 
@@ -360,6 +362,16 @@ object Immich {
             ?: "https://tiles.immich.cloud/v1/style/${if (licht) "light" else "dark"}.json"
     }
 
+    /** Jedno zdjęcie po id (kafelek kanału na ekranie głównym). */
+    suspend fun zasob(id: String): Asset = withContext(Dispatchers.Default) { asset(JSONObject(get("/assets/$id"))) }
+
+    /** Najnowsze zdjęcia i filmy z osi czasu (kanał „Najnowsze zdjęcia”). */
+    suspend fun najnowsze(n: Int): List<Asset> = withContext(Dispatchers.Default) {
+        val body = JSONObject().put("size", n).put("page", 1).put("order", "desc").put("visibility", "timeline").put("withExif", true)
+        val a = JSONObject(post("/search/metadata", body)).getJSONObject("assets").getJSONArray("items")
+        List(a.length()) { asset(a.getJSONObject(it)) }
+    }
+
     /** Details voor het infopaneel in de viewer. */
     suspend fun details(id: String): Details = withContext(Dispatchers.Default) {
         val o = JSONObject(get("/assets/$id"))
@@ -370,19 +382,52 @@ object Immich {
             bestand = o.optString("originalFileName"),
             camera = listOfNotNull(s("make"), s("model")).joinToString(" ").ifEmpty { null },
             lens = s("lensModel"),
+            // kolejność jak w Immichin: przysłona · czas · ISO · ogniskowa
             instellingen = listOfNotNull(
-                e?.optDouble("focalLength")?.takeIf { !it.isNaN() && it > 0 }?.let { "${it.toInt()} mm" },
-                e?.optDouble("fNumber")?.takeIf { !it.isNaN() && it > 0 }?.let { "ƒ/" + ("%.1f".format(it)).removeSuffix(",0").removeSuffix(".0") },
+                e?.optDouble("fNumber")?.takeIf { !it.isNaN() && it > 0 }?.let { "ƒ/" + ("%.1f".format(java.util.Locale.ROOT, it)).removeSuffix(".0") },
                 s("exposureTime")?.let { "$it s" },
                 e?.optInt("iso")?.takeIf { it > 0 }?.let { "ISO $it" },
+                e?.optDouble("focalLength")?.takeIf { !it.isNaN() && it > 0 }?.let { "${it.toInt()} mm" },
             ).joinToString("  ·  ").ifEmpty { null },
             plaats = listOfNotNull(s("city"), s("state"), s("country")?.let(Landnaam::vertaal)).distinct().joinToString(", ").ifEmpty { null },
             mensen = if (mensen == null) emptyList() else
                 List(mensen.length()) { mensen.getJSONObject(it).optString("name") }.filter { it.isNotBlank() },
             omschrijving = s("description"),
-            afmeting = listOfNotNull(o.optInt("width").takeIf { it > 0 }, o.optInt("height").takeIf { it > 0 })
-                .takeIf { it.size == 2 }?.let { (w, h) -> "$w × $h" },
+            afmeting = wymiary(o, e)?.let { (w, h) -> "$w × $h" },
+            plikSub = run {
+                val wh = wymiary(o, e)
+                val mp = wh?.let { (w, h) -> w.toLong() * h / 1_000_000.0 }?.takeIf { it >= 0.05 }
+                    ?.let { "%.1f MP".format(Taal.locale, it) }
+                val bajty = e?.optLong("fileSizeInByte")?.takeIf { it > 0 }?.let(::rozmiarPliku)
+                listOfNotNull(mp, wh?.let { (w, h) -> "$w × $h" }, bajty).joinToString("  ·  ").ifEmpty { null }
+            },
+            wspolrzedne = run {
+                val la = e?.optDouble("latitude")?.takeIf { !it.isNaN() }
+                val lo = e?.optDouble("longitude")?.takeIf { !it.isNaN() }
+                if (la != null && lo != null) "%.4f, %.4f".format(java.util.Locale.ROOT, la, lo) else null
+            },
+            strefa = s("timeZone"),
+            ulubione = o.optBoolean("isFavorite"),
+            wideo = o.optString("type") == "VIDEO",
+            dlugosc = duurKort(o.optString("duration").takeIf { it.isNotEmpty() && it != "null" }),
         )
+    }
+
+    /** Szerokość × wysokość: z zasobu, a jeśli brak, z EXIF (z uwzględnieniem obrotu). */
+    private fun wymiary(o: JSONObject, e: JSONObject?): Pair<Int, Int>? {
+        var w = o.optInt("width"); var h = o.optInt("height")
+        if (w <= 0 || h <= 0) {
+            w = e?.optInt("exifImageWidth") ?: 0; h = e?.optInt("exifImageHeight") ?: 0
+            if (e?.optString("orientation") in setOf("5", "6", "7", "8")) w = h.also { h = w }
+        }
+        return if (w > 0 && h > 0) w to h else null
+    }
+
+    /** 375.1 KB / 4.4 MB / 1.2 GB */
+    private fun rozmiarPliku(b: Long): String = when {
+        b >= 1L shl 30 -> "%.1f GB".format(Taal.locale, b / (1024.0 * 1024 * 1024))
+        b >= 1L shl 20 -> "%.1f MB".format(Taal.locale, b / (1024.0 * 1024))
+        else -> "%.1f KB".format(Taal.locale, b / 1024.0)
     }
 
     private fun asset(o: JSONObject): Asset {

@@ -573,4 +573,36 @@
         <item>Formato de fecha: primero el día o primero el mes («dom, sept 3, 2023»)</item>
         <item>Formato de hora: automático, 24 horas o 12 horas</item>
     </string-array>
+
+    <!-- Immichin-stijl -->
+    <string name="op_deze_dag">Tal día como hoy</string>
+    <string name="uklad">Cuadrícula</string>
+    <string name="uklad_uitleg">Miniaturas cuadradas por mes, o el diseño de Immich por día</string>
+    <string name="uklad_kwadraty">Cuadrados</string>
+    <string name="uklad_immich">Por día (Immich)</string>
+    <string name="etyk_biblioteka">Tu biblioteca</string>
+    <string name="etyk_ulubione">Tus favoritos</string>
+    <string name="etyk_kolekcje">Colecciones</string>
+    <string name="etyk_odkrywaj">Personas y lugares</string>
+    <string name="etyk_aplikacja">Aplicación</string>
+    <string name="etyk_wspomnienia">Revive</string>
+    <string name="szczegoly">Detalles</string>
+    <string name="odtworz_wszystkie">Reproducir todo</string>
+    <plurals name="filmy">
+        <item quantity="one">%s vídeo</item>
+        <item quantity="other">%s vídeos</item>
+    </plurals>
+    <string name="z_ilu">%1$s de %2$s</string>
+    <string name="w_ulubionych">En tus favoritos</string>
+    <string name="powieksz">Ampliar</string>
+    <string name="diashow_pauze_kort">Pausa</string>
+    <string name="zoom_hint">◀▶▲▼ mover   ·   OK acercar   ·   Atrás salir</string>
+    <string name="kanal_najnowsze">Fotos recientes</string>
+    <string name="kanal_losowe">Fotos al azar</string>
+    <string name="kanal_wspomnienia">Tal día como hoy</string>
+    <string name="groep_ekran_glowny">Pantalla de inicio</string>
+    <string name="kanaly">Canales en la pantalla de inicio</string>
+    <string name="kanaly_uitleg">Fotos recientes, fotos al azar y recuerdos de hoy como filas en la pantalla de inicio de Android TV</string>
+    <string name="kanaly_pokaz">Mostrar canales en el inicio</string>
+    <string name="kanaly_pokaz_uitleg">Pide al launcher que muestre cada fila; también puedes añadirlas en los ajustes de la pantalla de inicio</string>
 </resources>

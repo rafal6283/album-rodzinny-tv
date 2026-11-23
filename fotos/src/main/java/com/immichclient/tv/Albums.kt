@@ -1,5 +1,6 @@
 package com.immichclient.tv
 
+import androidx.compose.material.icons.filled.People
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
@@ -91,16 +92,16 @@ fun AlbumsScherm(staat: AlbumsStaat, nav: Nav) {
 
     Box(Modifier.fillMaxSize()) {
     LazyVerticalGrid(
-        columns = GridCells.Fixed(5),
+        columns = GridCells.Fixed(4),
         state = staat.grid,
         contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 80.dp),
-        horizontalArrangement = Arrangement.spacedBy(18.dp),
-        verticalArrangement = Arrangement.spacedBy(22.dp),
+        horizontalArrangement = Arrangement.spacedBy(26.dp),
+        verticalArrangement = Arrangement.spacedBy(28.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
         item(span = { GridItemSpan(maxLineSpan) }, key = "kop") {
             Column {
-                SchermKop(stringResource(R.string.albums), pluralStringResource(R.plurals.albums_aantal, lijst.size, lijst.size) + if (staat.zoek.isNotBlank()) " " + stringResource(R.string.albums_met, staat.zoek) else "")
+                SchermKop(etykieta = stringResource(R.string.etyk_kolekcje), titel = stringResource(R.string.albums), sub = pluralStringResource(R.plurals.albums_aantal, lijst.size, lijst.size) + if (staat.zoek.isNotBlank()) " " + stringResource(R.string.albums_met, staat.zoek) else "")
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                     for (v in AlbumVolgorde.entries) {
                         Keuze(
@@ -158,16 +159,25 @@ private fun AlbumKaart(a: Album, modifier: Modifier, onFocus: () -> Unit, onKlik
     Column {
         Card(
             onClick = onKlik,
-            modifier = modifier.fillMaxWidth().aspectRatio(1f).onFocusChanged { if (it.isFocused) onFocus() },
-            shape = CardDefaults.shape(RoundedCornerShape(14.dp)),
-            scale = CardDefaults.scale(focusedScale = 1.05f),
+            // poziome okładki 3:2 z dużym zaokrągleniem i białą ramką fokusu, jak w Immichin
+            modifier = modifier.fillMaxWidth().aspectRatio(1.45f).onFocusChanged { if (it.isFocused) onFocus() },
+            shape = CardDefaults.shape(RoundedCornerShape(18.dp)),
+            scale = CardDefaults.scale(focusedScale = 1.06f),
+            border = CardDefaults.border(focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, Color.White), shape = RoundedCornerShape(18.dp))),
         ) {
             Box(Modifier.fillMaxSize().background(Kleur.vlakHoog)) {
-                if (a.omslag != null) AsyncImage(beeld(Immich.thumb(a.omslag)), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                if (a.omslag != null) AsyncImage(kaartBeeld(a.omslag), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 else Icon(Icons.Filled.PhotoLibrary, null, Modifier.align(Alignment.Center), tint = Kleur.zacht)
+                if (a.gedeeld) Row(
+                    Modifier.align(Alignment.TopEnd).padding(10.dp).background(Color(0xB3101018), RoundedCornerShape(14.dp)).padding(horizontal = 10.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(androidx.compose.material.icons.Icons.Filled.People, null, Modifier.width(15.dp), tint = Color.White)
+                    Text("  " + stringResource(R.string.gedeeld), style = MaterialTheme.typography.labelMedium, color = Color.White)
+                }
             }
         }
-        Text(a.naam, style = MaterialTheme.typography.titleSmall, maxLines = 2, modifier = Modifier.padding(top = 8.dp))
-        Text(albumSub(a), style = MaterialTheme.typography.bodySmall, maxLines = 1, color = Color(0xFFA1A1AA))
+        Text(a.naam, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.padding(top = 12.dp, start = 4.dp))
+        Text(albumSub(a), style = MaterialTheme.typography.bodyMedium, maxLines = 1, color = Kleur.zacht, modifier = Modifier.padding(start = 4.dp))
     }
 }

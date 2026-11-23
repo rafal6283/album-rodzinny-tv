@@ -573,4 +573,36 @@
         <item>Format de date : jour d\'abord ou mois d\'abord (« dim., sept. 3, 2023 »)</item>
         <item>Format de l\'heure : automatique, 24 heures ou 12 heures</item>
     </string-array>
+
+    <!-- Immichin-stijl -->
+    <string name="op_deze_dag">Ce jour-là</string>
+    <string name="uklad">Disposition</string>
+    <string name="uklad_uitleg">Vignettes carrées par mois, ou la disposition Immich par jour</string>
+    <string name="uklad_kwadraty">Carrés</string>
+    <string name="uklad_immich">Par jour (Immich)</string>
+    <string name="etyk_biblioteka">Votre bibliothèque</string>
+    <string name="etyk_ulubione">Vos favoris</string>
+    <string name="etyk_kolekcje">Collections</string>
+    <string name="etyk_odkrywaj">Personnes et lieux</string>
+    <string name="etyk_aplikacja">Application</string>
+    <string name="etyk_wspomnienia">Revivre</string>
+    <string name="szczegoly">Détails</string>
+    <string name="odtworz_wszystkie">Tout lire</string>
+    <plurals name="filmy">
+        <item quantity="one">%s vidéo</item>
+        <item quantity="other">%s vidéos</item>
+    </plurals>
+    <string name="z_ilu">%1$s sur %2$s</string>
+    <string name="w_ulubionych">Dans vos favoris</string>
+    <string name="powieksz">Zoom</string>
+    <string name="diashow_pauze_kort">Pause</string>
+    <string name="zoom_hint">◀▶▲▼ déplacer   ·   OK plus près   ·   Retour quitter</string>
+    <string name="kanal_najnowsze">Photos récentes</string>
+    <string name="kanal_losowe">Photos au hasard</string>
+    <string name="kanal_wspomnienia">Ce jour-là</string>
+    <string name="groep_ekran_glowny">Écran d\'accueil</string>
+    <string name="kanaly">Chaînes sur l\'écran d\'accueil</string>
+    <string name="kanaly_uitleg">Photos récentes, photos au hasard et souvenirs du jour en rangées sur l\'écran d\'accueil Android TV</string>
+    <string name="kanaly_pokaz">Afficher les chaînes sur l\'accueil</string>
+    <string name="kanaly_pokaz_uitleg">Demande au lanceur d\'afficher chaque rangée ; vous pouvez aussi les ajouter dans les réglages de l\'accueil</string>
 </resources>

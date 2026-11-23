@@ -80,7 +80,7 @@ fun VerkenScherm(staat: VerkenStaat, nav: Nav) {
         verticalArrangement = Arrangement.spacedBy(18.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
-        item(span = { GridItemSpan(maxLineSpan) }, key = "kop") { SchermKop(stringResource(R.string.verkennen), null) }
+        item(span = { GridItemSpan(maxLineSpan) }, key = "kop") { SchermKop(stringResource(R.string.verkennen), null, etykieta = stringResource(R.string.etyk_odkrywaj)) }
         if (staat.fout != null && staat.personen.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { Melding(stringResource(R.string.niet_geladen), staat.fout) }
         if (staat.personen.isNotEmpty()) item(span = { GridItemSpan(maxLineSpan) }, key = "kp") {
             Text(stringResource(R.string.personen), style = MaterialTheme.typography.titleLarge)

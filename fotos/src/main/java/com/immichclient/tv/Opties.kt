@@ -131,7 +131,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 80.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        item { SchermKop(stringResource(R.string.instellingen), stringResource(R.string.instellingen_sub)) }
+        item { SchermKop(stringResource(R.string.instellingen), stringResource(R.string.instellingen_sub), etykieta = stringResource(R.string.etyk_aplikacja)) }
         item {
             Keuzes(stringResource(R.string.instellingen_tonen), stringResource(if (alles) R.string.instellingen_alle_uitleg else R.string.instellingen_basis_uitleg),
                 listOf(stringResource(R.string.instellingen_basis), stringResource(R.string.instellingen_alle)), if (alles) 1 else 0, Modifier.focusRequester(eerste)) { Instellingen.alleInstellingen = it == 1 }
@@ -199,6 +199,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         if (alles) schakel(R.string.wazig, R.string.wazig_uitleg, uitAan, Instellingen.wazig) { Instellingen.wazig = it }
 
         groep(R.string.groep_tijdlijn)
+        item { Keuzes(stringResource(R.string.uklad), stringResource(R.string.uklad_uitleg), listOf(stringResource(R.string.uklad_kwadraty), stringResource(R.string.uklad_immich)), if (Instellingen.kwadraty) 0 else 1) { Instellingen.kwadraty = it == 0 } }
         item { Keuzes(stringResource(R.string.grootte), stringResource(R.string.grootte_uitleg), RijMaat.entries.map { stringResource(it.label) }, Instellingen.rijMaat.ordinal) { Instellingen.rijMaat = RijMaat.entries[it] } }
         if (alles) item { Keuzes(stringResource(R.string.volgorde), stringResource(R.string.tijdlijn_volgorde_uitleg), listOf(stringResource(R.string.nieuwste_eerst), stringResource(R.string.oudste_eerst)), if (Instellingen.nieuwsteEerst) 0 else 1) { Instellingen.nieuwsteEerst = it == 0 } }
         if (alles) schakel(R.string.partner, R.string.partner_uitleg, uitAan, Instellingen.partners) { Instellingen.partners = it }
@@ -214,6 +215,16 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         }
         if (alles && Instellingen.groet == Groet.EIGEN) item {
             Actie(stringResource(R.string.eigen_tekst), Instellingen.groetTekst.ifBlank { stringResource(R.string.nog_niets) }) { groetInvoer = true }
+        }
+
+        // kanały na ekranie głównym Android TV (Kanaly.kt)
+        groep(R.string.groep_ekran_glowny)
+        schakel(R.string.kanaly, R.string.kanaly_uitleg, uitAan, Instellingen.kanaly) { Instellingen.kanaly = it }
+        if (Instellingen.kanaly) item {
+            Actie(stringResource(R.string.kanaly_pokaz), stringResource(R.string.kanaly_pokaz_uitleg)) {
+                val akt = ctx as? android.app.Activity
+                for (i in Kanaly.prosbyOWidocznosc(ctx)) runCatching { akt?.startActivityForResult(i, 0) }
+            }
         }
 
         groep(R.string.groep_kaart)

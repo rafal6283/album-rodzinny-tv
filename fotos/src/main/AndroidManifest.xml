@@ -11,6 +11,8 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" tools:ignore="ProtectedPermissions" />
     <!-- MapLibre kijkt of er netwerk is (ConnectivityReceiver) -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- okresowe odświeżanie kanałów ekranu głównego przetrwa restart urządzenia (JobInfo.setPersisted) -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
@@ -95,6 +97,17 @@
             android:targetActivity=".MainActivity"
             android:exported="true"
             android:label="@string/dream_naam" />
+
+        <!-- Kanały na ekranie głównym (Kanaly.kt): okresowe odświeżanie i obrazki kafelków dla launchera.
+             Dostawca jest eksportowany (launcher musi czytać obrazki), ale wydaje tylko zdjęcia z bieżących kanałów. -->
+        <service
+            android:name=".KanalyJob"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+        <provider
+            android:name=".KanalyObrazy"
+            android:authorities="com.immichclient.tv.kanaly"
+            android:exported="true" />
 
         <!-- uitslag van een update-installatie (PackageInstaller) -->
         <receiver android:name=".UpdateOntvanger" android:exported="false" />

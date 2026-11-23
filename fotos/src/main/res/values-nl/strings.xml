@@ -566,4 +566,36 @@
         <item>Datumnotatie: dag eerst of maand eerst („zo, sep. 3, 2023”)</item>
         <item>Tijdnotatie: automatisch, 24 uur of 12 uur</item>
     </string-array>
+
+    <!-- Immichin-stijl -->
+    <string name="op_deze_dag">Op deze dag</string>
+    <string name="uklad">Indeling</string>
+    <string name="uklad_uitleg">Vierkante tegels per maand, of de indeling van Immich per dag</string>
+    <string name="uklad_kwadraty">Vierkanten</string>
+    <string name="uklad_immich">Per dag (Immich)</string>
+    <string name="etyk_biblioteka">Je bibliotheek</string>
+    <string name="etyk_ulubione">Je favorieten</string>
+    <string name="etyk_kolekcje">Collecties</string>
+    <string name="etyk_odkrywaj">Mensen en plaatsen</string>
+    <string name="etyk_aplikacja">App</string>
+    <string name="etyk_wspomnienia">Herbeleef</string>
+    <string name="szczegoly">Details</string>
+    <string name="odtworz_wszystkie">Alles afspelen</string>
+    <plurals name="filmy">
+        <item quantity="one">%s video</item>
+        <item quantity="other">%s video\'s</item>
+    </plurals>
+    <string name="z_ilu">%1$s van %2$s</string>
+    <string name="w_ulubionych">In je favorieten</string>
+    <string name="powieksz">Zoomen</string>
+    <string name="diashow_pauze_kort">Pauze</string>
+    <string name="zoom_hint">◀▶▲▼ verschuiven   ·   OK dichterbij   ·   Terug sluiten</string>
+    <string name="kanal_najnowsze">Nieuwste foto\'s</string>
+    <string name="kanal_losowe">Willekeurige foto\'s</string>
+    <string name="kanal_wspomnienia">Op deze dag</string>
+    <string name="groep_ekran_glowny">Startscherm</string>
+    <string name="kanaly">Rijen op het startscherm</string>
+    <string name="kanaly_uitleg">Nieuwste foto\'s, willekeurige foto\'s en herinneringen van vandaag als rijen op het Android TV-startscherm</string>
+    <string name="kanaly_pokaz">Rijen tonen op het startscherm</string>
+    <string name="kanaly_pokaz_uitleg">Vraagt de launcher elke rij te tonen; je kunt ze ook toevoegen in de instellingen van het startscherm</string>
 </resources>

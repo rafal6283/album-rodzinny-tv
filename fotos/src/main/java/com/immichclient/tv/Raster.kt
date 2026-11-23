@@ -1,5 +1,6 @@
 package com.immichclient.tv
 
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -43,13 +44,15 @@ import androidx.tv.material3.Text
 
 /** Een regel in een fotoraster (LazyColumn). */
 sealed interface Rij { val sleutel: String }
-data class RijKop(override val sleutel: String, val titel: String, val sub: String?) : Rij
+data class RijKop(override val sleutel: String, val titel: String, val sub: String?, val plaatsen: String? = null) : Rij
 data class RijFotos(val regel: Regel) : Rij { override val sleutel get() = regel.sleutel }
 /** Maand die nog geladen wordt; focusbaar, zodat ingedrukt houden van "omlaag" nooit vastloopt. */
 data class RijWacht(override val sleutel: String, val maand: String, val hoogte: Float) : Rij
 
 const val RIJ_HOOGTE = 138f
-const val TUSSEN = 6f
+/** kwadratowe kafelki są nieco większe niż wiersz „justified” (jak w Immichin: ~6 w rzędzie) */
+const val KWADRAT_SKALA = 0.88f
+const val TUSSEN = 12f
 const val GROEP_TUSSEN = 26f
 const val KOP_HOOGTE = 30f
 
@@ -134,19 +137,35 @@ fun FotoRaster(
     }
 }
 
+/**
+ * Nagłówek miesiąca w stylu Immichin: „September 2026” szeryfem (rok jaśniejszy), pinezka z miejscami, liczba po prawej.
+ */
 @Composable
 private fun MaandKop(r: RijKop) {
-    Column(Modifier.fillMaxWidth().padding(top = 22.dp, bottom = 4.dp)) {
-        Row(verticalAlignment = Alignment.Bottom) {
-            Text(r.titel, style = MaterialTheme.typography.headlineSmall)
-            r.sub?.let { Text("   $it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(bottom = 3.dp)) }
+    Row(Modifier.fillMaxWidth().padding(top = 20.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        val ostatnia = r.titel.substringAfterLast(' ', "")
+        val (miesiac, rok) = if (ostatnia.length == 4 && ostatnia.all { it.isDigit() }) r.titel.substringBeforeLast(' ') to ostatnia else r.titel to null
+        Text(miesiac, style = MaterialTheme.typography.displayMedium, maxLines = 1)
+        rok?.let { Text("  $it", style = MaterialTheme.typography.displayMedium, color = Kleur.zacht.copy(alpha = 0.75f), maxLines = 1) }
+        r.plaatsen?.let {
+            androidx.tv.material3.Icon(
+                androidx.compose.material.icons.Icons.Filled.Place, null,
+                Modifier.padding(start = 20.dp, end = 5.dp).width(16.dp).height(16.dp), tint = Kleur.pinezka,
+            )
+            Text(it, style = MaterialTheme.typography.titleMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Medium), color = Kleur.tekst.copy(alpha = 0.85f), maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
         }
-        // subtiele accentlijn: kort stukje in de hoofdkleur, daarna een haarlijn
-        Row(Modifier.padding(top = 5.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.width(34.dp).height(3.dp).background(Kleur.primair, RoundedCornerShape(2.dp)))
-            Box(Modifier.padding(start = 8.dp).weight(1f).height(1.dp).background(Kleur.tekst.copy(alpha = 0.08f)))
-        }
+        Box(Modifier.weight(1f))
+        r.sub?.let { Text(it, style = MaterialTheme.typography.titleMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Normal), color = Kleur.zacht, modifier = Modifier.padding(start = 16.dp)) }
     }
+}
+
+/** „Big Sur · Yosemite · Portland +2”: najczęstsze miasta w kolejności liczby zdjęć. */
+fun miejscaTekst(assets: List<Asset>, ile: Int = 3): String? {
+    val miasta = assets.mapNotNull { it.stad }.groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.map { it.key }
+    if (miasta.isEmpty()) return null
+    val reszta = miasta.size - ile
+    return miasta.take(ile).joinToString(" · ") + if (reszta > 0) "  +$reszta" else ""
 }
 
 @Composable
@@ -189,7 +208,7 @@ private fun WachtVak(r: RijWacht, onWacht: (String) -> Unit) {
     Surface(
         onClick = {},
         modifier = Modifier.fillMaxWidth().height(r.hoogte.dp).graphicsLayer { alpha = a }.onFocusChanged { if (it.isFocused) onWacht(r.maand) },
-        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(5.dp)),
+        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(12.dp)),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
         colors = ClickableSurfaceDefaults.colors(containerColor = Kleur.vlak.copy(alpha = 0.5f), focusedContainerColor = Kleur.vlakHoog),
     ) { Box(Modifier) {} }
@@ -199,6 +218,7 @@ fun breedteVoor(totaal: Float) = totaal - 48f
 
 /** Platte lijst (zoekresultaten, herinnering, plaats) als rijen: per dag, of als één blok op relevantie. */
 fun rijenVoor(assets: List<Asset>, breedte: Float, perDag: Boolean, metJaar: Boolean = true, hoogte: Float = RIJ_HOOGTE): List<Rij> {
+    if (Instellingen.kwadraty && !perDag) return Opmaak.kwadraty("l", assets, breedte, hoogte * KWADRAT_SKALA, TUSSEN).map { RijFotos(it) }
     val groepen = if (perDag) Opmaak.perDag(assets, metJaar) else listOf(Groep(null, assets))
     return Opmaak.regels("l", groepen, breedte, hoogte, TUSSEN, GROEP_TUSSEN).map { RijFotos(it) }
 }
