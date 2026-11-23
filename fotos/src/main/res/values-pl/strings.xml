@@ -849,4 +849,8 @@
     <string name="kalendarz_dzis">"dziś"</string>
     <string name="kalendarz_jutro">"jutro"</string>
     <string name="kalendarz_za">"za %d dni"</string>
+    <string name="kalendarz_minione">"Niedawno"</string>
+    <string name="kalendarz_minione_sub">"urodziny i rocznice z ostatnich 2 miesięcy"</string>
+    <string name="kalendarz_wczoraj">"wczoraj"</string>
+    <string name="kalendarz_temu">"%d dni temu"</string>
 </resources>

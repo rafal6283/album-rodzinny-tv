@@ -801,4 +801,8 @@
     <string name="kalendarz_dzis">"vandaag"</string>
     <string name="kalendarz_jutro">"morgen"</string>
     <string name="kalendarz_za">"over %d dagen"</string>
+    <string name="kalendarz_minione">"Onlangs"</string>
+    <string name="kalendarz_minione_sub">"verjaardagen en jubilea van de afgelopen 2 maanden"</string>
+    <string name="kalendarz_wczoraj">"gisteren"</string>
+    <string name="kalendarz_temu">"%d dagen geleden"</string>
 </resources>

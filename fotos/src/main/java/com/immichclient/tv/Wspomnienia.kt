@@ -191,6 +191,9 @@ object Kalendarz {
 
     var lista by mutableStateOf<List<Wpis>>(emptyList())
         private set
+    /** urodziny i rocznice z ostatnich 60 dni (zaIle < 0 = tyle dni temu), od najświeższych */
+    var minione by mutableStateOf<List<Wpis>>(emptyList())
+        private set
     private var pobrano: LocalDate? = null
 
     fun uniewaznij() { pobrano = null }
@@ -223,6 +226,24 @@ object Kalendarz {
             val za = ChronoUnit.DAYS.between(dzis, n).toInt()
             if (za > 30) null else Wpis(n, za, n.year - od.year, null, a)
         }
+        // ostatnia rocznica przed dzisiaj (≤ 60 dni temu)
+        fun ostatnia(d: LocalDate): LocalDate {
+            fun wRoku(r: Int) = runCatching { d.withYear(r) }.getOrElse { LocalDate.of(r, 2, 28) }
+            val t = wRoku(dzis.year)
+            return if (t.isBefore(dzis)) t else wRoku(dzis.year - 1)
+        }
+        val mUrodziny = osoby.mapNotNull { p ->
+            val ur = p.urodziny ?: return@mapNotNull null
+            val o = ostatnia(ur); val temu = ChronoUnit.DAYS.between(o, dzis).toInt()
+            if (temu > 60 || o.year <= ur.year) null else Wpis(o, -temu, o.year - ur.year, p, null)
+        }
+        val mRocznice = albumy.mapNotNull { a ->
+            val od = a.van ?: return@mapNotNull null
+            if (a.aantal == 0) return@mapNotNull null
+            val o = ostatnia(od); val temu = ChronoUnit.DAYS.between(o, dzis).toInt()
+            if (temu > 60 || o.year <= od.year) null else Wpis(o, -temu, o.year - od.year, null, a)
+        }
+        minione = (mUrodziny + mRocznice).sortedWith(compareBy({ -it.zaIle }, { it.osoba == null })).take(40)
         wszystkieUrodziny = urodziny.associateBy { it.osoba!!.id }
         lista = (urodziny + rocznice).sortedWith(compareBy({ it.zaIle }, { it.osoba == null })).take(40)
         pobrano = dzis
@@ -239,22 +260,26 @@ fun opisUrodzin(w: Kalendarz.Wpis, krotko: Boolean): String {
 
 /** Wiersz „Nadchodzące” we Wspomnieniach; OK otwiera zdjęcia osoby albo album. */
 @Composable
-fun KalendarzRij(nav: Nav) {
+fun KalendarzRij(nav: Nav, minione: Boolean = false) {
     LaunchedEffect(Unit) { Kalendarz.laduj() }
-    val lista = Kalendarz.lista
+    val lista = if (minione) Kalendarz.minione else Kalendarz.lista
     if (lista.isEmpty()) return
     val fmt = remember { java.time.format.DateTimeFormatter.ofPattern("d MMMM", Taal.locale) }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(stringResource(R.string.kalendarz), style = MaterialTheme.typography.displaySmall)
-            Text("   " + stringResource(R.string.kalendarz_sub), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht, modifier = Modifier.padding(bottom = 6.dp))
+            Text(stringResource(if (minione) R.string.kalendarz_minione else R.string.kalendarz), style = MaterialTheme.typography.displaySmall)
+            Text("   " + stringResource(if (minione) R.string.kalendarz_minione_sub else R.string.kalendarz_sub), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht, modifier = Modifier.padding(bottom = 6.dp))
         }
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 12.dp),
         ) {
             items(lista, key = { (it.osoba?.id ?: it.album?.id).orEmpty() + it.data }) { w ->
-                val kiedy = when (w.zaIle) { 0 -> stringResource(R.string.kalendarz_dzis); 1 -> stringResource(R.string.kalendarz_jutro); else -> stringResource(R.string.kalendarz_za, w.zaIle) }
+                val kiedy = when {
+                    w.zaIle == 0 -> stringResource(R.string.kalendarz_dzis); w.zaIle == 1 -> stringResource(R.string.kalendarz_jutro)
+                    w.zaIle == -1 -> stringResource(R.string.kalendarz_wczoraj); w.zaIle < 0 -> stringResource(R.string.kalendarz_temu, -w.zaIle)
+                    else -> stringResource(R.string.kalendarz_za, w.zaIle)
+                }
                 val opis = if (w.osoba != null) pluralStringResource(R.plurals.lat, w.lat, w.lat) else pluralStringResource(R.plurals.lat_temu, w.lat, w.lat)
                 val nazwa = w.osoba?.let { Edycja.imie(it) } ?: w.album?.naam.orEmpty()
                 Card(

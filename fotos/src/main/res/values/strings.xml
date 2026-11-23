@@ -823,4 +823,8 @@
     <string name="kalendarz_dzis">"today"</string>
     <string name="kalendarz_jutro">"tomorrow"</string>
     <string name="kalendarz_za">"in %d days"</string>
+    <string name="kalendarz_minione">"Recently"</string>
+    <string name="kalendarz_minione_sub">"birthdays and anniversaries of the last 2 months"</string>
+    <string name="kalendarz_wczoraj">"yesterday"</string>
+    <string name="kalendarz_temu">"%d days ago"</string>
 </resources>

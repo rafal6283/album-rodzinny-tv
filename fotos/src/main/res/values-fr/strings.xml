@@ -808,4 +808,8 @@
     <string name="kalendarz_dzis">"aujourd’hui"</string>
     <string name="kalendarz_jutro">"demain"</string>
     <string name="kalendarz_za">"dans %d jours"</string>
+    <string name="kalendarz_minione">"Récemment"</string>
+    <string name="kalendarz_minione_sub">"anniversaires des 2 derniers mois"</string>
+    <string name="kalendarz_wczoraj">"hier"</string>
+    <string name="kalendarz_temu">"il y a %d jours"</string>
 </resources>

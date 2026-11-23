@@ -801,4 +801,8 @@
     <string name="kalendarz_dzis">"heute"</string>
     <string name="kalendarz_jutro">"morgen"</string>
     <string name="kalendarz_za">"in %d Tagen"</string>
+    <string name="kalendarz_minione">"Kürzlich"</string>
+    <string name="kalendarz_minione_sub">"Geburtstage und Jahrestage der letzten 2 Monate"</string>
+    <string name="kalendarz_wczoraj">"gestern"</string>
+    <string name="kalendarz_temu">"vor %d Tagen"</string>
 </resources>
