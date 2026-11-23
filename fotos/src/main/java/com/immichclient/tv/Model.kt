@@ -32,7 +32,11 @@ data class Asset(
 )
 @Immutable data class Persoon(val id: String, val naam: String, val favoriet: Boolean, val urodziny: LocalDate? = null)
 @Immutable data class Plaats(val stad: String, val land: String, val omslag: String)
-@Immutable data class Herinnering(val id: String, val jaar: Int, val dag: LocalDate, val assets: List<Asset>) {
+@Immutable data class Herinnering(
+    val id: String, val jaar: Int, val dag: LocalDate, val assets: List<Asset>,
+    /** typ wspomnienia z Immich („on_this_day” albo inny, np. urodziny) i jego tytuł, jeśli serwer go podaje */
+    val typ: String = "on_this_day", val tytul: String? = null,
+) {
     val jarenGeleden get() = dag.year - jaar
 }
 data class Pagina(val assets: List<Asset>, val volgende: Int?)

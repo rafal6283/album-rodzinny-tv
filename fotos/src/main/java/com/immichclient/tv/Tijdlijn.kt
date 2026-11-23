@@ -692,7 +692,7 @@ fun HerinneringKaart(h: Herinnering, nav: Nav, breedte: Float = 200f, hoogte: Fl
     // okładka: najlepiej zdjęcie (miniatura filmu bywa czarna), środkowe z listy
     val omslag = h.assets.filter { !it.video }.let { f -> f.getOrNull(f.size / 2) } ?: h.assets[h.assets.size / 2]
     Card(
-        onClick = { nav.bekijk(LijstBron(h.assets), 0, jarenGeleden(h.jarenGeleden), true, null) },
+        onClick = { nav.bekijk(LijstBron(h.assets), 0, h.tytul ?: jarenGeleden(h.jarenGeleden), true, null) },
         modifier = Modifier.width(breedte.dp).height(hoogte.dp),
         shape = CardDefaults.shape(RoundedCornerShape(18.dp)),
         scale = CardDefaults.scale(focusedScale = 1.06f),
@@ -706,8 +706,11 @@ fun HerinneringKaart(h: Herinnering, nav: Nav, breedte: Float = 200f, hoogte: Fl
                 Modifier.align(Alignment.TopEnd).padding(10.dp).width(22.dp).height(22.dp), tint = Color.White,
             )
             Column(Modifier.align(Alignment.BottomStart).padding(horizontal = 16.dp, vertical = 12.dp)) {
-                Text(jarenGeleden(h.jarenGeleden), style = MaterialTheme.typography.headlineSmall, color = Color.White, maxLines = 1)
-                Text("${h.jaar}  ·  ${licznikMix(h.assets)}", style = MaterialTheme.typography.labelMedium, color = Color(0xDDFFFFFF), maxLines = 1)
+                // wspomnienie z tytułem (np. „Urodziny Daniel”) albo „tego dnia” („2 lata temu”)
+                val tytul = h.tytul ?: if (h.jaar > 0) jarenGeleden(h.jarenGeleden) else h.dag.format(Formaat.dagJaar)
+                Text((if (h.typ.contains("birth", true) || h.tytul?.contains(Taal.s(R.string.urodziny), true) == true) "🎂 " else "") + tytul,
+                    style = MaterialTheme.typography.headlineSmall, color = Color.White, maxLines = 1)
+                Text(listOfNotNull(h.jaar.takeIf { it > 0 }?.toString(), licznikMix(h.assets)).joinToString("  ·  "), style = MaterialTheme.typography.labelMedium, color = Color(0xDDFFFFFF), maxLines = 1)
             }
         }
     }

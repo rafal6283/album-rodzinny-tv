@@ -859,4 +859,5 @@
     <string name="rocznice_brak_tip">"Daty urodzenia ustawisz w Ludzie → osoba → Edytuj osobę → Data urodzenia."</string>
     <string name="urodziny_osoby">"Urodziny: %1$s"</string>
     <string name="urodziny_osoby_sub">"%1$s · zdjęcia z okolic urodzin z każdego roku"</string>
+    <string name="wspomnienia_wyroznione">"Wyróżnione"</string>
 </resources>

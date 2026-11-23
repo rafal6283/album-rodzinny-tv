@@ -818,4 +818,5 @@
     <string name="rocznice_brak_tip">"Las fechas de nacimiento se ponen en Personas → persona → Editar persona → Fecha de nacimiento."</string>
     <string name="urodziny_osoby">"Cumpleaños: %1$s"</string>
     <string name="urodziny_osoby_sub">"%1$s · fotos de alrededor del cumpleaños de cada año"</string>
+    <string name="wspomnienia_wyroznione">"Destacados"</string>
 </resources>

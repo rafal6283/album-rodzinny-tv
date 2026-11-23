@@ -252,16 +252,37 @@ object Immich {
 
     suspend fun herinneringen(dag: LocalDate): List<Herinnering> = withContext(Dispatchers.Default) {
         val a = JSONArray(get("/memories?for=$dag"))
+        List(a.length()) { wspomnienie(a.getJSONObject(it), dag) }.filter { it.assets.isNotEmpty() }.sortedByDescending { it.jaar }
+    }
+
+    /**
+     * Wszystkie wspomnienia z serwera (jak lista „Wspomnienia” w aplikacji Immich na telefon), także inne niż „tego dnia”,
+     * np. urodziny z własnym tytułem. Od najnowszych.
+     */
+    suspend fun wszystkieWspomnienia(): List<Herinnering> = withContext(Dispatchers.Default) {
+        val a = JSONArray(get("/memories"))
         List(a.length()) { i ->
             val o = a.getJSONObject(i)
-            val assets = o.getJSONArray("assets")
-            Herinnering(
-                id = o.getString("id"),
-                jaar = o.optJSONObject("data")?.optInt("year") ?: 0,
-                dag = dag,
-                assets = List(assets.length()) { asset(assets.getJSONObject(it)) }.sortedBy { it.datum },
-            )
-        }.filter { it.assets.isNotEmpty() }.sortedByDescending { it.jaar }
+            val kiedy = (o.optString("memoryAt").ifEmpty { o.optString("showAt") }).take(10).let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: LocalDate.now()
+            wspomnienie(o, kiedy)
+        }.filter { it.assets.isNotEmpty() }.sortedByDescending { it.dag }
+    }
+
+    private fun wspomnienie(o: JSONObject, dag: LocalDate): Herinnering {
+        val assets = o.getJSONArray("assets")
+        val data = o.optJSONObject("data")
+        fun tekst(x: JSONObject?, k: String) = x?.optString(k)?.takeIf { it.isNotBlank() && it != "null" }
+        val typ = o.optString("type").ifEmpty { "on_this_day" }
+        // tytuł: pole w danych albo w samym wspomnieniu (różne wersje / rodzaje wspomnień)
+        val tytul = tekst(data, "title") ?: tekst(o, "title") ?: tekst(data, "name") ?: tekst(o, "name")
+        if (typ != "on_this_day") Log.i("Fotos", "wspomnienie typu $typ: ${o.optJSONObject("data")}")
+        return Herinnering(
+            id = o.getString("id"),
+            jaar = data?.optInt("year") ?: 0,
+            dag = dag,
+            assets = List(assets.length()) { asset(assets.getJSONObject(it)) }.sortedBy { it.datum },
+            typ = typ, tytul = tytul,
+        )
     }
 
     /** Willekeurige foto's (screensaver "alle foto's"): /search/random geeft [n] assets met exif in één call. */

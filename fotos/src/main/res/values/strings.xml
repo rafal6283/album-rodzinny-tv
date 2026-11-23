@@ -833,4 +833,5 @@
     <string name="rocznice_brak_tip">"Set birth dates in People → person → Edit person → Birth date."</string>
     <string name="urodziny_osoby">"Birthday: %1$s"</string>
     <string name="urodziny_osoby_sub">"%1$s · photos around the birthday from every year"</string>
+    <string name="wspomnienia_wyroznione">"Highlights"</string>
 </resources>

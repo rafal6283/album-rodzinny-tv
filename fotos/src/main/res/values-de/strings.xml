@@ -811,4 +811,5 @@
     <string name="rocznice_brak_tip">"Geburtsdaten unter Personen → Person → Person bearbeiten → Geburtsdatum."</string>
     <string name="urodziny_osoby">"Geburtstag: %1$s"</string>
     <string name="urodziny_osoby_sub">"%1$s · Fotos rund um den Geburtstag aus jedem Jahr"</string>
+    <string name="wspomnienia_wyroznione">"Hervorgehoben"</string>
 </resources>

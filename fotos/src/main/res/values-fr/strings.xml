@@ -818,4 +818,5 @@
     <string name="rocznice_brak_tip">"Dates de naissance : Personnes → personne → Modifier la personne → Date de naissance."</string>
     <string name="urodziny_osoby">"Anniversaire : %1$s"</string>
     <string name="urodziny_osoby_sub">"%1$s · photos autour de l’anniversaire, chaque année"</string>
+    <string name="wspomnienia_wyroznione">"À la une"</string>
 </resources>
