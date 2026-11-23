@@ -8,6 +8,9 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MotionPhotosOn
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.LibraryAdd
+import androidx.compose.material.icons.filled.RemoveCircleOutline
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.SkipPrevious
 import android.content.Context
 import android.os.Handler
@@ -972,11 +975,11 @@ private fun PasekAkcji(staat: KijkerStaat, akcje: List<Akcja>) {
                             stringResource(if (w) R.string.udost_wybrane else R.string.udost_dodaj)
                     }
                     Akcja.KOD_QR -> androidx.compose.material.icons.Icons.Filled.QrCode2 to stringResource(R.string.udost_kod, Udostepnianie.koszyk.size)
-                    Akcja.ALBUM -> androidx.compose.material.icons.Icons.Filled.LibraryAdd to
+                    Akcja.ALBUM -> Icons.Filled.LibraryAdd to
                         (if (Udostepnianie.koszyk.isNotEmpty()) stringResource(R.string.album_akcja_n, (Udostepnianie.koszyk.map { it.id } + listOfNotNull(staat.bron.op(staat.index)?.id)).distinct().size) else stringResource(R.string.album_akcja))
                     Akcja.Z_ALBUMU -> {
                         val usuniete = staat.bron.op(staat.index)?.let { staat.usunieteZAlbumu[it.id] } == true
-                        (if (usuniete) androidx.compose.material.icons.Icons.Filled.Undo else androidx.compose.material.icons.Icons.Filled.RemoveCircleOutline) to
+                        (if (usuniete) Icons.AutoMirrored.Filled.Undo else Icons.Filled.RemoveCircleOutline) to
                             stringResource(if (usuniete) R.string.album_przywroc else R.string.album_usun)
                     }
                 }

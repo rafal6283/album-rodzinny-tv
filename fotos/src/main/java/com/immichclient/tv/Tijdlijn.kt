@@ -1,6 +1,7 @@
 package com.immichclient.tv
 
 import androidx.compose.foundation.border
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.PlayCircle
 import android.util.Log
@@ -330,7 +331,7 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                             // edycja: osoba (imię, data urodzenia, ukrycie, połączenie) albo nazwa albumu
                             if (staat.filter.persoonId != null || staat.filter.albumId != null) Keuze(
                                 selected = false, onClick = { edycja = true }, modifier = Modifier.focusRequester(edycjaKnop),
-                                leadingIcon = { Icon(androidx.compose.material.icons.Icons.Filled.Edit, null, Modifier.width(18.dp)) },
+                                leadingIcon = { Icon(Icons.Filled.Edit, null, Modifier.width(18.dp)) },
                                 tekst = stringResource(if (staat.filter.persoonId != null) R.string.edytuj_osobe else R.string.album_zmien_nazwe),
                             )
                             // album jako kanał na ekranie głównym Android TV
