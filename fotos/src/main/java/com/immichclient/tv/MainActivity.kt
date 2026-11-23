@@ -578,6 +578,9 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                 k,
                 // "Toon op kaart" (OK in het infopaneel): viewer dicht, naar de kaartsectie, inzoomen op die plek
                 opKaart = { a ->
+                    // wywołane wciśnięciem OK: puszczenie tego samego OK nie może trafić w boczne menu (fokus na chwilę
+                    // ląduje na pierwszej pozycji, Szukaj, zanim mapa go przejmie) ani w mapę (OK = przybliż)
+                    Toetsen.okGeslikt = true
                     kijker = null; stapel.clear(); sectie = Sectie.KAART
                     (wortel(Sectie.KAART) as Scherm.Kaart).staat.toon(a)
                 },
