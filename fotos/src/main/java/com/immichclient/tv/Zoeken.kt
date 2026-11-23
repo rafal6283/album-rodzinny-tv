@@ -302,7 +302,7 @@ private fun Suggesties(staat: ZoekStaat, nav: Nav, zoek: (String) -> Unit) {
                 }
                 if (staat.personen.size > TOP_PERSONEN) item(key = "alle") {
                     Keuze(
-                        selected = false, onClick = { nav.open(Scherm.Personen(staat.personen)) },
+                        selected = false, onClick = { nav.open(Scherm.Personen(PersonenStaat(staat.personen))) },
                         leadingIcon = { Icon(Icons.Filled.Search, null, Modifier.width(18.dp)) },
                         tekst = stringResource(R.string.alle_personen, staat.personen.size),
                     )

@@ -19,6 +19,14 @@ Fork aplikacji [TV Client for Immich](https://github.com/neforce/android-tv-immi
   (przysłona · czas · ISO · ogniskowa, obiektyw), miejsce ze współrzędnymi, ulubione, albumy, opis i — opcjonalnie —
   mała mapa kraju.
 - **Pasek akcji** (▼ w przeglądarce): pokaz slajdów, szczegóły, powiększenie, mapa.
+- **Przewijanie filmów pilotem**: ◀ ▶ przewijają o 10 s (przytrzymane coraz szybciej: 30 s, 60 s), ⏪︎ ⏩︎ o 30 s;
+  pasek z czasem pokazuje się przy przewijaniu i na pauzie. Poprzedni / następny film: ▼ → ⏮ ⏭, przyciski kanału
+  albo ◀ na samym początku / ▶ po końcu filmu.
+- **Ludzie** jako osobna sekcja w menu: wszystkie twarze rozpoznane przez Immich, także bez imienia, z filtrem
+  Wszyscy / Z imieniem / Bez imienia, wyszukiwaniem i sortowaniem.
+- **Mapa w stylu Immichin**: nagłówek „Miejsca, w których byliście” z podsumowaniem (elementy · miejsca · kraje) i karta
+  wybranej grupy po prawej: zdjęcie, rodzaj (kontynent / region / kraj / miejsce), kraj i liczba miejsc, liczba
+  elementów, okres, cztery miniatury z „+N” i podpowiedzi pilota.
 - **Powiększanie** do 4× z przesuwaniem strzałkami; przy powiększeniu wczytuje się pełna rozdzielczość
   (Immich ≥ 1.133).
 - **Kanały na ekranie głównym Android TV**: „Najnowsze zdjęcia”, „Losowe zdjęcia” i „Tego dnia”, odświeżane co ~3 h.

@@ -280,7 +280,7 @@
     <string name="t_info_paneel">info (camera, plaats, kaart)</string>
     <string name="t_ok_info">OK bij info</string>
     <string name="t_ok_info_wat">toon op de wereldkaart (foto met plek)</string>
-    <string name="t_spoel_viewer">10 foto\'s terug / verder; in een video 10 s</string>
+    <string name="t_spoel_viewer">10 foto\'s terug / verder; in een video 30 s</string>
     <string name="t_sluiten">sluiten</string>
     <string name="tg_kaart">Wereldkaart</string>
     <string name="t_kaart_pijlen">groep kiezen, of de kaart schuiven</string>
@@ -656,5 +656,36 @@
     <plurals name="lat">
         <item quantity="one">%d jaar</item>
         <item quantity="other">%d jaar</item>
+    </plurals>
+
+    <!-- sekcja Ludzie, przewijanie filmów, karta mapy -->
+    <string name="t_wideo_przewijanie">in een video: 10 s spoelen (vasthouden: sneller); aan het begin / na het einde: vorige / volgende</string>
+    <string name="persoon_bez_imienia">"Zonder naam"</string>
+    <string name="ludzie_sub">"%1$s personen · %2$s met naam"</string>
+    <string name="ludzie_wszyscy">"Iedereen"</string>
+    <string name="ludzie_z_imieniem">"Met naam"</string>
+    <string name="ludzie_bez_imienia">"Zonder naam"</string>
+    <string name="wideo_hint">"◀ ▶ spoelen (vasthouden: sneller)   ·   OK pauze   ·   ▼ vorige / volgende"</string>
+    <string name="poprzedni">"Vorige"</string>
+    <string name="nastepny">"Volgende"</string>
+    <string name="kaart_etykieta">"Waar je bent geweest"</string>
+    <string name="kaart_rodzaj_kontynent">"Werelddeel"</string>
+    <string name="kaart_rodzaj_region">"Regio"</string>
+    <string name="kaart_rodzaj_kraj">"Land"</string>
+    <string name="kaart_rodzaj_miejsce">"Plaats"</string>
+    <string name="kaart_karta_przybliz">"Inzoomen"</string>
+    <string name="kaart_karta_otworz">"Openen"</string>
+    <string name="kaart_karta_wszystkie">"Houd OK ingedrukt voor alle %1$s items"</string>
+    <plurals name="kaart_elementy">
+        <item quantity="one">%s item</item>
+        <item quantity="other">%s items</item>
+    </plurals>
+    <plurals name="kaart_miejsca">
+        <item quantity="one">%s plaats</item>
+        <item quantity="other">%s plaatsen</item>
+    </plurals>
+    <plurals name="kaart_kraje">
+        <item quantity="one">%s land</item>
+        <item quantity="other">%s landen</item>
     </plurals>
 </resources>

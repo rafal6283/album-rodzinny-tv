@@ -207,6 +207,25 @@ object Immich {
             .filter { it.naam.isNotBlank() }
     }
 
+    /**
+     * Wszystkie rozpoznane osoby (sekcja Ludzie), także te bez imienia, w kolejności Immich (ulubione, potem z imieniem,
+     * potem wg liczby zdjęć). Stronami po 500, bo nienazwanych twarzy bywa kilka tysięcy.
+     */
+    suspend fun wszystkieOsoby(): List<Persoon> = withContext(Dispatchers.Default) {
+        val wynik = ArrayList<Persoon>()
+        var strona = 1
+        while (strona <= 40) {
+            val o = JSONObject(get("/people?size=500&page=$strona&withHidden=false"))
+            val a = o.getJSONArray("people")
+            for (i in 0 until a.length()) a.getJSONObject(i).let { p ->
+                if (!p.optBoolean("isHidden")) wynik.add(Persoon(p.getString("id"), p.optString("name").takeIf { it != "null" }.orEmpty().trim(), p.optBoolean("isFavorite")))
+            }
+            if (!o.optBoolean("hasNextPage") || a.length() == 0) break
+            strona++
+        }
+        wynik.distinctBy { it.id }
+    }
+
     // ---- Albums ----
 
     suspend fun albums(): List<Album> = withContext(Dispatchers.Default) {

@@ -227,6 +227,9 @@ class KaartStaat(private val scope: CoroutineScope) {
     var rekent by mutableIntStateOf(0)
     /** het laatste kaartframe was nog niet compleet: er komen nog tegels binnen */
     var tegelsOnaf by mutableStateOf(false)
+    /** nagłówek: elementy · miejsca · kraje */
+    var samenvatting by mutableStateOf<KaartSamenvatting?>(null)
+        private set
 
     init {
         scope.launch {
@@ -243,6 +246,7 @@ class KaartStaat(private val scope: CoroutineScope) {
                         Triple(x, y, idx)
                     }
                     wx = x; wy = y; markers = m; index = idx
+                    samenvatting = withContext(Dispatchers.Default) { maakSamenvatting(m) }
                     // alle zoomniveaus alvast uitrekenen (één keer per markerset), dan is elke latere stap meteen klaar
                     launch(Dispatchers.Default) {
                         val t = System.currentTimeMillis()
@@ -751,9 +755,9 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
             if (m != null) for (c in staat.clusters) key(c.sleutel) {
                 Marker(c, m, focus = c.sleutel == staat.focus, cam = staat.camera, w = w, h = h)
             }
-            // naam en aantal onder het gekozen cluster
+            // karta wybranej grupy po prawej (jak w Immichin): zdjęcie, nazwa, liczby, miniatury, podpowiedzi
             motor.focusCluster()?.let { c ->
-                key(c.sleutel) { FocusLabel(c, staat.naam(c), staat.camera, w, h) }
+                KaartKarta(c, staat, Modifier.align(Alignment.CenterEnd).padding(end = 24.dp))
             }
 
             // kop linksboven (op een lichte of satellietkaart met een donker vlak erachter, anders onleesbaar)
@@ -762,11 +766,20 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
                 Modifier.padding(start = 24.dp, top = 20.dp)
                     .then(if (donkereKaart) Modifier else Modifier.background(Color(0xB3000000), RoundedCornerShape(14.dp)).padding(horizontal = 14.dp, vertical = 8.dp)),
             ) {
-                Text(stringResource(R.string.kaart), style = MaterialTheme.typography.displaySmall)
-                val n = m?.aantal
+                Text(stringResource(R.string.kaart_etykieta).uppercase(Taal.locale), style = EtykietaStyl, maxLines = 1, modifier = Modifier.padding(bottom = 2.dp))
+                Text(stringResource(R.string.kaart), style = TytulStyl, color = Color.White)
+                val sv = staat.samenvatting
                 Text(
-                    when { staat.fout != null -> stringResource(R.string.kaart_niet_geladen, staat.fout.orEmpty()); n == null -> stringResource(R.string.laden); else -> pluralStringResource(R.plurals.fotos_met_locatie, n, Taal.getal(n)) },
-                    style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht,
+                    when {
+                        staat.fout != null -> stringResource(R.string.kaart_niet_geladen, staat.fout.orEmpty())
+                        sv == null -> stringResource(R.string.laden)
+                        else -> listOfNotNull(
+                            pluralStringResource(R.plurals.kaart_elementy, sv.elementy, Taal.getal(sv.elementy)),
+                            sv.miejsca.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.kaart_miejsca, it, Taal.getal(it)) },
+                            sv.kraje.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.kaart_kraje, it, Taal.getal(it)) },
+                        ).joinToString("  ·  ")
+                    },
+                    style = MaterialTheme.typography.titleMedium, color = Color.White, modifier = Modifier.padding(top = 2.dp),
                 )
             }
             if (stijlFout && !stijlKlaar) Text(
@@ -782,7 +795,7 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
                 if (staat.tegelsOnaf && !stijlFout) { delay(700); tegelsLang = true; delay(20_000); tegelsLang = false } else tegelsLang = false
             }
             val laadt = (staat.fout == null && (staat.markers == null || staat.index == null)) || rekentLang || tegelsLang
-            Laadpil(laadt, Modifier.align(Alignment.TopEnd).padding(top = if (stijlFout && !stijlKlaar) 56.dp else 22.dp, end = 24.dp))
+            Laadpil(laadt, Modifier.align(Alignment.BottomStart).padding(start = 24.dp, bottom = 22.dp))
             // bedieningshint onderin (verdwijnt vanzelf) en bronvermelding
             val hintAlpha by animateFloatAsState(if (hint) 1f else 0f, tween(400), label = "hint")
             Text(
@@ -848,18 +861,6 @@ private fun markerBeeld(id: String): coil3.request.ImageRequest {
     val px = with(LocalDensity.current) { (MARKER_DP * 1.3f).dp.roundToPx() }
     return remember(id) {
         coil3.request.ImageRequest.Builder(ctx).data(Immich.thumb(id)).size(px, px).precision(coil3.size.Precision.INEXACT).build()
-    }
-}
-
-@Composable
-private fun FocusLabel(c: Cluster, naam: String, cam: State<Camera>, w: Int, h: Int) {
-    Column(
-        Modifier.opPunt(cam, w, h, c.wx, c.wy, ankerY = 0f).zIndex(2f).padding(top = (MARKER_DP * 0.65f + 12).dp)
-            .background(Color(0xD9000000), RoundedCornerShape(10.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        if (naam.isNotEmpty()) Text(naam, style = MaterialTheme.typography.titleSmall, color = Color.White, maxLines = 1, textAlign = TextAlign.Center)
-        Text(pluralStringResource(R.plurals.fotos, c.aantal, Taal.getal(c.aantal)), style = MaterialTheme.typography.labelSmall, color = Color(0xCCFFFFFF))
     }
 }
 

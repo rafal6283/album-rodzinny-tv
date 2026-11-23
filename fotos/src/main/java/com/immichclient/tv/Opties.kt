@@ -227,7 +227,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         if (alles) schakel(R.string.partner, R.string.partner_uitleg, uitAan, Instellingen.partners) { Instellingen.partners = it }
         if (alles) schakel(R.string.herinneringen_boven, R.string.herinneringen_boven_uitleg, uitAan, Instellingen.herinneringen) { Instellingen.herinneringen = it }
         item {
-            val keuzes = listOf(Sectie.FOTOS, Sectie.FILMY, Sectie.HERINNERINGEN, Sectie.KAART, Sectie.ALBUMS, Sectie.MAPPEN, Sectie.FAVORIETEN)
+            val keuzes = listOf(Sectie.FOTOS, Sectie.FILMY, Sectie.HERINNERINGEN, Sectie.KAART, Sectie.ALBUMS, Sectie.LUDZIE, Sectie.MAPPEN, Sectie.FAVORIETEN)
             Keuzes(stringResource(R.string.startscherm), stringResource(R.string.startscherm_uitleg), keuzes.map { stringResource(if (it == Sectie.FOTOS) Instellingen.uiterlijk.label else it.label) },
                 keuzes.indexOf(Instellingen.start).coerceAtLeast(0)) { Instellingen.start = keuzes[it] }
         }
@@ -499,6 +499,7 @@ fun ToetsenOverzicht(sluit: () -> Unit) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     ToetsGroep(R.string.tg_viewer, listOf(
                         R.string.t_links_rechts to R.string.t_vorige_volgende,
+                        R.string.t_links_rechts to R.string.t_wideo_przewijanie,
                         R.string.t_ok_play to R.string.t_diashow_wat,
                         R.string.t_info_toets to R.string.t_info_paneel,
                         R.string.t_ok_info to R.string.t_ok_info_wat,

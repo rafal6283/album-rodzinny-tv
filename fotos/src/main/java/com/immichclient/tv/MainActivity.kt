@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Photo
@@ -125,7 +126,7 @@ sealed class Scherm {
     /** alle foto's van een kaartcluster (lang OK op de kaart) */
     class KaartFotos(val titel: String, ids: List<String>, scope: CoroutineScope) : Scherm() { val staat = KaartFotosStaat(ids, scope) }
     /** alle personen (vanuit Zoeken), met zoekveld en sortering */
-    class Personen(val lijst: List<Persoon>) : Scherm() { val staat = PersonenStaat(lijst) }
+    class Personen(val staat: PersonenStaat) : Scherm()
     /** een map uit de mappenboom (null = het startpunt van de boom, zodra die geladen is) */
     class Mappen(boom: MappenBoom, knoop: MapKnoop?, scope: CoroutineScope) : Scherm() { val staat = MapStaat(boom, knoop, scope) }
     data object Instellingen : Scherm()
@@ -182,13 +183,15 @@ enum class Sectie(@StringRes val label: Int, val icoon: ImageVector) {
     ALBUMS(R.string.sectie_albums, Icons.Filled.PhotoLibrary),
     MAPPEN(R.string.sectie_mappen, Icons.Filled.Folder),
     FAVORIETEN(R.string.sectie_favorieten, Icons.Filled.Favorite),
+    /** wszystkie rozpoznane twarze, także bez imienia */
+    LUDZIE(R.string.personen, Icons.Filled.People),
     /** same filmy z osi czasu, od najnowszych */
     FILMY(R.string.sectie_filmy, Icons.Filled.VideoLibrary),
     INSTELLINGEN(R.string.sectie_instellingen, Icons.Filled.Settings);
 
     companion object {
         /** Kolejność w bocznej szynie, jak w Immichin: szukaj, zdjęcia+wideo, wspomnienia, ulubione, albumy, ludzie, mapa… */
-        val KOLEJNOSC = listOf(ZOEKEN, FOTOS, FILMY, HERINNERINGEN, FAVORIETEN, ALBUMS, VERKENNEN, KAART, MAPPEN, INSTELLINGEN)
+        val KOLEJNOSC = listOf(ZOEKEN, FOTOS, FILMY, HERINNERINGEN, FAVORIETEN, ALBUMS, LUDZIE, VERKENNEN, KAART, MAPPEN, INSTELLINGEN)
     }
 }
 
@@ -342,6 +345,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             Sectie.ZOEKEN -> Scherm.Zoeken(scope)
             Sectie.VERKENNEN -> Scherm.Verkennen(scope)
             Sectie.KAART -> Scherm.Kaart(scope)
+            Sectie.LUDZIE -> Scherm.Personen(PersonenStaat(emptyList(), scope) { Immich.wszystkieOsoby() })
             Sectie.ALBUMS -> Scherm.Albums(scope)
             Sectie.MAPPEN -> Scherm.Mappen(MappenBoom(scope), null, scope)
             Sectie.FILMY -> Scherm.Lijst(ctx.getString(R.string.sectie_filmy), ctx.getString(R.string.filmy_sub), false, scope) { p ->
