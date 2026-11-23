@@ -734,4 +734,8 @@
         <item quantity="many">%s krajów</item>
         <item quantity="other">%s kraju</item>
     </plurals>
+    <string name="menu_kolejnosc">"Kolejność menu"</string>
+    <string name="menu_kolejnosc_uitleg">"Ułóż sekcje bocznego menu po swojemu"</string>
+    <string name="menu_kolejnosc_hint">"OK chwyć / upuść   ·   ▲▼ przesuń chwyconą sekcję   ·   Wstecz zamknij"</string>
+    <string name="menu_domyslna">"Przywróć domyślną kolejność"</string>
 </resources>

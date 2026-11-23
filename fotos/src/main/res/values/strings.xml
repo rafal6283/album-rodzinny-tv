@@ -710,4 +710,8 @@
         <item quantity="one">%s country</item>
         <item quantity="other">%s countries</item>
     </plurals>
+    <string name="menu_kolejnosc">"Menu order"</string>
+    <string name="menu_kolejnosc_uitleg">"Arrange the sections of the side menu"</string>
+    <string name="menu_kolejnosc_hint">"OK pick up / drop   ·   ▲▼ move the picked section   ·   Back close"</string>
+    <string name="menu_domyslna">"Restore default order"</string>
 </resources>

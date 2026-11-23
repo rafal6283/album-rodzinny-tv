@@ -695,4 +695,8 @@
         <item quantity="one">%s país</item>
         <item quantity="other">%s países</item>
     </plurals>
+    <string name="menu_kolejnosc">"Orden del menú"</string>
+    <string name="menu_kolejnosc_uitleg">"Ordena las secciones del menú lateral"</string>
+    <string name="menu_kolejnosc_hint">"OK coger / soltar   ·   ▲▼ mover   ·   Atrás cerrar"</string>
+    <string name="menu_domyslna">"Restaurar el orden predeterminado"</string>
 </resources>

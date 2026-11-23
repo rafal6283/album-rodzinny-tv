@@ -24,6 +24,7 @@ Fork aplikacji [TV Client for Immich](https://github.com/neforce/android-tv-immi
   albo ◀ na samym początku / ▶ po końcu filmu.
 - **Ludzie** jako osobna sekcja w menu: wszystkie twarze rozpoznane przez Immich, także bez imienia, z filtrem
   Wszyscy / Z imieniem / Bez imienia, wyszukiwaniem i sortowaniem.
+- **Kolejność menu**: Ustawienia → Wygląd → Kolejność menu; OK chwyta sekcję, ▲▼ ją przesuwają (Ustawienia zostają na dole).
 - **Mapa w stylu Immichin**: nagłówek „Miejsca, w których byliście” z podsumowaniem (elementy · miejsca · kraje) i karta
   wybranej grupy po prawej: zdjęcie, rodzaj (kontynent / region / kraj / miejsce), kraj i liczba miejsc, liczba
   elementów, okres, cztery miniatury z „+N” i podpowiedzi pilota.

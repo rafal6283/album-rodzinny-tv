@@ -486,7 +486,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                 ) {
                     // logo u góry szyny, jak w Immichin
                     Logo(Modifier.padding(start = 16.dp, top = 12.dp, bottom = 8.dp))
-                    for (s in Sectie.KOLEJNOSC) {
+                    for (s in Sectie.menu()) {
                         if (s == Sectie.INSTELLINGEN) Spacer(Modifier.height(16.dp))
                         NavigationDrawerItem(
                             selected = sectie == s && stapel.isEmpty(),

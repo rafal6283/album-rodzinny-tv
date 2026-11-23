@@ -97,6 +97,8 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     val dreamRegel = remember { FocusRequester() }
     val eerste = remember { FocusRequester() }
     val taalRegel = remember { FocusRequester() }
+    val menuRegel = remember { FocusRequester() }
+    var menuKolejnosc by remember { mutableStateOf(false) }
     val datumRegel = remember { FocusRequester() }
     val klokRegel = remember { FocusRequester() }
     // keuzelijst (albums/personen) dicht: focus terug op die regel (anders pakt Android de lade)
@@ -256,6 +258,10 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
 
         groep(R.string.groep_uiterlijk)
         item {
+            val nazwy = Sectie.menu().filter { it != Sectie.INSTELLINGEN }.map { nazwaSekcji(it) }
+            Actie(stringResource(R.string.menu_kolejnosc), nazwy.joinToString(" · "), Modifier.focusRequester(menuRegel)) { menuKolejnosc = true }
+        }
+        item {
             // taal: meteen toepassen = activity opnieuw opbouwen (alle teksten, datums en landnamen volgen)
             Keuzes(stringResource(R.string.taal), stringResource(R.string.taal_uitleg), Taal.TALEN.map { Taal.naam(it) }, Taal.TALEN.indexOf(Taal.code).coerceAtLeast(0), Modifier.focusRequester(taalRegel)) {
                 val nieuw = Taal.TALEN[it]
@@ -362,6 +368,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         item { Text(stringResource(R.string.onofficieel_lang), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp)) }
         if (alles) item { Actie(stringResource(R.string.diagnose), stringResource(R.string.diagnose_uitleg)) { diagnose = true } }
     }
+    if (menuKolejnosc) KolejnoscSekcji { menuKolejnosc = false; scope.launch { delay(60); runCatching { menuRegel.requestFocus() } } }
     if (hulp) ScreensaverHulp { hulp = false; dreamRonde++ }
     if (diagnose) DiagnoseLaag { diagnose = false }
     if (albumKiezer) KiesLijst(stringResource(R.string.dream_albums), albumKeuzes(), Instellingen.dreamAlbum, sluit = { albumKiezer = false }, meer = true) { id, naam ->

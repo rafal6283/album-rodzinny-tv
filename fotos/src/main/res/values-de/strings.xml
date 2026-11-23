@@ -688,4 +688,8 @@
         <item quantity="one">%s Land</item>
         <item quantity="other">%s Länder</item>
     </plurals>
+    <string name="menu_kolejnosc">"Menü-Reihenfolge"</string>
+    <string name="menu_kolejnosc_uitleg">"Bereiche im Seitenmenü selbst anordnen"</string>
+    <string name="menu_kolejnosc_hint">"OK aufnehmen / ablegen   ·   ▲▼ verschieben   ·   Zurück schließen"</string>
+    <string name="menu_domyslna">"Standardreihenfolge wiederherstellen"</string>
 </resources>

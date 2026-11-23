@@ -688,4 +688,8 @@
         <item quantity="one">%s land</item>
         <item quantity="other">%s landen</item>
     </plurals>
+    <string name="menu_kolejnosc">"Volgorde menu"</string>
+    <string name="menu_kolejnosc_uitleg">"Zet de onderdelen van het zijmenu in je eigen volgorde"</string>
+    <string name="menu_kolejnosc_hint">"OK oppakken / neerzetten   ·   ▲▼ verplaatsen   ·   Terug sluiten"</string>
+    <string name="menu_domyslna">"Standaardvolgorde herstellen"</string>
 </resources>
