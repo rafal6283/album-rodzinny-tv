@@ -576,10 +576,11 @@
     <string name="update_actueel">You have the latest version. OK to check again</string>
     <string name="update_controleer">OK to check for a new version</string>
     <string name="update_auto">Check for updates</string>
-    <string name="update_auto_uitleg">Look for a new version on GitHub at startup</string>
+    <string name="update_auto_uitleg">Look for a new version of Album Rodzinny on GitHub at startup</string>
     <string name="nieuw_regel">What\'s new</string>
     <string name="nieuw_regel_uitleg">Changes in this version</string>
     <string-array name="wat_nieuw">
+        <item>Automatic updates: a new version from GitHub offers to install itself</item>
         <item>New name and look: Album Rodzinny — icon rail with logo, tinted background glow, serif headings</item>
         <item>Timeline as square tiles with places in the month header (Settings → Timeline → Grid layout)</item>
         <item>Photos and videos together everywhere; memories play videos too, with a Play all button</item>

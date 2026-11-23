@@ -590,10 +590,11 @@
     <string name="update_actueel">Masz najnowszą wersję. OK, aby sprawdzić ponownie</string>
     <string name="update_controleer">OK, aby sprawdzić nową wersję</string>
     <string name="update_auto">Sprawdzaj aktualizacje</string>
-    <string name="update_auto_uitleg">Przy starcie szukaj nowej wersji oryginalnej aplikacji na GitHubie (zastąpiłaby ten wygląd)</string>
+    <string name="update_auto_uitleg">Przy starcie szukaj nowej wersji Album Rodzinny na GitHubie</string>
     <string name="nieuw_regel">Co nowego</string>
     <string name="nieuw_regel_uitleg">Zmiany w tej wersji</string>
     <string-array name="wat_nieuw">
+        <item>Automatyczne aktualizacje: nowa wersja z GitHuba sama zaproponuje instalację</item>
         <item>Nowa nazwa i wygląd: Album Rodzinny — boczna szyna z logo, kolorowa poświata tła, szeryfowe nagłówki</item>
         <item>Oś czasu jako siatka kwadratów z miejscami w nagłówku miesiąca (Ustawienia → Oś czasu → Układ siatki)</item>
         <item>Zdjęcia i filmy razem wszędzie; wspomnienia odtwarzają też filmy, przycisk „Odtwórz wszystkie”</item>

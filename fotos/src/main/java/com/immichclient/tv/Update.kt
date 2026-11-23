@@ -63,7 +63,8 @@ import java.util.concurrent.TimeUnit
  * Er gaat niets naar GitHub behalve een gewone, anonieme API-aanvraag (geen sleutel, geen apparaatgegevens).
  */
 object Update {
-    private const val REPO = "neforce/android-tv-immich-client"
+    /** wydania Album Rodzinny (budowane przez GitHub Actions, podpisane stałym kluczem wydań) */
+    private const val REPO = "rafal6283/album-rodzinny-tv"
     private const val PREFS = "update"
     private const val TAG = "Fotos"
 
@@ -95,9 +96,9 @@ object Update {
 
     fun versie(c: Context): String = testVersie ?: runCatching { c.packageManager.getPackageInfo(c.packageName, 0).versionName }.getOrNull() ?: "0"
 
-    /** "2.10" > "2.9"; ontbrekende delen tellen als 0, tekst achter een getal ("2.8-beta") telt niet mee */
+    /** "2.10" > "2.9", "2.9-ar2" > "2.9-ar1"; w każdej części liczą się jej cyfry ("ar2" = 2, "beta" = 0) */
     fun nieuwer(a: String, b: String): Boolean {
-        fun delen(s: String) = s.trimStart('v', 'V').split('.', '-').map { d -> d.takeWhile { it.isDigit() }.toIntOrNull() ?: 0 }
+        fun delen(s: String) = s.trimStart('v', 'V').split('.', '-').map { d -> d.filter { it.isDigit() }.take(9).toIntOrNull() ?: 0 }
         val x = delen(a); val y = delen(b)
         for (i in 0 until maxOf(x.size, y.size)) { val p = x.getOrElse(i) { 0 }; val q = y.getOrElse(i) { 0 }; if (p != q) return p > q }
         return false
@@ -121,7 +122,7 @@ object Update {
         val r = withContext(Dispatchers.IO) {
             runCatching {
                 val req = Request.Builder().url("https://api.github.com/repos/$REPO/releases/latest")
-                    .header("Accept", "application/vnd.github+json").header("User-Agent", "android-tv-immich-client").build()
+                    .header("Accept", "application/vnd.github+json").header("User-Agent", "album-rodzinny-tv").build()
                 http.newCall(req).execute().use { res ->
                     if (!res.isSuccessful) error("GitHub ${res.code}")
                     val o = JSONObject(res.body!!.string())
@@ -150,7 +151,7 @@ object Update {
         val bestand = File(c.cacheDir, "update.apk")
         val fout = withContext(Dispatchers.IO) {
             runCatching {
-                http.newCall(Request.Builder().url(r.apk).header("User-Agent", "android-tv-immich-client").build()).execute().use { res ->
+                http.newCall(Request.Builder().url(r.apk).header("User-Agent", "album-rodzinny-tv").build()).execute().use { res ->
                     if (!res.isSuccessful) error("download ${res.code}")
                     val body = res.body!!
                     val totaal = body.contentLength().takeIf { it > 0 } ?: r.grootte

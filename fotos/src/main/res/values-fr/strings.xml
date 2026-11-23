@@ -566,7 +566,7 @@
     <string name="update_actueel">Vous avez la dernière version. OK pour vérifier à nouveau</string>
     <string name="update_controleer">OK pour chercher une nouvelle version</string>
     <string name="update_auto">Rechercher des mises à jour</string>
-    <string name="update_auto_uitleg">Chercher une nouvelle version sur GitHub au démarrage</string>
+    <string name="update_auto_uitleg">Au démarrage, chercher une nouvelle version d’Album Rodzinny sur GitHub</string>
     <string name="nieuw_regel">Nouveautés</string>
     <string name="nieuw_regel_uitleg">Changements de cette version</string>
     <string-array name="wat_nieuw">

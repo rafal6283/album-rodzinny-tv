@@ -1,0 +1,82 @@
+# Budowanie Album Rodzinny na GitHubie (bez komputera):
+# - każda zmiana na main i każdy pull request: kompilacja + APK do pobrania jako artefakt (podpis kluczem debug),
+# - tag v* (np. v2.9-ar3): APK podpisany stałym kluczem wydań z sekretów i opublikowany jako wydanie (Release);
+#   aplikacja na telewizorze sama zaproponuje tę wersję (Update.kt, sprawdza też SHA-256 pliku).
+# Opis wydania: plik wydania/<tag>.md, jeśli istnieje; inaczej lista zmian generowana przez GitHub.
+name: Budowanie
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: budowanie-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Klucz wydań (tylko tagi)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then echo "::error::Brak sekretu RELEASE_KEYSTORE_B64"; exit 1; fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "IMMICHCLIENT_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
+      - name: Budowanie APK
+        env:
+          IMMICHCLIENT_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          IMMICHCLIENT_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          IMMICHCLIENT_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon :fotos:assembleRelease
+
+      - name: Nazwa i podpis
+        id: apk
+        run: |
+          WERSJA="${GITHUB_REF_NAME#v}"
+          if [[ "$GITHUB_REF" != refs/tags/v* ]]; then WERSJA="dev-${GITHUB_SHA::7}"; fi
+          PLIK="album-rodzinny-$WERSJA.apk"
+          cp fotos/build/outputs/apk/release/fotos-release.apk "$PLIK"
+          APKSIGNER="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)/apksigner"
+          "$APKSIGNER" verify --print-certs "$PLIK" | tee podpis.txt
+          if [[ "$GITHUB_REF" == refs/tags/v* ]] && grep -q "Android Debug" podpis.txt; then
+            echo "::error::Wydanie podpisane kluczem debug — sprawdź sekrety klucza wydań"; exit 1
+          fi
+          echo "plik=$PLIK" >> "$GITHUB_OUTPUT"
+          sha256sum "$PLIK"
+
+      - name: APK jako artefakt
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.apk.outputs.plik }}
+          path: ${{ steps.apk.outputs.plik }}
+          retention-days: 30
+
+      - name: Wydanie (Release)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          OPIS="wydania/${GITHUB_REF_NAME}.md"
+          if [ -f "$OPIS" ]; then NOTATKI=(--notes-file "$OPIS"); else NOTATKI=(--generate-notes); fi
+          gh release create "$GITHUB_REF_NAME" "${{ steps.apk.outputs.plik }}" \
+            --title "Album Rodzinny ${GITHUB_REF_NAME#v}" "${NOTATKI[@]}"

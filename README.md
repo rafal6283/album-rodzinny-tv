@@ -54,6 +54,19 @@ Fork aplikacji [TV Client for Immich](https://github.com/neforce/android-tv-immi
 - Parowanie kodem QR z telefonu, uprawnienia klucza API, wygaszacz ekranu i pozostałe ustawienia działają jak w
   oryginale — zobacz [README.upstream.md](README.upstream.md).
 
+## Wydania i aktualizacje
+
+- **GitHub Actions** (`.github/workflows/budowanie.yml`) kompiluje każdą zmianę na `main` i każdy pull request
+  (APK do pobrania jako artefakt przebiegu). Tag `v*` (np. `v2.9-ar3`) buduje APK podpisany **stałym kluczem wydań**
+  (sekrety `RELEASE_*`) i publikuje go jako wydanie; opis z `wydania/<tag>.md`, jeśli istnieje.
+- Aplikacja przy starcie sprawdza najnowsze wydanie tego repozytorium i sama proponuje instalację (z kontrolą SHA-256).
+- Nowa wersja: podnieś `versionCode` i `versionName` w `fotos/build.gradle.kts` (np. `2.9-ar3`), dopisz
+  `wydania/v2.9-ar3.md`, wypchnij i dodaj tag `v2.9-ar3`. Można to robić z komputera albo z sesji Claude Code w
+  chmurze na telefonie — budowanie i publikacja dzieją się na GitHubie.
+- Ten sam klucz wydań jest na komputerze dewelopera (`~/.android/immichclient-release.properties`), więc APK z
+  komputera i z GitHuba instalują się jedno na drugim. **Klucza nie wolno zgubić** — bez niego nie da się
+  zaktualizować zainstalowanej aplikacji (trzeba by ją odinstalować).
+
 ## Budowanie
 
 ```sh
