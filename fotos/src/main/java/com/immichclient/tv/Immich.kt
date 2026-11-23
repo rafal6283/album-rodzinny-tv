@@ -397,6 +397,46 @@ object Immich {
     private suspend fun put(pad: String, json: JSONObject) =
         haal(Request.Builder().url(api + pad).put(json.toString().toRequestBody("application/json".toMediaType())).build())
 
+    private suspend fun patch(pad: String, json: JSONObject) =
+        haal(Request.Builder().url(api + pad).patch(json.toString().toRequestBody("application/json".toMediaType())).build())
+    private suspend fun delete(pad: String, json: JSONObject) =
+        haal(Request.Builder().url(api + pad).delete(json.toString().toRequestBody("application/json".toMediaType())).build())
+
+    // ---- Edycja: osoby i albumy (uprawnienia person.update / person.merge / album.create / album.update / albumAsset.*) ----
+
+    /** Jedna osoba z datą urodzenia i informacją, czy jest ukryta. */
+    suspend fun osoba(id: String): Pair<Persoon, Boolean> = withContext(Dispatchers.Default) {
+        val o = JSONObject(get("/people/$id"))
+        val ur = o.optString("birthDate").take(10).let { runCatching { LocalDate.parse(it) }.getOrNull() }
+        Persoon(o.getString("id"), o.optString("name").takeIf { it != "null" }.orEmpty(), o.optBoolean("isFavorite"), ur) to o.optBoolean("isHidden")
+    }
+
+    suspend fun zmienImie(id: String, imie: String) { put("/people/$id", JSONObject().put("name", imie.trim())) }
+
+    /** Data urodzenia osoby; null = usuń datę. */
+    suspend fun zmienUrodziny(id: String, data: LocalDate?) {
+        put("/people/$id", JSONObject().put("birthDate", data?.toString() ?: JSONObject.NULL))
+    }
+
+    suspend fun ukryjOsobe(id: String, ukryj: Boolean) { put("/people/$id", JSONObject().put("isHidden", ukryj)) }
+
+    /** Twarze osób [ids] przechodzą do osoby [cel]; osoby [ids] przestają istnieć. */
+    suspend fun polaczOsoby(cel: String, ids: List<String>) { post("/people/$cel/merge", JSONObject().put("ids", JSONArray(ids))) }
+
+    /** Nowy album z podanymi zdjęciami; zwraca jego id. */
+    suspend fun nowyAlbum(nazwa: String, ids: List<String>): String =
+        JSONObject(post("/albums", JSONObject().put("albumName", nazwa.trim()).put("assetIds", JSONArray(ids)))).getString("id")
+
+    /** Dodaj do albumu; zwraca liczbę faktycznie dodanych (pozostałe już w nim były). */
+    suspend fun dodajDoAlbumu(albumId: String, ids: List<String>): Int {
+        val a = JSONArray(put("/albums/$albumId/assets", JSONObject().put("ids", JSONArray(ids))))
+        return (0 until a.length()).count { a.getJSONObject(it).optBoolean("success") }
+    }
+
+    suspend fun usunZAlbumu(albumId: String, ids: List<String>) { delete("/albums/$albumId/assets", JSONObject().put("ids", JSONArray(ids))) }
+
+    suspend fun zmienNazweAlbumu(albumId: String, nazwa: String) { patch("/albums/$albumId", JSONObject().put("albumName", nazwa.trim())) }
+
     /** Ulubione z pilota (wymaga uprawnienia asset.update; bez niego Immich odpowiada 403). */
     suspend fun ustawUlubione(id: String, ulubione: Boolean) { put("/assets/$id", JSONObject().put("isFavorite", ulubione)) }
 

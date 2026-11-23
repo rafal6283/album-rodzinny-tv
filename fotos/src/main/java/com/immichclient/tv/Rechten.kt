@@ -6,6 +6,7 @@ import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -67,6 +68,12 @@ object Rechten {
         Recht("folder.read", R.string.recht_folder_read),
         // ulubione z pilota (jedyna zmiana w bibliotece, jaką robi aplikacja)
         Recht("asset.update", R.string.recht_asset_update),
+        Recht("person.update", R.string.recht_person_update),
+        Recht("person.merge", R.string.recht_person_merge),
+        Recht("album.create", R.string.recht_album_create),
+        Recht("album.update", R.string.recht_album_update),
+        Recht("albumAsset.create", R.string.recht_album_asset_create),
+        Recht("albumAsset.delete", R.string.recht_album_asset_delete),
     )
 
     /** null = nog niet gecontroleerd (of niet te bepalen); anders de ontbrekende rechten */
@@ -130,7 +137,7 @@ fun RechtenScherm(opnieuwKoppelen: () -> Unit, sluit: () -> Unit) {
             .onPreviewKeyEvent { e -> e.type == KeyEventType.KeyDown && e.key.nativeKeyCode == KeyEvent.KEYCODE_MENU }
             .padding(horizontal = 56.dp, vertical = 36.dp),
     ) {
-        Column(Modifier.widthIn(max = 900.dp)) {
+        Column(Modifier.widthIn(max = 900.dp).verticalScroll(androidx.compose.foundation.rememberScrollState())) {
             Text(stringResource(R.string.rechten_titel), style = MaterialTheme.typography.displaySmall)
             val sub = when {
                 Rechten.bezig || mist == null -> stringResource(R.string.rechten_bezig)
@@ -141,7 +148,7 @@ fun RechtenScherm(opnieuwKoppelen: () -> Unit, sluit: () -> Unit) {
             }
             Text(listOfNotNull(Rechten.sleutelNaam?.let { "“$it”" }, sub).joinToString("  ·  "), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht)
             Spacer(Modifier.height(20.dp))
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 for (r in Rechten.ALLE) {
                     val ok = when { mist == null || r.naam in Rechten.onbekend -> null; r.naam in mist -> false; else -> true }
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -150,7 +157,7 @@ fun RechtenScherm(opnieuwKoppelen: () -> Unit, sluit: () -> Unit) {
                             null, Modifier.size(24.dp),
                             tint = when (ok) { true -> Color(0xFF86EFAC); false -> Color(0xFFFCA5A5); null -> Kleur.zacht },
                         )
-                        Text(r.naam, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 14.dp).width(150.dp))
+                        Text(r.naam, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(start = 14.dp).width(190.dp))
                         Text(stringResource(r.wat), style = MaterialTheme.typography.bodyLarge, color = if (ok == false) Color.White else Kleur.zacht)
                     }
                 }

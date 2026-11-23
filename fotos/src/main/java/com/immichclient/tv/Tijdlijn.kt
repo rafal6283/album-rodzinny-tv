@@ -212,6 +212,11 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
     // hoofdtijdlijn heet zoals de app (instelling Naam en icoon), ook als hij al bestond toen die veranderde
     val titel = if (scherm.metHerinneringen) stringResource(Instellingen.uiterlijk.label) else scherm.titel
     var kiezer by remember { mutableStateOf(false) }
+    /** edycja z telewizora: menu osoby / zmiana nazwy albumu */
+    var edycja by remember { mutableStateOf(false) }
+    val edycjaKnop = remember { FocusRequester() }
+    var edycjaBylaOtwarta by remember { mutableStateOf(false) }
+    LaunchedEffect(edycja) { if (edycjaBylaOtwarta && !edycja) { delay(60); runCatching { edycjaKnop.requestFocus() } }; edycjaBylaOtwarta = edycja }
     var sprongLabel by remember { mutableStateOf<String?>(null) }
     val eerste = remember { FocusRequester() }
     val datumKnop = remember { FocusRequester() }
@@ -322,6 +327,12 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                                 selected = false, onClick = { kiezer = true }, modifier = Modifier.focusRequester(datumKnop),
                                 leadingIcon = { Icon(Icons.Filled.CalendarMonth, null, Modifier.width(18.dp)) },
                             tekst = stringResource(R.string.ga_naar_datum))
+                            // edycja: osoba (imię, data urodzenia, ukrycie, połączenie) albo nazwa albumu
+                            if (staat.filter.persoonId != null || staat.filter.albumId != null) Keuze(
+                                selected = false, onClick = { edycja = true }, modifier = Modifier.focusRequester(edycjaKnop),
+                                leadingIcon = { Icon(androidx.compose.material.icons.Icons.Filled.Edit, null, Modifier.width(18.dp)) },
+                                tekst = stringResource(if (staat.filter.persoonId != null) R.string.edytuj_osobe else R.string.album_zmien_nazwe),
+                            )
                             // album jako kanał na ekranie głównym Android TV
                             staat.filter.albumId?.let { albumId ->
                                 val naEkranie = Instellingen.kanalAlbum == albumId
@@ -376,6 +387,29 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
             LaunchedEffect(sprongLabel) { if (sprongLabel != null) { delay(900); sprongLabel = null } }
         }
         if (kiezer) DatumKiezer(staat, sluit = { kiezer = false }, kies = { kiezer = false; spring(it) })
+        if (edycja) {
+            val osobaId = staat.filter.persoonId
+            val albumId = staat.filter.albumId
+            if (osobaId != null) OsobaMenu(
+                osobaId, scherm.titel.takeIf { it != stringResource(R.string.persoon_bez_imienia) }.orEmpty(),
+                ustawTytul = { scherm.titel = it },
+                poPolaczeniu = { nav.terug() },
+                komunikat = { Edycja.komunikat = it },
+                sluit = { edycja = false },
+            )
+            else if (albumId != null) TekstInvoer(stringResource(R.string.album_zmien_nazwe), scherm.titel, actie = stringResource(R.string.zapisz), sluit = { edycja = false }) { nowa ->
+                edycja = false
+                if (nowa.isNotBlank() && nowa.trim() != scherm.titel) scope.launch {
+                    runCatching { Immich.zmienNazweAlbumu(albumId, nowa) }
+                        .onSuccess {
+                            scherm.titel = nowa.trim(); Edycja.nazwyAlbumow[albumId] = nowa.trim(); Edycja.wersjaAlbumow++
+                            if (Instellingen.kanalAlbum == albumId) Instellingen.kanalAlbumNazwa = nowa.trim()
+                            Edycja.komunikat = Taal.s(R.string.zapisano)
+                        }
+                        .onFailure { Edycja.komunikat = Edycja.blad(it) }
+                }
+            }
+        }
     }
 }
 

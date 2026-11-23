@@ -116,8 +116,12 @@ class App : Application(), SingletonImageLoader.Factory {
 /** Een scherm met zijn eigen staat; blijft bewaard zolang het op de stapel staat (terug = zelfde plek, zelfde focus). */
 sealed class Scherm {
     class Tijdlijn(
-        val titel: String, val sub: String?, filter: Filter, nieuwsteEerst: Boolean, val metHerinneringen: Boolean, scope: CoroutineScope,
-    ) : Scherm() { val staat = TijdlijnStaat(filter, nieuwsteEerst, scope) }
+        titel: String, val sub: String?, filter: Filter, nieuwsteEerst: Boolean, val metHerinneringen: Boolean, scope: CoroutineScope,
+    ) : Scherm() {
+        val staat = TijdlijnStaat(filter, nieuwsteEerst, scope)
+        /** zmienny: nowe imię osoby / nowa nazwa albumu nadane z telewizora */
+        var titel by mutableStateOf(titel)
+    }
     class Albums(scope: CoroutineScope) : Scherm() { val staat = AlbumsStaat(scope) }
     class Verkennen(scope: CoroutineScope) : Scherm() { val staat = VerkenStaat(scope) }
     class Zoeken(scope: CoroutineScope) : Scherm() { val staat = ZoekStaat(scope) }
@@ -139,6 +143,8 @@ class Nav(
     val scope: CoroutineScope,
     val open: (Scherm) -> Unit,
     private val toon: (bron: BeeldBron, index: Int, titel: String?, diashow: Boolean, raster: RasterStaat?, naTerug: (() -> Unit)?) -> Unit,
+    /** bieżący ekran podrzędny zamknąć (np. oś czasu osoby po połączeniu jej z inną) */
+    val terug: () -> Unit = {},
 ) {
     /** Viewer openen; [raster] krijgt de focus terug, of [naTerug] wordt aangeroepen bij het sluiten (kaart). */
     fun bekijk(bron: BeeldBron, index: Int, titel: String?, diashow: Boolean, raster: RasterStaat?, naTerug: (() -> Unit)? = null) =
@@ -336,6 +342,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             scope = scope,
             open = { stapel.add(it) },
             toon = { bron, i, titel, dia, raster, naTerug -> if (i >= 0) kijker = Triple(KijkerStaat(bron, i, titel, dia), raster, naTerug) },
+            terug = { if (stapel.isNotEmpty()) stapel.removeAt(stapel.lastIndex) },
         )
     }
     fun wortel(s: Sectie): Scherm = wortels.getOrPut(s) {
@@ -563,5 +570,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         }
         // ekran udostępniania na samym wierzchu (otwierany z przeglądarki); po zamknięciu fokus wraca do przeglądarki
         if (Udostepnianie.otwarte) UdostepnianieScherm()
+        // komunikaty edycji (osoby, albumy) na samym wierzchu
+        EdycjaKomunikat(Modifier.align(androidx.compose.ui.Alignment.BottomCenter))
     }
 }

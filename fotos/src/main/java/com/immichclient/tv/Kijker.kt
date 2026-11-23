@@ -155,6 +155,10 @@ class KijkerStaat(val bron: BeeldBron, start: Int, val titel: String?, diashow: 
     var liveGra by mutableStateOf(false)
     /** krótki komunikat na dole ekranu (np. brak uprawnienia do ulubionych) */
     var komunikat by mutableStateOf<String?>(null)
+    /** otwarty wybór albumu dla tych zdjęć (▼ → Do albumu) */
+    var doAlbumu by mutableStateOf<List<String>?>(null)
+    /** zdjęcia usunięte z albumu w tej przeglądarce (przycisk zmienia się na „Przywróć”) */
+    val usunieteZAlbumu = androidx.compose.runtime.mutableStateMapOf<String, Boolean>()
     var speler: ExoPlayer? = null
     /** chwila ostatniego przewinięcia filmu (pasek czasu jest wtedy widoczny przez kilka sekund) */
     var przewinieto by mutableLongStateOf(0L)
@@ -241,7 +245,7 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     val ctx = LocalContext.current
     val fr = remember { FocusRequester() }
     val huidig = staat.bron.op(staat.index)
-    BackHandler {
+    BackHandler(enabled = staat.doAlbumu == null) {
         when {
             staat.zoom > 1f -> { staat.zoom = 1f; staat.przesX = 0f; staat.przesY = 0f }
             staat.pasek -> staat.pasek = false
@@ -256,6 +260,12 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     LaunchedEffect(Unit) { fr.requestFocus() }
     // po zamknięciu ekranu udostępniania fokus wraca do przeglądarki
     LaunchedEffect(Udostepnianie.otwarte) { if (!Udostepnianie.otwarte) { delay(50); runCatching { fr.requestFocus() } } }
+    LaunchedEffect(staat.doAlbumu == null) { if (staat.doAlbumu == null) { delay(50); runCatching { fr.requestFocus() } } }
+    // album, z którego coś usunięto: po zamknięciu przeglądarki jego oś czasu wczytuje się od nowa
+    DisposableEffect(Unit) {
+        onDispose { (staat.bron as? TijdlijnStaat)?.let { t -> t.filter.albumId?.let { if (Edycja.doOdswiezenia.remove(it)) t.herlaad() } } }
+    }
+    val albumZrodla = (staat.bron as? TijdlijnStaat)?.filter?.albumId
     // Tijdens een diashow het scherm aan houden: anders start de systeem-screensaver (op o.a. de Google TV
     // Streamer niet uit te zetten) midden in de diashow. Gepauzeerd of gestopt geldt weer de gewone timeout.
     val view = LocalView.current
@@ -306,11 +316,11 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     }
 
     val ekran = with(LocalDensity.current) { androidx.compose.ui.platform.LocalConfiguration.current.let { it.screenWidthDp.dp.toPx() to it.screenHeightDp.dp.toPx() } }
-    val akcje = akcjeDla(huidig, opKaart != null)
+    val akcje = akcjeDla(huidig, opKaart != null, albumZrodla != null)
     val zakres = androidx.compose.runtime.rememberCoroutineScope()
     fun wykonaj(ak: Akcja) {
         // ulubione i udostępnianie zostawiają pasek otwarty (widać zmianę na przycisku)
-        if (ak != Akcja.ULUBIONE && ak != Akcja.UDOSTEPNIJ) staat.pasek = false
+        if (ak != Akcja.ULUBIONE && ak != Akcja.UDOSTEPNIJ && ak != Akcja.Z_ALBUMU) staat.pasek = false
         when (ak) {
             Akcja.POKAZ -> staat.diashow = !staat.diashow
             Akcja.POPRZEDNI -> ga(-1)
@@ -322,6 +332,23 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
             Akcja.LIVE -> { staat.diashow = false; staat.liveGra = true }
             Akcja.UDOSTEPNIJ -> if (huidig != null) Udostepnianie.przelacz(huidig)
             Akcja.KOD_QR -> { staat.diashow = false; Udostepnianie.otworz(ctx) }
+            Akcja.ALBUM -> if (huidig != null) {
+                staat.diashow = false
+                // zaznaczone (koszyk z „Zaznacz”) razem z bieżącym; bez zaznaczenia samo bieżące zdjęcie
+                staat.doAlbumu = (Udostepnianie.koszyk.map { it.id } + huidig.id).distinct()
+            }
+            Akcja.Z_ALBUMU -> if (huidig != null && albumZrodla != null) {
+                val bylo = staat.usunieteZAlbumu[huidig.id] == true
+                zakres.launch {
+                    runCatching { if (bylo) Immich.dodajDoAlbumu(albumZrodla, listOf(huidig.id)) else Immich.usunZAlbumu(albumZrodla, listOf(huidig.id)) }
+                        .onSuccess {
+                            staat.usunieteZAlbumu[huidig.id] = !bylo
+                            Edycja.doOdswiezenia.add(albumZrodla); Edycja.wersjaAlbumow++
+                            staat.komunikat = ctx.getString(if (bylo) R.string.album_przywrocono else R.string.album_usunieto)
+                        }
+                        .onFailure { staat.komunikat = Edycja.blad(it) }
+                }
+            }
         }
     }
     // Live Photo: krótki film odtwarza się sam raz po otwarciu zdjęcia (nie w trakcie pokazu)
@@ -332,6 +359,7 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
 
     BoxWithConstraints(
         Modifier.fillMaxSize().background(Color.Black).focusRequester(fr).focusable().onPreviewKeyEvent { e ->
+            if (staat.doAlbumu != null) return@onPreviewKeyEvent false
             val k = e.key.nativeKeyCode
             // --- film (poza pokazem slajdów): ◀ ▶ krótko = poprzedni / następny, przytrzymane = przewijanie. Działa dopiero
             // po własnym wciśnięciu w filmie (puszczenie strzałki, którą tu przyszliśmy ze zdjęcia, nic nie robi) ---
@@ -509,6 +537,8 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
             AnimatedVisibility(staat.diashow && Instellingen.diaBeeld == DiaBeeld.ALLES, enter = fadeIn(), exit = fadeOut()) { DiaRing(staat) }
         }
     }
+    // wybór albumu (▼ → Do albumu): to zdjęcie albo wszystkie zaznaczone
+    staat.doAlbumu?.let { ids -> AlbumWybor(ids, komunikat = { staat.komunikat = it }) { staat.doAlbumu = null } }
 }
 
 /** Ringetje dat in de diashow-tijd volloopt en bij elke foto opnieuw begint; staat stil zolang een video speelt. */
@@ -872,9 +902,9 @@ private fun OsobyRegel(osoby: List<Persoon>) {
 }
 
 /** Akcje dolnego paska przeglądarki (▼), jak okrągłe przyciski w Immichin. */
-enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, MAPA }
+enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, ALBUM, Z_ALBUMU, MAPA }
 
-fun akcjeDla(a: Asset?, zMapa: Boolean): List<Akcja> = buildList {
+fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false): List<Akcja> = buildList {
     add(Akcja.POKAZ)
     if (a != null) add(Akcja.ULUBIONE)
     add(Akcja.SZCZEGOLY)
@@ -882,6 +912,8 @@ fun akcjeDla(a: Asset?, zMapa: Boolean): List<Akcja> = buildList {
     if (a?.live != null) add(Akcja.LIVE)
     if (a != null) add(Akcja.UDOSTEPNIJ)
     if (Udostepnianie.koszyk.isNotEmpty()) add(Akcja.KOD_QR)
+    if (a != null) add(Akcja.ALBUM)
+    if (a != null && zAlbumu) add(Akcja.Z_ALBUMU)
     if (zMapa && a?.lat != null) add(Akcja.MAPA)
 }
 
@@ -940,6 +972,13 @@ private fun PasekAkcji(staat: KijkerStaat, akcje: List<Akcja>) {
                             stringResource(if (w) R.string.udost_wybrane else R.string.udost_dodaj)
                     }
                     Akcja.KOD_QR -> androidx.compose.material.icons.Icons.Filled.QrCode2 to stringResource(R.string.udost_kod, Udostepnianie.koszyk.size)
+                    Akcja.ALBUM -> androidx.compose.material.icons.Icons.Filled.LibraryAdd to
+                        (if (Udostepnianie.koszyk.isNotEmpty()) stringResource(R.string.album_akcja_n, (Udostepnianie.koszyk.map { it.id } + listOfNotNull(staat.bron.op(staat.index)?.id)).distinct().size) else stringResource(R.string.album_akcja))
+                    Akcja.Z_ALBUMU -> {
+                        val usuniete = staat.bron.op(staat.index)?.let { staat.usunieteZAlbumu[it.id] } == true
+                        (if (usuniete) androidx.compose.material.icons.Icons.Filled.Undo else androidx.compose.material.icons.Icons.Filled.RemoveCircleOutline) to
+                            stringResource(if (usuniete) R.string.album_przywroc else R.string.album_usun)
+                    }
                 }
                 val skala by animateFloatAsState(if (wybrany) 1.08f else 1f, tween(140), label = "akcja")
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(92.dp)) {

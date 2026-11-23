@@ -75,14 +75,16 @@ class PersonenStaat(start: List<Persoon>, scope: CoroutineScope? = null, laad: (
         }
     }
 
-    val aantalMetNaam get() = alle.count { it.naam.isNotBlank() }
+    val aantalMetNaam get() = alle.count { Edycja.widoczna(it) && Edycja.imie(it).isNotBlank() }
 
     fun zichtbaar(): List<Persoon> {
         val z = zonderAccenten(zoek.trim())
+        // zmiany z telewizora: nowe imiona, ukryte i połączone osoby
+        val teraz = alle.filter { Edycja.widoczna(it) }.map { p -> Edycja.imiona[p.id]?.let { p.copy(naam = it) } ?: p }
         var l = when (kto) {
-            KtoPokazac.WSZYSCY -> alle
-            KtoPokazac.Z_IMIENIEM -> alle.filter { it.naam.isNotBlank() }
-            KtoPokazac.BEZ_IMIENIA -> alle.filter { it.naam.isBlank() }
+            KtoPokazac.WSZYSCY -> teraz
+            KtoPokazac.Z_IMIENIEM -> teraz.filter { it.naam.isNotBlank() }
+            KtoPokazac.BEZ_IMIENIA -> teraz.filter { it.naam.isBlank() }
         }
         if (z.isNotEmpty()) l = l.filter { p -> zonderAccenten(p.naam).split(' ').any { it.startsWith(z, ignoreCase = true) } || zonderAccenten(p.naam).contains(z, ignoreCase = true) }
         // na nazwie: bez imienia na końcu (w kolejności Immich, czyli wg liczby zdjęć)
@@ -94,7 +96,7 @@ fun zonderAccenten(s: String) = java.text.Normalizer.normalize(s, java.text.Norm
 
 @Composable
 fun PersonenScherm(staat: PersonenStaat, nav: Nav) {
-    val lijst = remember(staat.alle, staat.zoek, staat.opNaam, staat.kto) { staat.zichtbaar() }
+    val lijst = remember(staat.alle, staat.zoek, staat.opNaam, staat.kto, Edycja.wersjaOsob) { staat.zichtbaar() }
     val persoon = stringResource(R.string.persoon)
     val bezImienia = stringResource(R.string.persoon_bez_imienia)
     var zoekOpen by remember { mutableStateOf(false) }
@@ -116,7 +118,7 @@ fun PersonenScherm(staat: PersonenStaat, nav: Nav) {
                     val sub = when {
                         staat.laadt -> stringResource(R.string.laden)
                         staat.fout != null -> stringResource(R.string.kaart_niet_geladen, staat.fout.orEmpty())
-                        staat.metNaamloos -> stringResource(R.string.ludzie_sub, Taal.getal(staat.alle.size), Taal.getal(staat.aantalMetNaam))
+                        staat.metNaamloos -> stringResource(R.string.ludzie_sub, Taal.getal(staat.alle.count { Edycja.widoczna(it) }), Taal.getal(staat.aantalMetNaam))
                         else -> Taal.getal(lijst.size)
                     } + if (staat.zoek.isNotBlank()) "  ·  “${staat.zoek}”  ·  ${Taal.getal(lijst.size)}" else ""
                     SchermKop(etykieta = stringResource(R.string.etyk_odkrywaj), titel = stringResource(R.string.personen), sub = sub)
