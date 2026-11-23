@@ -309,6 +309,18 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         InstelScherm(test = instelTest && !instellen, terug = if (gekoppeld) ({ instellen = false }) else null, klaar = { instellen = false; herstart() }, finish = finish)
         return
     }
+    // profil domownika z PIN-em: przy starcie najpierw PIN (albo przejście na wspólny profil główny)
+    val ctxPin = androidx.compose.ui.platform.LocalContext.current
+    var zablokowane by remember { mutableStateOf(Pin.ma(ctxPin, Immich.kijker)) }
+    if (zablokowane) {
+        val profil = Immich.kijker.orEmpty()
+        PinEkran(
+            stringResource(R.string.pin_tytul, profil), stringResource(R.string.pin_wpisz),
+            inne = stringResource(R.string.pin_na_glowny) to { Profile.przelacz(ctxPin, null); zablokowane = false; herstart() },
+            anuluj = null,
+        ) { pin -> Pin.sprawdz(ctxPin, profil, pin).also { if (it) zablokowane = false } }
+        return
+    }
     // Eén scope voor alle schermstaten, met een CoroutineExceptionHandler: een onverwachte fout in een coroutine (de
     // meeste zijn al met runCatching afgedekt) sluit dan niet de hele app, maar komt in de diagnose terecht.
     val scope = remember {
@@ -386,6 +398,13 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             nav.bekijk(LijstBron(lista), i, tytul, id == null, null)
         }
         WejscieKanal.zadanie = null
+    }
+    // „Tego dnia” jako pokaz na start (Ustawienia → Oś czasu): raz na uruchomienie, tylko gdy są zdjęcia z tego dnia
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        if (!Instellingen.tegoDniaStart || TegoDniaStart.pokazano || testIndex >= 0 || WejscieKanal.zadanie != null) return@LaunchedEffect
+        TegoDniaStart.pokazano = true
+        val lista = TegoDniaStart.zasoby()
+        if (lista.isNotEmpty() && kijker == null) nav.bekijk(LijstBron(lista), 0, ctx.getString(R.string.tego_dnia), true, null)
     }
     if (testIndex >= 0) androidx.compose.runtime.LaunchedEffect(Unit) {
         val s = (wortel(Sectie.FOTOS) as Scherm.Tijdlijn).staat

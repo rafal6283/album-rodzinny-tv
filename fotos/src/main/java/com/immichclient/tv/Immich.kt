@@ -159,9 +159,10 @@ object Immich {
     // ---- Zoeken ----
 
     /** Slim zoeken (CLIP): "strand", "verjaardag met taart", "hond in de sneeuw". Volgorde = relevantie; taal = de app-taal. */
-    suspend fun zoekSlim(tekst: String, pagina: Int, alleenVideo: Boolean?): Pagina {
+    suspend fun zoekSlim(tekst: String, pagina: Int, alleenVideo: Boolean?, filtr: ZoekFiltr = ZoekFiltr()): Pagina {
         val body = JSONObject().put("query", tekst).put("language", Taal.code).put("size", 120).put("page", pagina)
         if (alleenVideo != null) body.put("type", if (alleenVideo) "VIDEO" else "IMAGE")
+        filtr.dopisz(body)
         return pagina(JSONObject(post("/search/smart", body)))
     }
 
@@ -177,10 +178,11 @@ object Immich {
      * Bestandsnaam / omschrijving / OCR (tekst op de foto), eventueel alleen foto's of video's. Zonder tekst = alle
      * foto's of video's van de tijdlijn, nieuwste eerst (zoals het type-filter in de web-app).
      */
-    suspend fun zoekTekst(tekst: String?, veld: String, pagina: Int, alleenVideo: Boolean? = null): Pagina {
+    suspend fun zoekTekst(tekst: String?, veld: String, pagina: Int, alleenVideo: Boolean? = null, filtr: ZoekFiltr = ZoekFiltr()): Pagina {
         val body = JSONObject().put("size", 250).put("page", pagina).put("order", "desc")
         if (tekst != null) body.put(veld, tekst) else body.put("visibility", "timeline")
         if (alleenVideo != null) body.put("type", if (alleenVideo) "VIDEO" else "IMAGE")
+        filtr.dopisz(body)
         return pagina(JSONObject(post("/search/metadata", body)))
     }
 
@@ -401,6 +403,19 @@ object Immich {
         haal(Request.Builder().url(api + pad).patch(json.toString().toRequestBody("application/json".toMediaType())).build())
     private suspend fun delete(pad: String, json: JSONObject) =
         haal(Request.Builder().url(api + pad).delete(json.toString().toRequestBody("application/json".toMediaType())).build())
+
+    /** Zdjęcia osoby z okresu [od, do] (porównanie „kiedyś i dziś”), od najnowszych. */
+    suspend fun osobaWOkresie(osobaId: String, od: LocalDate?, doDnia: LocalDate?, n: Int, rosnaco: Boolean = false): List<Asset> = withContext(Dispatchers.Default) {
+        val body = JSONObject().put("size", n).put("page", 1).put("order", if (rosnaco) "asc" else "desc").put("withExif", true)
+            .put("personIds", JSONArray(listOf(osobaId))).put("type", "IMAGE")
+        od?.let { body.put("takenAfter", "${it}T00:00:00.000Z") }
+        doDnia?.let { body.put("takenBefore", "${it}T23:59:59.999Z") }
+        val a = JSONObject(post("/search/metadata", body)).getJSONObject("assets").getJSONArray("items")
+        List(a.length()) { asset(a.getJSONObject(it)) }
+    }
+
+    /** Pierwsza strona twarzy bez imienia (ekran „Kto to jest?”), w kolejności Immich (najczęstsze najpierw). */
+    suspend fun osobyBezImienia(): List<Persoon> = wszystkieOsoby().filter { it.naam.isBlank() }
 
     // ---- Edycja: osoby i albumy (uprawnienia person.update / person.merge / album.create / album.update / albumAsset.*) ----
 

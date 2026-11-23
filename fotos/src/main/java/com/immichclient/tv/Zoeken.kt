@@ -33,6 +33,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -118,6 +123,8 @@ class ZoekStaat(scope: CoroutineScope) {
     /** na een nieuwe zoekopdracht het eerste resultaat focus geven */
     var focusOpResultaat = false
     var personen by mutableStateOf<List<Persoon>>(emptyList())
+    /** filtry: osoba + miejsce + rok (np. „Ola, Antalya, 2025”); działają z tekstem i bez */
+    var filtr by mutableStateOf(ZoekFiltr())
 
     init {
         scope.launch { runCatching { Immich.personen() }.onSuccess { personen = it } }
@@ -125,17 +132,18 @@ class ZoekStaat(scope: CoroutineScope) {
     }
 
     /** Zoekopdracht zonder tekst, alleen het type (alle video's / alle foto's, op datum). */
-    val alleenType get() = tekst.isBlank() && type != ZoekType.ALLES
+    val alleenType get() = tekst.isBlank() && (type != ZoekType.ALLES || !filtr.pusty)
 
     fun zoek(c: Context) {
         val t = tekst.trim()
         val ty = type
+        val f = filtr
         if (t.isEmpty()) {
-            // geen tekst: met Foto's/Video's gekozen = alles van dat type op datum, anders niets te zoeken
-            if (ty.video == null) { if (res.gezocht) res.wis(); return }
+            // geen tekst: met Foto's/Video's of een filter gekozen = alles daarvan op datum, anders niets te zoeken
+            if (ty.video == null && f.pusty) { if (res.gezocht) res.wis(); return }
             if (volgorde == ZoekVolgorde.RELEVANTIE) volgorde = ZoekVolgorde.NIEUW
             focusOpResultaat = true
-            res.start { p -> Immich.zoekTekst(null, "", p, ty.video) }
+            res.start { p -> Immich.zoekTekst(null, "", p, ty.video, f) }
             return
         }
         Recent.voegToe(c, t)
@@ -143,12 +151,15 @@ class ZoekStaat(scope: CoroutineScope) {
         val m = modus
         res.start { p ->
             when (m) {
-                ZoekModus.SLIM -> Immich.zoekSlim(t, p, ty.video)
-                ZoekModus.TEKST -> Immich.zoekTekst(t, "ocr", p, ty.video)
-                ZoekModus.NAAM -> Immich.zoekTekst(t, "originalFileName", p, ty.video)
+                ZoekModus.SLIM -> Immich.zoekSlim(t, p, ty.video, f)
+                ZoekModus.TEKST -> Immich.zoekTekst(t, "ocr", p, ty.video, f)
+                ZoekModus.NAAM -> Immich.zoekTekst(t, "originalFileName", p, ty.video, f)
             }
         }
     }
+
+    /** Opis filtrów do tytułu wyników („Ola · Antalya · 2025”). */
+    fun opisFiltra() = listOfNotNull(filtr.osoba?.naam, filtr.miasto, filtr.rok?.toString()).joinToString(" · ")
 }
 
 object Recent {
@@ -165,6 +176,7 @@ object Recent {
 fun ZoekScherm(staat: ZoekStaat, nav: Nav) {
     val ctx = LocalContext.current
     var invoer by remember { mutableStateOf(false) }
+    var filtrOkno by remember { mutableStateOf<String?>(null) }
     val veld = remember { FocusRequester() }
     val spraak = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         val t = r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
@@ -197,7 +209,7 @@ fun ZoekScherm(staat: ZoekStaat, nav: Nav) {
         }
         FotoRaster(
             rijen = rijen, staat = staat.res.raster, bovenAantal = 1,
-            onKlik = { a -> nav.bekijk(bron, gesorteerd.indexOf(a), if (staat.alleenType) ctx.getString(staat.type.label) else ctx.getString(R.string.zoeken_titel, staat.tekst), false, staat.res.raster) },
+            onKlik = { a -> nav.bekijk(bron, gesorteerd.indexOf(a), if (staat.alleenType) staat.opisFiltra().ifEmpty { ctx.getString(staat.type.label) } else ctx.getString(R.string.zoeken_titel, staat.tekst), false, staat.res.raster) },
             modifier = Modifier.fillMaxSize(),
         ) {
             item(key = "boven") {
@@ -245,6 +257,20 @@ fun ZoekScherm(staat: ZoekStaat, nav: Nav) {
                         Spacer(Modifier.width(18.dp))
                         for (t in ZoekType.entries) Keuze(selected = staat.type == t, onClick = { staat.type = t; staat.zoek(ctx) }, tekst = stringResource(t.label))
                     }
+                    // filtry: osoba / miejsce / rok (łączą się z tekstem i ze sobą)
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Keuze(selected = staat.filtr.osoba != null, onClick = { filtrOkno = "osoba" },
+                            leadingIcon = { Icon(Icons.Filled.Person, null, Modifier.width(18.dp)) },
+                            tekst = staat.filtr.osoba?.naam ?: stringResource(R.string.filtr_osoba))
+                        Keuze(selected = staat.filtr.miasto != null, onClick = { filtrOkno = "miejsce" },
+                            leadingIcon = { Icon(Icons.Filled.Place, null, Modifier.width(18.dp)) },
+                            tekst = staat.filtr.miasto ?: stringResource(R.string.filtr_miejsce))
+                        Keuze(selected = staat.filtr.rok != null, onClick = { filtrOkno = "rok" },
+                            leadingIcon = { Icon(Icons.Filled.CalendarMonth, null, Modifier.width(18.dp)) },
+                            tekst = staat.filtr.rok?.toString() ?: stringResource(R.string.filtr_rok))
+                        if (!staat.filtr.pusty) Keuze(selected = false, onClick = { staat.filtr = ZoekFiltr(); staat.zoek(ctx) },
+                            leadingIcon = { Icon(Icons.Filled.Close, null, Modifier.width(18.dp)) }, tekst = stringResource(R.string.filtr_wyczysc))
+                    }
                     if (staat.res.assets.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         for (v in ZoekVolgorde.entries) Keuze(selected = staat.volgorde == v, onClick = { staat.volgorde = v }, tekst = stringResource(v.label))
                     }
@@ -264,7 +290,41 @@ fun ZoekScherm(staat: ZoekStaat, nav: Nav) {
     // laag dicht: focus terug op het zoekveld (anders springt Android naar de lade); resultaten nemen hem daarna over
     var wasOpen by remember { mutableStateOf(false) }
     LaunchedEffect(invoer) { if (wasOpen && !invoer) { delay(16); runCatching { veld.requestFocus() } }; wasOpen = invoer }
+    var filtrByl by remember { mutableStateOf(false) }
+    LaunchedEffect(filtrOkno) { if (filtrByl && filtrOkno == null && staat.res.assets.isEmpty()) { delay(16); runCatching { veld.requestFocus() } }; filtrByl = filtrOkno != null }
     if (invoer) TekstInvoer(stringResource(R.string.zoeken), staat.tekst, sluit = { invoer = false }) { staat.tekst = it; invoer = false; staat.zoek(ctx) }
+    FiltrWybor(filtrOkno, staat, sluit = { filtrOkno = null }) { filtrOkno = null; staat.zoek(ctx) }
+}
+
+/** Wybór filtra wyszukiwania: osoba (z imieniem), miejsce (miasta z biblioteki) albo rok. */
+@Composable
+private fun FiltrWybor(okno: String?, staat: ZoekStaat, sluit: () -> Unit, wybrano: () -> Unit) {
+    when (okno) {
+        "osoba" -> KiesLijst(
+            stringResource(R.string.filtr_osoba),
+            listOf(KiesItem("", stringResource(R.string.filtr_dowolna), null, null)) + staat.personen.map { KiesItem(it.id, it.naam, null, Immich.gezicht(it.id), rond = true) },
+            staat.filtr.osoba?.id.orEmpty(), sluit = sluit,
+        ) { id, _ -> staat.filtr = staat.filtr.copy(osoba = staat.personen.firstOrNull { it.id == id }); wybrano() }
+        "miejsce" -> {
+            val miejsca by produceState<List<KiesItem>?>(null) {
+                value = runCatching { Immich.plaatsen() }.getOrDefault(emptyList())
+                    .sortedWith(compareBy(java.text.Collator.getInstance(Taal.locale)) { it.stad })
+                    .map { KiesItem(it.stad, it.stad, it.land, Immich.thumb(it.omslag)) }.distinctBy { it.id }
+            }
+            KiesLijst(
+                stringResource(R.string.filtr_miejsce), miejsca?.let { listOf(KiesItem("", stringResource(R.string.filtr_dowolne), null, null)) + it },
+                staat.filtr.miasto.orEmpty(), sluit = sluit,
+            ) { id, _ -> staat.filtr = staat.filtr.copy(miasto = id.ifEmpty { null }); wybrano() }
+        }
+        "rok" -> {
+            val teraz = java.time.LocalDate.now().year
+            KiesLijst(
+                stringResource(R.string.filtr_rok),
+                listOf(KiesItem("", stringResource(R.string.filtr_dowolny), null, null)) + (teraz downTo 1980).map { KiesItem(it.toString(), it.toString(), null, null) },
+                staat.filtr.rok?.toString().orEmpty(), sluit = sluit,
+            ) { id, _ -> staat.filtr = staat.filtr.copy(rok = id.toIntOrNull()); wybrano() }
+        }
+    }
 }
 
 @Composable
@@ -319,10 +379,20 @@ private fun Suggesties(staat: ZoekStaat, nav: Nav, zoek: (String) -> Unit) {
  * [live] krijgt elke wijziging (albums filteren tijdens het typen).
  */
 @Composable
-fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, actie: String = stringResource(R.string.actie_zoeken), sluit: () -> Unit, klaar: (String) -> Unit) {
+fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, actie: String = stringResource(R.string.actie_zoeken), wielkie: Boolean = false, sluit: () -> Unit, klaar: (String) -> Unit) {
     var tekst by remember { mutableStateOf(begin) }
     val eerste = remember { FocusRequester() }
     fun zet(t: String) { tekst = t; live?.invoke(t) }
+    // imiona i nazwy albumów: wielka litera na początku każdego słowa
+    fun litera(c: Char) = if (wielkie && (tekst.isEmpty() || tekst.endsWith(' '))) c.uppercaseChar() else c
+    val ctxT = LocalContext.current
+    val spraakT = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
+        val t = r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+        if (r.resultCode == Activity.RESULT_OK && !t.isNullOrBlank()) zet(if (wielkie) t.split(' ').joinToString(" ") { w -> w.replaceFirstChar { it.titlecase(Taal.locale) } } else t)
+    }
+    val kanSpraakT = remember { ctxT.packageManager.queryIntentActivities(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0).isNotEmpty() }
+    // litery narodowe języka aplikacji (polskie znaki w imionach: Łucja, Józef)
+    val extra = when (Taal.code) { "pl" -> "ąćęłńóśźż"; "de" -> "äöüß"; "fr" -> "éèêàçùôî"; "es" -> "ñáéíóúü"; else -> "" }
     BackHandler { sluit() }
     Box(
         Modifier.fillMaxSize().background(Color(0xF00A0A0A)).focusVangen().onPreviewKeyEvent { e ->
@@ -355,13 +425,25 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
             "abcdefghijklmnopqrstuvwxyz1234567890".chunked(10).forEachIndexed { ri, rij ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     rij.forEachIndexed { ci, c ->
-                        Toets(c.toString(), Modifier.weight(1f).then(if (ri == 0 && ci == 0) Modifier.focusRequester(eerste) else Modifier)) { zet(tekst + c) }
+                        Toets(litera(c).toString(), Modifier.weight(1f).then(if (ri == 0 && ci == 0) Modifier.focusRequester(eerste) else Modifier)) { zet(tekst + litera(c)) }
                     }
                     // laatste rij aanvullen tot 10, zodat alles netjes onder elkaar staat
                     repeat(10 - rij.length) { Spacer(Modifier.weight(1f)) }
                 }
             }
+            if (extra.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                extra.forEach { c -> Toets(litera(c).toString(), Modifier.weight(1f)) { zet(tekst + litera(c)) } }
+                Toets("-", Modifier.weight(1f)) { zet("$tekst-") }
+                repeat((9 - extra.length).coerceAtLeast(0)) { Spacer(Modifier.weight(1f)) }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (kanSpraakT) Toets("🎤", Modifier.weight(1f)) {
+                    runCatching {
+                        spraakT.launch(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                            .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                            .putExtra(RecognizerIntent.EXTRA_LANGUAGE, Taal.locale.toLanguageTag()))
+                    }
+                }
                 Toets(stringResource(R.string.toets_spatie), Modifier.weight(3f)) { zet("$tekst ") }
                 Toets("⌫", Modifier.weight(1f)) { zet(tekst.dropLast(1)) }
                 Toets(stringResource(R.string.toets_wissen), Modifier.weight(2f)) { zet("") }

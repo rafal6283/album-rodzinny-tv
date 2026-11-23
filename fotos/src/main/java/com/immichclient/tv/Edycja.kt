@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -120,7 +121,7 @@ fun OsobaMenu(id: String, imie: String, ustawTytul: (String) -> Unit, poPolaczen
         Knop(stringResource(R.string.osoba_polacz), stringResource(R.string.osoba_polacz_sub), Modifier.width(560.dp)) { okno = "polacz" }
     }
     when (okno) {
-        "imie" -> TekstInvoer(stringResource(R.string.osoba_imie), nazwa, actie = stringResource(R.string.zapisz), sluit = { okno = null }) { nowe ->
+        "imie" -> TekstInvoer(stringResource(R.string.osoba_imie), nazwa, actie = stringResource(R.string.zapisz), wielkie = true, sluit = { okno = null }) { nowe ->
             okno = null
             if (nowe.isNotBlank() && nowe.trim() != nazwa) scope.launch {
                 runCatching { Immich.zmienImie(id, nowe) }
@@ -255,7 +256,7 @@ fun AlbumWybor(ids: List<String>, komunikat: (String) -> Unit, sluit: () -> Unit
             }
         }
     }
-    else TekstInvoer(stringResource(R.string.album_nazwa), "", actie = stringResource(R.string.album_utworz), sluit = { nazwaOkno = false }) { nazwa ->
+    else TekstInvoer(stringResource(R.string.album_nazwa), "", actie = stringResource(R.string.album_utworz), wielkie = true, sluit = { nazwaOkno = false }) { nazwa ->
         if (nazwa.isBlank()) return@TekstInvoer
         sluit()
         scope.launch {
@@ -276,5 +277,97 @@ fun EdycjaKomunikat(modifier: Modifier) {
     androidx.compose.animation.AnimatedVisibility(k != null, modifier.padding(bottom = 60.dp), enter = androidx.compose.animation.fadeIn(), exit = androidx.compose.animation.fadeOut()) {
         Text(k.orEmpty(), style = MaterialTheme.typography.titleMedium, color = Color.White,
             modifier = Modifier.background(Color(0xF0181822), RoundedCornerShape(20.dp)).padding(horizontal = 24.dp, vertical = 12.dp))
+    }
+}
+
+/**
+ * „Kto to jest?”: twarze bez imienia jedna po drugiej (najczęstsze najpierw). Dla każdej: przypisz do osoby z listy
+ * (połączenie), wpisz nowe imię, ukryj albo pomiń. Szybkie porządkowanie z kanapy.
+ */
+@Composable
+fun KtoToJest(sluit: () -> Unit) {
+    Lagen.Open()
+    val scope = rememberCoroutineScope()
+    BackHandler { sluit() }
+    val bez by produceState<List<Persoon>?>(null) { value = runCatching { Immich.osobyBezImienia() }.getOrDefault(emptyList()) }
+    val znane by produceState<List<Persoon>>(emptyList()) { value = runCatching { Immich.wszystkieOsoby().filter { it.naam.isNotBlank() } }.getOrDefault(emptyList()) }
+    var i by remember { mutableIntStateOf(0) }
+    var okno by remember { mutableStateOf<String?>(null) }
+    val pierwszy = remember { FocusRequester() }
+    val lista = bez?.filter { Edycja.widoczna(it) && Edycja.imiona[it.id].isNullOrBlank() }
+    val p = lista?.getOrNull(i)
+    LaunchedEffect(p?.id, okno) { if (okno == null) { delay(60); runCatching { pierwszy.requestFocus() } } }
+    // przypisana / nazwana / ukryta twarz znika z listy, więc ten sam indeks pokazuje następną; „Pomiń” = indeks + 1
+    fun zrobione(msg: String) { Edycja.wersjaOsob++; Edycja.komunikat = msg }
+
+    Box(Modifier.fillMaxSize().background(Color(0xF7090910)).focusVangen().padding(horizontal = 56.dp, vertical = 32.dp)) {
+        Column {
+            Text(stringResource(R.string.kto_etyk).uppercase(Taal.locale), style = EtykietaStyl)
+            Text(stringResource(R.string.kto_tytul), style = TytulStyl, color = Color.White)
+            Text(
+                when {
+                    lista == null -> stringResource(R.string.laden)
+                    p == null -> stringResource(R.string.kto_koniec)
+                    else -> stringResource(R.string.kto_sub, Taal.getal(i + 1), Taal.getal(lista.size))
+                },
+                style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht, modifier = Modifier.padding(bottom = 16.dp),
+            )
+            if (p == null) {
+                if (lista != null) Knop(stringResource(R.string.rechten_sluiten), null, Modifier.width(220.dp).focusRequester(pierwszy)) { sluit() }
+                return@Column
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    coil3.compose.AsyncImage(
+                        beeld(Immich.gezicht(p.id)), null,
+                        Modifier.size(200.dp).background(Kleur.vlak, androidx.compose.foundation.shape.CircleShape)
+                            .clip(androidx.compose.foundation.shape.CircleShape),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    )
+                    // kilka zdjęć z tą osobą, żeby łatwiej rozpoznać
+                    val zdjecia by produceState<List<Asset>>(emptyList(), p.id) { value = runCatching { Immich.osobaWOkresie(p.id, null, null, 3) }.getOrDefault(emptyList()) }
+                    Row(Modifier.padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        zdjecia.forEach { a ->
+                            coil3.compose.AsyncImage(beeld(Immich.thumb(a.id)), null, Modifier.size(96.dp).clip(RoundedCornerShape(12.dp)), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                        }
+                    }
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Knop(stringResource(R.string.kto_to_jest), stringResource(R.string.kto_to_jest_sub), Modifier.width(420.dp).focusRequester(pierwszy)) { okno = "wybierz" }
+                    Knop(stringResource(R.string.kto_nowe), stringResource(R.string.kto_nowe_sub), Modifier.width(420.dp)) { okno = "imie" }
+                    Knop(stringResource(R.string.osoba_ukryj), stringResource(R.string.osoba_ukryj_sub), Modifier.width(420.dp)) {
+                        scope.launch {
+                            runCatching { Immich.ukryjOsobe(p.id, true) }
+                                .onSuccess { Edycja.ukryte[p.id] = true; zrobione(Taal.s(R.string.osoba_ukryta)) }
+                                .onFailure { Edycja.komunikat = Edycja.blad(it) }
+                        }
+                    }
+                    Knop(stringResource(R.string.kto_pomin), null, Modifier.width(420.dp)) { i++ }
+                }
+            }
+        }
+    }
+    val obecna = p ?: return
+    when (okno) {
+        "imie" -> TekstInvoer(stringResource(R.string.osoba_imie), "", actie = stringResource(R.string.zapisz), wielkie = true, sluit = { okno = null }) { nowe ->
+            okno = null
+            if (nowe.isNotBlank()) scope.launch {
+                runCatching { Immich.zmienImie(obecna.id, nowe) }
+                    .onSuccess { Edycja.imiona[obecna.id] = nowe.trim(); zrobione(Taal.s(R.string.zapisano)) }
+                    .onFailure { Edycja.komunikat = Edycja.blad(it) }
+            }
+        }
+        "wybierz" -> KiesLijst(
+            stringResource(R.string.kto_to_jest),
+            znane.filter { Edycja.widoczna(it) }.map { KiesItem(it.id, Edycja.imie(it), null, Immich.gezicht(it.id), rond = true) },
+            "", sluit = { okno = null },
+        ) { cel, celNaam ->
+            okno = null
+            scope.launch {
+                runCatching { Immich.polaczOsoby(cel, listOf(obecna.id)) }
+                    .onSuccess { Edycja.polaczone[obecna.id] = true; zrobione(Taal.s(R.string.osoba_polaczona, celNaam)) }
+                    .onFailure { Edycja.komunikat = Edycja.blad(it) }
+            }
+        }
     }
 }

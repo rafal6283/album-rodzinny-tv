@@ -506,6 +506,15 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
             enter = fadeIn() + androidx.compose.animation.slideInVertically { it / 3 }, exit = fadeOut(),
         ) { PasekAkcji(staat, akcje) }
         AnimatedVisibility(staat.zoom > 1f, Modifier.align(Alignment.BottomCenter), enter = fadeIn(), exit = fadeOut()) { ZoomPodpowiedz(staat) }
+        // opis zdjęcia z Immich jako napis w trakcie pokazu slajdów (Ustawienia → Pokaz slajdów → Opisy)
+        val opis by produceState<String?>(null, huidig?.id, staat.diashow) {
+            value = null
+            if (staat.diashow && Instellingen.diaOpisy && huidig != null) { delay(300); value = runCatching { Immich.details(huidig.id).omschrijving }.getOrNull()?.trim()?.ifEmpty { null } }
+        }
+        AnimatedVisibility(opis != null && staat.diashow && !staat.speeltVideo, Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp, start = 80.dp, end = 80.dp), enter = fadeIn(tween(700)), exit = fadeOut()) {
+            Text(opis.orEmpty(), style = MaterialTheme.typography.headlineSmall, color = Color.White, textAlign = androidx.compose.ui.text.style.TextAlign.Center, maxLines = 3,
+                modifier = Modifier.background(Color(0x99000000), RoundedCornerShape(16.dp)).padding(horizontal = 24.dp, vertical = 12.dp))
+        }
         AnimatedVisibility(staat.komunikat != null, Modifier.align(Alignment.BottomCenter).padding(bottom = 140.dp), enter = fadeIn(), exit = fadeOut()) {
             Text(staat.komunikat.orEmpty(), style = MaterialTheme.typography.titleMedium, color = Color.White,
                 modifier = Modifier.background(Color(0xE6181822), RoundedCornerShape(20.dp)).padding(horizontal = 22.dp, vertical = 12.dp))
@@ -639,6 +648,9 @@ private fun Video(a: Asset, staat: KijkerStaat, zrodlo: String = a.id, live: Boo
         verhouding = 0f; gedraaid = false
         var format: androidx.media3.common.Format? = null
         speler.setMediaItem(MediaItem.fromUri(Immich.video(zrodlo)))
+        // wznawianie: przerwany wcześniej film zaczyna się tam, gdzie skończyłeś (nie w pokazie slajdów i nie w Live Photo)
+        val wznow = if (!live && !staat.diashow) Wznawianie.pozycja(ctx, a.id) else 0L
+        if (wznow > 0) { speler.seekTo(wznow); staat.komunikat = ctx.getString(R.string.wideo_wznowiono, czasFilmu(wznow)) }
         speler.prepare()
         speler.playWhenReady = true
         val luister = object : Player.Listener {
@@ -671,6 +683,7 @@ private fun Video(a: Asset, staat: KijkerStaat, zrodlo: String = a.id, live: Boo
         staat.speler = speler
         // vrijgeven zodra deze pagina weg is; bij video→video heeft de nieuwe pagina staat.speler dan al overgenomen
         onDispose {
+            if (!live) Wznawianie.zapisz(ctx, a.id, speler.currentPosition, speler.duration)
             speler.removeListener(luister); speler.stop(); speler.release()
             if (staat.speler === speler) { staat.speler = null; staat.speeltVideo = false }
         }

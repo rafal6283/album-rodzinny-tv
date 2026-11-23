@@ -564,6 +564,9 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
     LaunchedEffect(hintTot) { hint = true; delay((hintTot - System.currentTimeMillis()).coerceAtLeast(0)); hint = false }
     var stijlFout by remember { mutableStateOf(false) }
     var stijlKlaar by remember { mutableStateOf(false) }
+    /** rośnie przy każdym wczytaniu stylu (nowy styl = warstwy mapy cieplnej i krajów od nowa) */
+    var stijlWersja by remember { mutableIntStateOf(0) }
+    var warstwy by remember { mutableStateOf<KaartWarstwyDane?>(null) }
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Color(0xFF101418))) {
         val w = constraints.maxWidth; val h = constraints.maxHeight
@@ -660,7 +663,7 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
             val soort = staat.stijlSoort ?: return@LaunchedEffect
             if (motor.kaart == null) return@LaunchedEffect
             motor.kaart?.setStyle(Style.Builder().fromUri(url)) { stijl ->
-                stijlKlaar = true
+                stijlKlaar = true; stijlWersja++
                 if (!kaartAlles) {
                     val n = WEG_LAGEN.count { stijl.removeLayer(it) }
                     Log.i("Fotos", "kaartstijl ${soort.name}: $n lagen weg, ${stijl.layers.size} over")
@@ -674,6 +677,15 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
                     stijl.addLayerAt(org.maplibre.android.style.layers.RasterLayer("sat", "sat"), 0)
                 }
             }
+        }
+        // mapa cieplna i podświetlone kraje (ustawienia → Mapa)
+        val ctxW = LocalContext.current
+        LaunchedEffect(staat.markers) { staat.markers?.let { m -> warstwy = runCatching { zbudujWarstwy(ctxW, m) }.getOrNull() } }
+        val heat = Instellingen.kaartHeat; val kraje = Instellingen.kaartKraje
+        LaunchedEffect(stijlWersja, warstwy, heat, kraje, motor.kaart) {
+            val d = warstwy ?: return@LaunchedEffect
+            if (stijlWersja == 0) return@LaunchedEffect
+            motor.kaart?.style?.takeIf { it.isFullyLoaded }?.let { ustawWarstwy(it, d, heat, kraje) }
         }
         // clusterindex klaar: clusteren
         LaunchedEffect(staat.index) { if (staat.index != null) motor.hercluster(stil = true, altijd = true) }

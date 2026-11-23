@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -100,6 +101,8 @@ fun PersonenScherm(staat: PersonenStaat, nav: Nav) {
     val persoon = stringResource(R.string.persoon)
     val bezImienia = stringResource(R.string.persoon_bez_imienia)
     var zoekOpen by remember { mutableStateOf(false) }
+    var ktoOtwarte by remember { mutableStateOf(false) }
+    var ktoBylo by remember { mutableStateOf(false) }
     val zoekKnop = remember { FocusRequester() }
     val terug = remember { FocusRequester() }
     var wasOpen by remember { mutableStateOf(false) }
@@ -129,6 +132,13 @@ fun PersonenScherm(staat: PersonenStaat, nav: Nav) {
                             tekst = staat.zoek.ifBlank { stringResource(R.string.zoek_persoon) },
                         )
                         if (staat.metNaamloos) {
+                            // „Kto to jest?”: nazywanie twarzy bez imienia jedna po drugiej
+                            val bezImion = staat.alle.count { Edycja.widoczna(it) && Edycja.imie(it).isBlank() }
+                            if (bezImion > 0) Keuze(
+                                selected = false, onClick = { ktoOtwarte = true },
+                                leadingIcon = { Icon(Icons.Filled.Face, null, Modifier.width(18.dp)) },
+                                tekst = stringResource(R.string.kto_przycisk, Taal.getal(bezImion)),
+                            )
                             Keuze(selected = staat.kto == KtoPokazac.WSZYSCY, onClick = { staat.kto = KtoPokazac.WSZYSCY }, tekst = stringResource(R.string.ludzie_wszyscy))
                             Keuze(selected = staat.kto == KtoPokazac.Z_IMIENIEM, onClick = { staat.kto = KtoPokazac.Z_IMIENIEM }, tekst = stringResource(R.string.ludzie_z_imieniem))
                             Keuze(selected = staat.kto == KtoPokazac.BEZ_IMIENIA, onClick = { staat.kto = KtoPokazac.BEZ_IMIENIA }, tekst = stringResource(R.string.ludzie_bez_imienia))
@@ -166,6 +176,8 @@ fun PersonenScherm(staat: PersonenStaat, nav: Nav) {
         delay(30)
         if (staat.laatsteFocus == null || runCatching { terug.requestFocus() }.isFailure) runCatching { zoekKnop.requestFocus() }
     }
+    LaunchedEffect(ktoOtwarte) { if (ktoBylo && !ktoOtwarte) { delay(40); runCatching { zoekKnop.requestFocus() } }; ktoBylo = ktoOtwarte }
+    if (ktoOtwarte) KtoToJest { ktoOtwarte = false }
     if (zoekOpen) TekstInvoer(stringResource(R.string.zoek_persoon), staat.zoek, live = { staat.zoek = it }, actie = stringResource(R.string.actie_klaar), sluit = { zoekOpen = false }) {
         staat.zoek = it; zoekOpen = false
     }
