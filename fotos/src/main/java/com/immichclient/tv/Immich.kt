@@ -246,6 +246,14 @@ object Immich {
         List(a.length()) { asset(a.getJSONObject(it)) }
     }
 
+    /** Losowe zdjęcia I filmy z osi czasu (przycisk „Losowo”); [ulubione] = tylko ulubione. */
+    suspend fun losowe(n: Int, ulubione: Boolean = false): List<Asset> = withContext(Dispatchers.Default) {
+        val q = JSONObject().put("size", n).put("visibility", "timeline").put("withExif", true)
+        if (ulubione) q.put("isFavorite", true)
+        val a = JSONArray(post("/search/random", q))
+        List(a.length()) { asset(a.getJSONObject(it)) }
+    }
+
     // ---- Albums van één foto (viewer: "uit album …") ----
 
     private val albumsVan = object : LinkedHashMap<String, List<String>>(64, 0.75f, true) {

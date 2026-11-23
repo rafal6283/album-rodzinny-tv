@@ -600,4 +600,7 @@
     <string name="kanaly_pokaz_uitleg">Bittet den Launcher, jede Reihe anzuzeigen; du kannst sie auch in den Startbildschirm-Einstellungen hinzufügen</string>
     <string name="mapa_szczegoly">Karte in den Details</string>
     <string name="mapa_szczegoly_uitleg">Kleine Länderkarte unten in der Detailkarte des Fotos</string>
+    <string name="sectie_filmy">Videos</string>
+    <string name="filmy_sub">Alle Videos, neueste zuerst</string>
+    <string name="losowo">Zufällig</string>
 </resources>

@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import kotlinx.coroutines.launch
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
@@ -83,6 +84,33 @@ interface BeeldBron {
 class LijstBron(val lijst: List<Asset>) : BeeldBron {
     override val aantal get() = lijst.size
     override fun op(i: Int) = lijst.getOrNull(i)
+}
+
+/**
+ * Losowa, „nieskończona” mieszanka zdjęć i filmów (przycisk „Losowo”): porcje z /search/random, kolejna doczytuje się,
+ * gdy zostaje mniej niż 10 do końca. Powtórki z poprzednich porcji są pomijane.
+ */
+class LosowaBron(private val scope: kotlinx.coroutines.CoroutineScope, private val ulubione: Boolean) : BeeldBron {
+    private val lista = androidx.compose.runtime.mutableStateListOf<Asset>()
+    private val widziane = HashSet<String>()
+    private var laduje = false
+    private var pustych = 0
+
+    suspend fun doladuj() {
+        if (laduje || pustych >= 3) return
+        laduje = true
+        val nowe = runCatching { Immich.losowe(PORCJA, ulubione) }.getOrDefault(emptyList()).filter { widziane.add(it.id) }
+        if (nowe.isEmpty()) pustych++ else { pustych = 0; lista.addAll(nowe) }
+        laduje = false
+    }
+
+    override val aantal get() = lista.size
+    override fun op(i: Int): Asset? {
+        if (i >= lista.size - 10) scope.launch { doladuj() }
+        return lista.getOrNull(i)
+    }
+
+    private companion object { const val PORCJA = 60 }
 }
 
 /**

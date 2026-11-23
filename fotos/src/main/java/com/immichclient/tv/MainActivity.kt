@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Explore
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -171,11 +173,13 @@ enum class Sectie(@StringRes val label: Int, val icoon: ImageVector) {
     ALBUMS(R.string.sectie_albums, Icons.Filled.PhotoLibrary),
     MAPPEN(R.string.sectie_mappen, Icons.Filled.Folder),
     FAVORIETEN(R.string.sectie_favorieten, Icons.Filled.Favorite),
+    /** same filmy z osi czasu, od najnowszych */
+    FILMY(R.string.sectie_filmy, Icons.Filled.VideoLibrary),
     INSTELLINGEN(R.string.sectie_instellingen, Icons.Filled.Settings);
 
     companion object {
         /** Kolejność w bocznej szynie, jak w Immichin: szukaj, zdjęcia+wideo, wspomnienia, ulubione, albumy, ludzie, mapa… */
-        val KOLEJNOSC = listOf(ZOEKEN, FOTOS, HERINNERINGEN, FAVORIETEN, ALBUMS, VERKENNEN, KAART, MAPPEN, INSTELLINGEN)
+        val KOLEJNOSC = listOf(ZOEKEN, FOTOS, FILMY, HERINNERINGEN, FAVORIETEN, ALBUMS, VERKENNEN, KAART, MAPPEN, INSTELLINGEN)
     }
 }
 
@@ -325,6 +329,9 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             Sectie.KAART -> Scherm.Kaart(scope)
             Sectie.ALBUMS -> Scherm.Albums(scope)
             Sectie.MAPPEN -> Scherm.Mappen(MappenBoom(scope), null, scope)
+            Sectie.FILMY -> Scherm.Lijst(ctx.getString(R.string.sectie_filmy), ctx.getString(R.string.filmy_sub), false, scope) { p ->
+                Immich.zoekTekst(null, "originalFileName", p, alleenVideo = true)
+            }
             Sectie.FAVORIETEN -> Scherm.Tijdlijn(ctx.getString(R.string.sectie_favorieten), null, Filter(favorieten = true), Instellingen.nieuwsteEerst, false, scope)
             Sectie.INSTELLINGEN -> Scherm.Instellingen
         }
@@ -448,12 +455,13 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                             ladeFocusNu.value = it.hasFocus
                             if (it.hasFocus) Log.i("Fotos", "lade focus (wisselt=$ladeDicht)")
                         }
+                        .verticalScroll(androidx.compose.foundation.rememberScrollState())
                         .padding(12.dp).selectableGroup(),
                 ) {
                     // logo u góry szyny, jak w Immichin
                     Logo(Modifier.padding(start = 16.dp, top = 12.dp, bottom = 8.dp))
                     for (s in Sectie.KOLEJNOSC) {
-                        if (s == Sectie.INSTELLINGEN) Spacer(Modifier.weight(1f))
+                        if (s == Sectie.INSTELLINGEN) Spacer(Modifier.height(16.dp))
                         NavigationDrawerItem(
                             selected = sectie == s && stapel.isEmpty(),
                             modifier = (if (sectie == s) Modifier.focusRequester(ladeFocus) else Modifier)

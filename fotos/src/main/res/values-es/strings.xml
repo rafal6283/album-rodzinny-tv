@@ -607,4 +607,7 @@
     <string name="kanaly_pokaz_uitleg">Pide al launcher que muestre cada fila; también puedes añadirlas en los ajustes de la pantalla de inicio</string>
     <string name="mapa_szczegoly">Mapa en los detalles</string>
     <string name="mapa_szczegoly_uitleg">Pequeño mapa del país al final de la ficha de detalles de la foto</string>
+    <string name="sectie_filmy">Vídeos</string>
+    <string name="filmy_sub">Todos los vídeos, los más recientes primero</string>
+    <string name="losowo">Aleatorio</string>
 </resources>

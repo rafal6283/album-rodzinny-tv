@@ -600,4 +600,7 @@
     <string name="kanaly_pokaz_uitleg">Vraagt de launcher elke rij te tonen; je kunt ze ook toevoegen in de instellingen van het startscherm</string>
     <string name="mapa_szczegoly">Kaart bij details</string>
     <string name="mapa_szczegoly_uitleg">Kleine landkaart onderaan de detailkaart van de foto</string>
+    <string name="sectie_filmy">Video’s</string>
+    <string name="filmy_sub">Alle video’s, nieuwste eerst</string>
+    <string name="losowo">Shuffle</string>
 </resources>

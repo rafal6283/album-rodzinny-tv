@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -319,6 +320,25 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                                 selected = false, onClick = { kiezer = true }, modifier = Modifier.focusRequester(datumKnop),
                                 leadingIcon = { Icon(Icons.Filled.CalendarMonth, null, Modifier.width(18.dp)) },
                             tekst = stringResource(R.string.ga_naar_datum))
+                            // „Losowo” (shuffle): losowe zdjęcia i filmy jako pokaz; w głównej osi czasu i w ulubionych
+                            if (staat.filter.albumId == null && staat.filter.persoonId == null) {
+                                val tytulLosowo = stringResource(R.string.losowo)
+                                var ladowanie by remember { mutableStateOf(false) }
+                                Keuze(
+                                    selected = ladowanie,
+                                    onClick = {
+                                        if (!ladowanie) scope.launch {
+                                            ladowanie = true
+                                            val bron = LosowaBron(nav.scope, staat.filter.favorieten)
+                                            bron.doladuj()
+                                            ladowanie = false
+                                            if (bron.aantal > 0) nav.bekijk(bron, 0, tytulLosowo, true, null)
+                                        }
+                                    },
+                                    leadingIcon = { Icon(Icons.Filled.Shuffle, null, Modifier.width(18.dp)) },
+                                    tekst = tytulLosowo,
+                                )
+                            }
                         }
                         if (scherm.metHerinneringen && Instellingen.herinneringen) HerinneringenRij(nav)
                     }

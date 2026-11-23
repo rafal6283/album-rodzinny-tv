@@ -607,4 +607,7 @@
     <string name="kanaly_pokaz_uitleg">Demande au lanceur d\'afficher chaque rangée ; vous pouvez aussi les ajouter dans les réglages de l\'accueil</string>
     <string name="mapa_szczegoly">Carte dans les détails</string>
     <string name="mapa_szczegoly_uitleg">Petite carte du pays en bas de la fiche détails de la photo</string>
+    <string name="sectie_filmy">Vidéos</string>
+    <string name="filmy_sub">Toutes les vidéos, les plus récentes d’abord</string>
+    <string name="losowo">Aléatoire</string>
 </resources>

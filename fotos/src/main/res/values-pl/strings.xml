@@ -637,4 +637,7 @@
     <string name="kanaly_pokaz_uitleg">Prosi launcher o pokazanie każdego rzędu; możesz je też dodać w ustawieniach ekranu głównego</string>
     <string name="mapa_szczegoly">Mapa w szczegółach</string>
     <string name="mapa_szczegoly_uitleg">Mała mapa kraju na dole karty szczegółów zdjęcia</string>
+    <string name="sectie_filmy">Filmy</string>
+    <string name="filmy_sub">Wszystkie filmy, od najnowszych</string>
+    <string name="losowo">Losowo</string>
 </resources>
