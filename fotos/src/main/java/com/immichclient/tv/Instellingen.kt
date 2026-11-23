@@ -60,6 +60,8 @@ object Instellingen {
     /** wat er tijdens een lopende diashow over de foto heen staat (ringetje, badge, datum/plaats, landkaart) */
     var diaBeeld by keuze("dia_beeld", DiaBeeld.ALLES)
     /** muzyka w tle pokazu: włączona + adres strumienia lub pliku (radio internetowe, mp3 z serwera domowego) */
+    /** opis zdjęcia z Immich jako napis w trakcie pokazu */
+    var diaOpisy by bool("dia_opisy", true)
     var muzyka by bool("muzyka", false)
     var muzykaUrl by tekst("muzyka_url", "")
 
@@ -88,7 +90,11 @@ object Instellingen {
     var nieuwsteEerst by bool("nieuwste_eerst", true)
     var partners by bool("partners", true)
     var herinneringen by bool("herinneringen", true)
+    /** po uruchomieniu aplikacji pokaz zdjęć „Tego dnia” z poprzednich lat */
+    var tegoDniaStart by bool("tego_dnia_start", false)
     var start by keuze("start", Sectie.FOTOS)
+    /** kolejność sekcji w bocznym menu: nazwy po przecinku (pusty = domyślna, zob. Sectie.menu()); per urządzenie */
+    var sekcje by tekst("sekcje", "", perApparaat = true)
     var groet by keuze("groet", Groet.UIT)
     var groetTekst by tekst("groet_tekst", "")
 
@@ -96,6 +102,10 @@ object Instellingen {
     var kaartStart by keuze("kaart_start", KaartStart.WERELD)
     var cluster by keuze("cluster", ClusterNiveau.NORMAAL)
     var kaartStijl by keuze("kaart_stijl", KaartStijl.DONKER)
+    /** mapa cieplna miejsc ze zdjęciami (jak w Immichin) */
+    var kaartHeat by bool("kaart_heat", true)
+    /** kraje, w których powstały zdjęcia, lekko podświetlone */
+    var kaartKraje by bool("kaart_kraje", true)
     /** laatst bekeken plek: "lat,lon,zoom" (voor KaartStart.LAATST) */
     var kaartLaatst by tekst("kaart_laatst", "")
 

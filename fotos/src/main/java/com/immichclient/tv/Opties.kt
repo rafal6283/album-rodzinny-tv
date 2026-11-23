@@ -72,6 +72,10 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     var groetInvoer by remember { mutableStateOf(false) }
     var muzykaInvoer by remember { mutableStateOf(false) }
     var profilInvoer by remember { mutableStateOf(false) }
+    /** profil, na który przełączamy (wymaga PIN-u) / dla którego ustawiamy PIN */
+    var pinCel by remember { mutableStateOf<String?>(null) }
+    var pinUstaw by remember { mutableStateOf<String?>(null) }
+    var pinRonde by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     var controleren by remember { mutableStateOf(false) }
     // cachegrootte: schijf + geheugen, opnieuw gemeten na legen
     var cacheRonde by remember { mutableIntStateOf(0) }
@@ -97,6 +101,8 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     val dreamRegel = remember { FocusRequester() }
     val eerste = remember { FocusRequester() }
     val taalRegel = remember { FocusRequester() }
+    val menuRegel = remember { FocusRequester() }
+    var menuKolejnosc by remember { mutableStateOf(false) }
     val datumRegel = remember { FocusRequester() }
     val klokRegel = remember { FocusRequester() }
     // keuzelijst (albums/personen) dicht: focus terug op die regel (anders pakt Android de lade)
@@ -151,6 +157,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         if (alles) item { Keuzes(stringResource(R.string.overgang), stringResource(R.string.overgang_uitleg), listOf(stringResource(R.string.vervagen), stringResource(R.string.schuiven)), if (Instellingen.diaSchuiven) 1 else 0) { Instellingen.diaSchuiven = it == 1 } }
         if (alles) item { Keuzes(stringResource(R.string.dia_beeld), stringResource(R.string.dia_beeld_uitleg), DiaBeeld.entries.map { stringResource(it.label) }, Instellingen.diaBeeld.ordinal) { Instellingen.diaBeeld = DiaBeeld.entries[it] } }
         // muzyka w tle pokazu (liczba wierszy wliczona w dreamItem)
+        schakel(R.string.dia_opisy, R.string.dia_opisy_uitleg, uitAan, Instellingen.diaOpisy) { Instellingen.diaOpisy = it }
         schakel(R.string.muzyka, R.string.muzyka_uitleg, uitAan, Instellingen.muzyka) { Instellingen.muzyka = it }
         if (Instellingen.muzyka) item {
             Actie(stringResource(R.string.muzyka_adres), Instellingen.muzykaUrl.ifBlank { stringResource(R.string.muzyka_adres_uitleg) }) { muzykaInvoer = true }
@@ -226,8 +233,9 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         if (alles) item { Keuzes(stringResource(R.string.volgorde), stringResource(R.string.tijdlijn_volgorde_uitleg), listOf(stringResource(R.string.nieuwste_eerst), stringResource(R.string.oudste_eerst)), if (Instellingen.nieuwsteEerst) 0 else 1) { Instellingen.nieuwsteEerst = it == 0 } }
         if (alles) schakel(R.string.partner, R.string.partner_uitleg, uitAan, Instellingen.partners) { Instellingen.partners = it }
         if (alles) schakel(R.string.herinneringen_boven, R.string.herinneringen_boven_uitleg, uitAan, Instellingen.herinneringen) { Instellingen.herinneringen = it }
+        schakel(R.string.tego_dnia_start, R.string.tego_dnia_start_uitleg, uitAan, Instellingen.tegoDniaStart) { Instellingen.tegoDniaStart = it }
         item {
-            val keuzes = listOf(Sectie.FOTOS, Sectie.FILMY, Sectie.HERINNERINGEN, Sectie.KAART, Sectie.ALBUMS, Sectie.MAPPEN, Sectie.FAVORIETEN)
+            val keuzes = listOf(Sectie.FOTOS, Sectie.FILMY, Sectie.HERINNERINGEN, Sectie.KAART, Sectie.ALBUMS, Sectie.LUDZIE, Sectie.MAPPEN, Sectie.FAVORIETEN)
             Keuzes(stringResource(R.string.startscherm), stringResource(R.string.startscherm_uitleg), keuzes.map { stringResource(if (it == Sectie.FOTOS) Instellingen.uiterlijk.label else it.label) },
                 keuzes.indexOf(Instellingen.start).coerceAtLeast(0)) { Instellingen.start = keuzes[it] }
         }
@@ -253,8 +261,14 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         if (alles) item { Keuzes(stringResource(R.string.startweergave), stringResource(R.string.startweergave_uitleg), KaartStart.entries.map { stringResource(it.label) }, Instellingen.kaartStart.ordinal) { Instellingen.kaartStart = KaartStart.entries[it] } }
         if (alles) item { Keuzes(stringResource(R.string.clusterniveau), stringResource(R.string.cluster_uitleg), ClusterNiveau.entries.map { stringResource(it.label) }, Instellingen.cluster.ordinal) { Instellingen.cluster = ClusterNiveau.entries[it] } }
         item { Keuzes(stringResource(R.string.kaartstijl), stringResource(R.string.kaartstijl_uitleg), KaartStijl.entries.map { stringResource(it.label) }, Instellingen.kaartStijl.ordinal) { Instellingen.kaartStijl = KaartStijl.entries[it] } }
+        schakel(R.string.kaart_heat, R.string.kaart_heat_uitleg, uitAan, Instellingen.kaartHeat) { Instellingen.kaartHeat = it }
+        schakel(R.string.kaart_kraje, R.string.kaart_kraje_uitleg, uitAan, Instellingen.kaartKraje) { Instellingen.kaartKraje = it }
 
         groep(R.string.groep_uiterlijk)
+        item {
+            val nazwy = Sectie.menu().filter { it != Sectie.INSTELLINGEN }.map { nazwaSekcji(it) }
+            Actie(stringResource(R.string.menu_kolejnosc), nazwy.joinToString(" · "), Modifier.focusRequester(menuRegel)) { menuKolejnosc = true }
+        }
         item {
             // taal: meteen toepassen = activity opnieuw opbouwen (alle teksten, datums en landnamen volgen)
             Keuzes(stringResource(R.string.taal), stringResource(R.string.taal_uitleg), Taal.TALEN.map { Taal.naam(it) }, Taal.TALEN.indexOf(Taal.code).coerceAtLeast(0), Modifier.focusRequester(taalRegel)) {
@@ -303,14 +317,25 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
             Keuzes(stringResource(R.string.profil), stringResource(R.string.profil_uitleg), nazwy.map { it ?: stringResource(R.string.profil_glowny) },
                 nazwy.indexOf(Immich.kijker).coerceAtLeast(0)) {
                 if (nazwy[it] != Immich.kijker) {
-                    Profile.przelacz(ctx, nazwy[it])
-                    Taal.herstartSectie = Sectie.INSTELLINGEN
-                    (ctx as? android.app.Activity)?.recreate()
+                    // profil z PIN-em: najpierw PIN
+                    if (Pin.ma(ctx, nazwy[it])) pinCel = nazwy[it]
+                    else {
+                        Profile.przelacz(ctx, nazwy[it])
+                        Taal.herstartSectie = Sectie.INSTELLINGEN
+                        (ctx as? android.app.Activity)?.recreate()
+                    }
                 }
             }
         }
         item { Actie(stringResource(R.string.profil_dodaj), stringResource(R.string.profil_dodaj_uitleg)) { profilInvoer = true } }
         Immich.kijker?.let { aktywny ->
+            item {
+                val ma = pinRonde >= 0 && Pin.ma(ctx, aktywny)
+                Actie(stringResource(R.string.pin_profilu), stringResource(if (ma) R.string.pin_jest else R.string.pin_brak)) { pinUstaw = aktywny }
+            }
+            if (pinRonde >= 0 && Pin.ma(ctx, aktywny)) item {
+                Actie(stringResource(R.string.pin_usun), stringResource(R.string.pin_usun_uitleg)) { Pin.ustaw(ctx, aktywny, null); pinRonde++ }
+            }
             item {
                 Actie(stringResource(R.string.profil_usun, aktywny), stringResource(R.string.profil_usun_uitleg)) {
                     Profile.usun(ctx, aktywny)
@@ -362,6 +387,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         item { Text(stringResource(R.string.onofficieel_lang), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp)) }
         if (alles) item { Actie(stringResource(R.string.diagnose), stringResource(R.string.diagnose_uitleg)) { diagnose = true } }
     }
+    if (menuKolejnosc) KolejnoscSekcji { menuKolejnosc = false; scope.launch { delay(60); runCatching { menuRegel.requestFocus() } } }
     if (hulp) ScreensaverHulp { hulp = false; dreamRonde++ }
     if (diagnose) DiagnoseLaag { diagnose = false }
     if (albumKiezer) KiesLijst(stringResource(R.string.dream_albums), albumKeuzes(), Instellingen.dreamAlbum, sluit = { albumKiezer = false }, meer = true) { id, naam ->
@@ -372,6 +398,23 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     }
     if (muzykaInvoer) TekstInvoer(stringResource(R.string.muzyka_adres), Instellingen.muzykaUrl.ifBlank { "http://" }, actie = stringResource(R.string.actie_klaar), sluit = { muzykaInvoer = false }) {
         Instellingen.muzykaUrl = it.trim(); muzykaInvoer = false
+    }
+    pinCel?.let { cel ->
+        PinEkran(stringResource(R.string.pin_tytul, cel), stringResource(R.string.pin_wpisz), anuluj = { pinCel = null }) { pin ->
+            Pin.sprawdz(ctx, cel, pin).also { ok ->
+                if (ok) {
+                    pinCel = null
+                    Profile.przelacz(ctx, cel)
+                    Taal.herstartSectie = Sectie.INSTELLINGEN
+                    (ctx as? android.app.Activity)?.recreate()
+                }
+            }
+        }
+    }
+    pinUstaw?.let { profil ->
+        PinEkran(stringResource(R.string.pin_profilu), stringResource(R.string.pin_nowy, profil), nowy = true, anuluj = { pinUstaw = null }) { pin ->
+            Pin.ustaw(ctx, profil, pin); pinUstaw = null; pinRonde++; Edycja.komunikat = ctx.getString(R.string.zapisano); true
+        }
     }
     if (profilInvoer) TekstInvoer(stringResource(R.string.profil_nazwa), "", actie = stringResource(R.string.profil_dalej), sluit = { profilInvoer = false }) { nazwa ->
         val n = nazwa.trim().replace(Regex("[^\\p{L}\\p{N} _-]"), "").take(24)
@@ -384,7 +427,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
 }
 
 /** Item-index van de groepskop "Screensaver" in de lijst: kop + regel Basis/Alle + groep Diashow (1 + 3 of 6 regels). */
-private fun dreamItem(alles: Boolean) = 3 + (if (alles) 6 else 3) + 1 + (if (Instellingen.muzyka) 1 else 0)
+private fun dreamItem(alles: Boolean) = 3 + (if (alles) 6 else 3) + 2 + (if (Instellingen.muzyka) 1 else 0)
 /** Screensaver-groep in de instellingen tonen (sinds 2.2; false verbergt de groep weer, de DreamService blijft bestaan). */
 const val SCREENSAVER_AAN = true
 
@@ -499,6 +542,7 @@ fun ToetsenOverzicht(sluit: () -> Unit) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     ToetsGroep(R.string.tg_viewer, listOf(
                         R.string.t_links_rechts to R.string.t_vorige_volgende,
+                        R.string.t_links_rechts to R.string.t_wideo_przewijanie,
                         R.string.t_ok_play to R.string.t_diashow_wat,
                         R.string.t_info_toets to R.string.t_info_paneel,
                         R.string.t_ok_info to R.string.t_ok_info_wat,

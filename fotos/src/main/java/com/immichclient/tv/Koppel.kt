@@ -51,7 +51,11 @@ object Koppel {
     private const val TAG = "Fotos"
     private val POORTEN = 8791..8799
     /** Precies de rechten die de app nodig heeft (alleen lezen); zie x-immich-permission in de OpenAPI-spec. */
-    val RECHTEN = listOf("asset.read", "asset.view", "album.read", "memory.read", "person.read", "map.read", "user.read", "folder.read", "asset.update")
+    val RECHTEN = listOf(
+        "asset.read", "asset.view", "album.read", "memory.read", "person.read", "map.read", "user.read", "folder.read", "asset.update",
+        // edycja z telewizora: osoby (imię, data urodzenia, ukrywanie, łączenie) i albumy (tworzenie, dodawanie, usuwanie z albumu, nazwa)
+        "person.update", "person.merge", "album.create", "album.update", "albumAsset.create", "albumAsset.delete",
+    )
 
     sealed class Stand {
         data object Wacht : Stand()

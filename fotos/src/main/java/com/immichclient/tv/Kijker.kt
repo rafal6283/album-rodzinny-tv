@@ -1,11 +1,17 @@
 package com.immichclient.tv
 
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MotionPhotosOn
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.LibraryAdd
+import androidx.compose.material.icons.filled.RemoveCircleOutline
+import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.SkipPrevious
 import android.content.Context
 import android.os.Handler
 import android.util.Log
@@ -152,7 +158,38 @@ class KijkerStaat(val bron: BeeldBron, start: Int, val titel: String?, diashow: 
     var liveGra by mutableStateOf(false)
     /** krótki komunikat na dole ekranu (np. brak uprawnienia do ulubionych) */
     var komunikat by mutableStateOf<String?>(null)
+    /** otwarty wybór albumu dla tych zdjęć (▼ → Do albumu) */
+    var doAlbumu by mutableStateOf<List<String>?>(null)
+    /** zdjęcia usunięte z albumu w tej przeglądarce (przycisk zmienia się na „Przywróć”) */
+    val usunieteZAlbumu = androidx.compose.runtime.mutableStateMapOf<String, Boolean>()
     var speler: ExoPlayer? = null
+    /** chwila ostatniego przewinięcia filmu (pasek czasu jest wtedy widoczny przez kilka sekund) */
+    var przewinieto by mutableLongStateOf(0L)
+    /** pozycja docelowa przewijania: kolejne kroki sumują się, zanim odtwarzacz zdąży przeskoczyć (pokazywana na pasku) */
+    var przewinDoel by mutableLongStateOf(0L)
+        private set
+    private var ostatniSkok = 0L
+    /** strzałka wciśnięta w filmie (kod klawisza): krótko = poprzedni / następny, przytrzymana = przewijanie */
+    var strzalka = 0
+    var strzalkaPrzewija = false
+
+    /** Przewiń film o [deltaMs] (ujemne = do tyłu), w granicach filmu; odtwarzacz skacze najwyżej co 300 ms. */
+    fun przewin(deltaMs: Long) {
+        val sp = speler ?: return
+        val teraz = System.currentTimeMillis()
+        val baza = if (teraz - przewinieto < 1200) przewinDoel else sp.currentPosition
+        val dl = sp.duration.takeIf { it > 0 }
+        przewinDoel = (baza + deltaMs).coerceAtLeast(0L).let { if (dl != null) it.coerceAtMost((dl - 500).coerceAtLeast(0L)) else it }
+        if (teraz - ostatniSkok > 300) { sp.seekTo(przewinDoel); ostatniSkok = teraz }
+        przewinieto = teraz
+        actief = teraz
+    }
+
+    /** Koniec przewijania: skok dokładnie do pozycji docelowej. */
+    fun przewinKoniec() {
+        speler?.seekTo(przewinDoel)
+        przewinieto = System.currentTimeMillis()
+    }
     /** dolny pasek akcji (▼): pokaz, szczegóły, powiększ, mapa */
     var pasek by mutableStateOf(false)
     var pasekWybor by mutableIntStateOf(0)
@@ -211,7 +248,7 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     val ctx = LocalContext.current
     val fr = remember { FocusRequester() }
     val huidig = staat.bron.op(staat.index)
-    BackHandler {
+    BackHandler(enabled = staat.doAlbumu == null) {
         when {
             staat.zoom > 1f -> { staat.zoom = 1f; staat.przesX = 0f; staat.przesY = 0f }
             staat.pasek -> staat.pasek = false
@@ -226,6 +263,12 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     LaunchedEffect(Unit) { fr.requestFocus() }
     // po zamknięciu ekranu udostępniania fokus wraca do przeglądarki
     LaunchedEffect(Udostepnianie.otwarte) { if (!Udostepnianie.otwarte) { delay(50); runCatching { fr.requestFocus() } } }
+    LaunchedEffect(staat.doAlbumu == null) { if (staat.doAlbumu == null) { delay(50); runCatching { fr.requestFocus() } } }
+    // album, z którego coś usunięto: po zamknięciu przeglądarki jego oś czasu wczytuje się od nowa
+    DisposableEffect(Unit) {
+        onDispose { (staat.bron as? TijdlijnStaat)?.let { t -> t.filter.albumId?.let { if (Edycja.doOdswiezenia.remove(it)) t.herlaad() } } }
+    }
+    val albumZrodla = (staat.bron as? TijdlijnStaat)?.filter?.albumId
     // Tijdens een diashow het scherm aan houden: anders start de systeem-screensaver (op o.a. de Google TV
     // Streamer niet uit te zetten) midden in de diashow. Gepauzeerd of gestopt geldt weer de gewone timeout.
     val view = LocalView.current
@@ -276,13 +319,15 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     }
 
     val ekran = with(LocalDensity.current) { androidx.compose.ui.platform.LocalConfiguration.current.let { it.screenWidthDp.dp.toPx() to it.screenHeightDp.dp.toPx() } }
-    val akcje = akcjeDla(huidig, opKaart != null)
+    val akcje = akcjeDla(huidig, opKaart != null, albumZrodla != null)
     val zakres = androidx.compose.runtime.rememberCoroutineScope()
     fun wykonaj(ak: Akcja) {
         // ulubione i udostępnianie zostawiają pasek otwarty (widać zmianę na przycisku)
-        if (ak != Akcja.ULUBIONE && ak != Akcja.UDOSTEPNIJ) staat.pasek = false
+        if (ak != Akcja.ULUBIONE && ak != Akcja.UDOSTEPNIJ && ak != Akcja.Z_ALBUMU) staat.pasek = false
         when (ak) {
             Akcja.POKAZ -> staat.diashow = !staat.diashow
+            Akcja.POPRZEDNI -> ga(-1)
+            Akcja.NASTEPNY -> ga(1)
             Akcja.SZCZEGOLY -> staat.info = !staat.info
             Akcja.POWIEKSZ -> { staat.diashow = false; staat.info = false; staat.zoomUstaw(2f, ekran.first, ekran.second) }
             Akcja.MAPA -> if (opKaart != null && huidig != null) opKaart(huidig)
@@ -290,6 +335,23 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
             Akcja.LIVE -> { staat.diashow = false; staat.liveGra = true }
             Akcja.UDOSTEPNIJ -> if (huidig != null) Udostepnianie.przelacz(huidig)
             Akcja.KOD_QR -> { staat.diashow = false; Udostepnianie.otworz(ctx) }
+            Akcja.ALBUM -> if (huidig != null) {
+                staat.diashow = false
+                // zaznaczone (koszyk z „Zaznacz”) razem z bieżącym; bez zaznaczenia samo bieżące zdjęcie
+                staat.doAlbumu = (Udostepnianie.koszyk.map { it.id } + huidig.id).distinct()
+            }
+            Akcja.Z_ALBUMU -> if (huidig != null && albumZrodla != null) {
+                val bylo = staat.usunieteZAlbumu[huidig.id] == true
+                zakres.launch {
+                    runCatching { if (bylo) Immich.dodajDoAlbumu(albumZrodla, listOf(huidig.id)) else Immich.usunZAlbumu(albumZrodla, listOf(huidig.id)) }
+                        .onSuccess {
+                            staat.usunieteZAlbumu[huidig.id] = !bylo
+                            Edycja.doOdswiezenia.add(albumZrodla); Edycja.wersjaAlbumow++
+                            staat.komunikat = ctx.getString(if (bylo) R.string.album_przywrocono else R.string.album_usunieto)
+                        }
+                        .onFailure { staat.komunikat = Edycja.blad(it) }
+                }
+            }
         }
     }
     // Live Photo: krótki film odtwarza się sam raz po otwarciu zdjęcia (nie w trakcie pokazu)
@@ -300,8 +362,32 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
 
     BoxWithConstraints(
         Modifier.fillMaxSize().background(Color.Black).focusRequester(fr).focusable().onPreviewKeyEvent { e ->
-            if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+            if (staat.doAlbumu != null) return@onPreviewKeyEvent false
             val k = e.key.nativeKeyCode
+            // --- film (poza pokazem slajdów): ◀ ▶ krótko = poprzedni / następny, przytrzymane = przewijanie. Działa dopiero
+            // po własnym wciśnięciu w filmie (puszczenie strzałki, którą tu przyszliśmy ze zdjęcia, nic nie robi) ---
+            val sp = staat.speler
+            if ((k == KeyEvent.KEYCODE_DPAD_LEFT || k == KeyEvent.KEYCODE_DPAD_RIGHT) && huidig?.video == true && sp != null &&
+                !staat.diashow && !staat.videoFout && !staat.info && !staat.pasek) {
+                val kier = if (k == KeyEvent.KEYCODE_DPAD_RIGHT) 1 else -1
+                staat.actief = System.currentTimeMillis()
+                if (e.type == KeyEventType.KeyDown) {
+                    val powt = e.nativeKeyEvent.repeatCount
+                    if (powt == 0) { staat.strzalka = k; staat.strzalkaPrzewija = false }
+                    else if (staat.strzalka == k) {
+                        // ok. 20 powtórzeń na sekundę: cały film w ~6 s, po 3 s trzymania dwa razy szybciej
+                        val dl = sp.duration.takeIf { it > 0 } ?: 600_000L
+                        val krok = (dl / 120).coerceIn(1_000L, 60_000L) * (if (powt > 60) 2 else 1)
+                        staat.strzalkaPrzewija = true
+                        staat.przewin(kier * krok)
+                    }
+                } else if (e.type == KeyEventType.KeyUp && staat.strzalka == k) {
+                    staat.strzalka = 0
+                    if (staat.strzalkaPrzewija) { staat.strzalkaPrzewija = false; staat.przewinKoniec() } else ga(kier)
+                }
+                return@onPreviewKeyEvent true
+            }
+            if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
             staat.actief = System.currentTimeMillis()
             // --- tryb powiększenia: strzałki przesuwają, OK/⏩ bliżej, ⏪ dalej ---
             if (staat.zoom > 1f) {
@@ -330,13 +416,18 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
                     else -> false
                 }
             }
+            // poprzedni / następny element zawsze: kanał ▲▼, ⏮ ⏭, strona w górę / w dół
+            when (k) {
+                KeyEvent.KEYCODE_MEDIA_NEXT, KeyEvent.KEYCODE_CHANNEL_UP, KeyEvent.KEYCODE_PAGE_DOWN -> { staat.diashow = false; ga(1); return@onPreviewKeyEvent true }
+                KeyEvent.KEYCODE_MEDIA_PREVIOUS, KeyEvent.KEYCODE_CHANNEL_DOWN, KeyEvent.KEYCODE_PAGE_UP -> { staat.diashow = false; ga(-1); return@onPreviewKeyEvent true }
+            }
             when (k) {
                 KeyEvent.KEYCODE_DPAD_LEFT -> { staat.diashow = false; ga(-1); true }
                 KeyEvent.KEYCODE_DPAD_RIGHT -> { staat.diashow = false; ga(1); true }
                 // ▼ = pasek akcji (przy otwartych szczegółach: zamknij je)
                 KeyEvent.KEYCODE_DPAD_DOWN -> {
                     if (staat.info) staat.info = false
-                    else { staat.pasek = true; staat.pasekWybor = 0 }
+                    else { staat.pasek = true; staat.pasekWybor = akcje.indexOf(Akcja.POKAZ).coerceAtLeast(0) }
                     true
                 }
                 KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_INFO -> {
@@ -352,8 +443,8 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
                     staat.actief = System.currentTimeMillis(); true
                 }
                 // ⏩ / ⏪: in een video 10 s, anders 10 foto's
-                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> { staat.speler?.takeIf { huidig?.video == true }?.let { it.seekTo(it.currentPosition + 10_000) } ?: ga(10); true }
-                KeyEvent.KEYCODE_MEDIA_REWIND -> { staat.speler?.takeIf { huidig?.video == true }?.let { it.seekTo((it.currentPosition - 10_000).coerceAtLeast(0)) } ?: ga(-10); true }
+                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> { if (huidig?.video == true && staat.speler != null) { staat.przewin(30_000); staat.przewinKoniec() } else ga(10); true }
+                KeyEvent.KEYCODE_MEDIA_REWIND -> { if (huidig?.video == true && staat.speler != null) { staat.przewin(-30_000); staat.przewinKoniec() } else ga(-10); true }
                 else -> false
             }
         },
@@ -415,6 +506,15 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
             enter = fadeIn() + androidx.compose.animation.slideInVertically { it / 3 }, exit = fadeOut(),
         ) { PasekAkcji(staat, akcje) }
         AnimatedVisibility(staat.zoom > 1f, Modifier.align(Alignment.BottomCenter), enter = fadeIn(), exit = fadeOut()) { ZoomPodpowiedz(staat) }
+        // opis zdjęcia z Immich jako napis w trakcie pokazu slajdów (Ustawienia → Pokaz slajdów → Opisy)
+        val opis by produceState<String?>(null, huidig?.id, staat.diashow) {
+            value = null
+            if (staat.diashow && Instellingen.diaOpisy && huidig != null) { delay(300); value = runCatching { Immich.details(huidig.id).omschrijving }.getOrNull()?.trim()?.ifEmpty { null } }
+        }
+        AnimatedVisibility(opis != null && staat.diashow && !staat.speeltVideo, Modifier.align(Alignment.BottomCenter).padding(bottom = 48.dp, start = 80.dp, end = 80.dp), enter = fadeIn(tween(700)), exit = fadeOut()) {
+            Text(opis.orEmpty(), style = MaterialTheme.typography.headlineSmall, color = Color.White, textAlign = androidx.compose.ui.text.style.TextAlign.Center, maxLines = 3,
+                modifier = Modifier.background(Color(0x99000000), RoundedCornerShape(16.dp)).padding(horizontal = 24.dp, vertical = 12.dp))
+        }
         AnimatedVisibility(staat.komunikat != null, Modifier.align(Alignment.BottomCenter).padding(bottom = 140.dp), enter = fadeIn(), exit = fadeOut()) {
             Text(staat.komunikat.orEmpty(), style = MaterialTheme.typography.titleMedium, color = Color.White,
                 modifier = Modifier.background(Color(0xE6181822), RoundedCornerShape(20.dp)).padding(horizontal = 22.dp, vertical = 12.dp))
@@ -449,6 +549,8 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
             AnimatedVisibility(staat.diashow && Instellingen.diaBeeld == DiaBeeld.ALLES, enter = fadeIn(), exit = fadeOut()) { DiaRing(staat) }
         }
     }
+    // wybór albumu (▼ → Do albumu): to zdjęcie albo wszystkie zaznaczone
+    staat.doAlbumu?.let { ids -> AlbumWybor(ids, komunikat = { staat.komunikat = it }) { staat.doAlbumu = null } }
 }
 
 /** Ringetje dat in de diashow-tijd volloopt en bij elke foto opnieuw begint; staat stil zolang een video speelt. */
@@ -546,6 +648,9 @@ private fun Video(a: Asset, staat: KijkerStaat, zrodlo: String = a.id, live: Boo
         verhouding = 0f; gedraaid = false
         var format: androidx.media3.common.Format? = null
         speler.setMediaItem(MediaItem.fromUri(Immich.video(zrodlo)))
+        // wznawianie: przerwany wcześniej film zaczyna się tam, gdzie skończyłeś (nie w pokazie slajdów i nie w Live Photo)
+        val wznow = if (!live && !staat.diashow) Wznawianie.pozycja(ctx, a.id) else 0L
+        if (wznow > 0) { speler.seekTo(wznow); staat.komunikat = ctx.getString(R.string.wideo_wznowiono, czasFilmu(wznow)) }
         speler.prepare()
         speler.playWhenReady = true
         val luister = object : Player.Listener {
@@ -578,6 +683,7 @@ private fun Video(a: Asset, staat: KijkerStaat, zrodlo: String = a.id, live: Boo
         staat.speler = speler
         // vrijgeven zodra deze pagina weg is; bij video→video heeft de nieuwe pagina staat.speler dan al overgenomen
         onDispose {
+            if (!live) Wznawianie.zapisz(ctx, a.id, speler.currentPosition, speler.duration)
             speler.removeListener(luister); speler.stop(); speler.release()
             if (staat.speler === speler) { staat.speler = null; staat.speeltVideo = false }
         }
@@ -608,13 +714,53 @@ private fun Video(a: Asset, staat: KijkerStaat, zrodlo: String = a.id, live: Boo
             Text(stringResource(R.string.video_fout_rada), style = MaterialTheme.typography.bodySmall, color = Kleur.zacht,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 10.dp).width(560.dp))
         }
-        // dun voortgangsbalkje onderin
-        val deel by produceState(0f, speler) {
-            while (true) { val d = speler.duration; value = if (d > 0) speler.currentPosition.toFloat() / d else 0f; delay(250) }
+        // pozycja / długość (ms); przy przewijaniu od razu pozycja docelowa, bez czekania na odtwarzacz
+        val czas by produceState(0L to 0L, speler) {
+            while (true) { value = speler.currentPosition to speler.duration.coerceAtLeast(0L); delay(200) }
         }
-        if (!live) Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(4.dp).background(Color(0x33FFFFFF))) {
-            Box(Modifier.fillMaxHeight().fillMaxWidth(deel).background(Kleur.primair))
+        val teraz by produceState(System.currentTimeMillis()) { while (true) { value = System.currentTimeMillis(); delay(250) } }
+        val (pozOdtw, dl) = czas
+        val poz = if (teraz - staat.przewinieto < 1200 || staat.strzalkaPrzewija) staat.przewinDoel else pozOdtw
+        val deel = if (dl > 0) (poz.toFloat() / dl).coerceIn(0f, 1f) else 0f
+        // pełny pasek z podpowiedziami: po każdym klawiszu (i przy starcie filmu) przez kilka sekund oraz na pauzie
+        val pauza = !staat.speeltVideo && speler.playbackState == Player.STATE_READY && !speler.playWhenReady
+        val pelny = !live && !staat.videoFout && !staat.pasek && !staat.info && (teraz - staat.actief < 4000 || pauza || staat.strzalkaPrzewija)
+        if (!live) androidx.compose.animation.AnimatedContent(pelny, Modifier.align(Alignment.BottomStart).fillMaxWidth(), label = "pasekWideo") { duzy ->
+            if (!duzy) Box(Modifier.fillMaxWidth().height(4.dp).background(Color(0x33FFFFFF))) {
+                Box(Modifier.fillMaxHeight().fillMaxWidth(deel).background(Kleur.primair))
+            } else Column(
+                Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xD0000000))))
+                    .padding(start = 40.dp, end = 40.dp, top = 56.dp, bottom = 26.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(if (pauza) Icons.Filled.Pause else Icons.Filled.PlayArrow, null, Modifier.size(28.dp), tint = Color.White)
+                    Text(czasFilmu(poz), style = MaterialTheme.typography.titleMedium, color = Color.White, modifier = Modifier.padding(start = 14.dp, end = 16.dp))
+                    Box(Modifier.weight(1f).height(6.dp).background(Color(0x40FFFFFF), RoundedCornerShape(3.dp))) {
+                        Box(Modifier.fillMaxHeight().fillMaxWidth(deel).background(Kleur.primair, RoundedCornerShape(3.dp)))
+                    }
+                    Text(czasFilmu(dl), style = MaterialTheme.typography.titleMedium, color = Color.White, modifier = Modifier.padding(start = 16.dp))
+                }
+                Row(Modifier.padding(top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    WideoSkrot(stringResource(R.string.wideo_ok)) { Text("OK", style = MaterialTheme.typography.labelMedium, color = Color.White) }
+                    WideoSkrot(stringResource(R.string.wideo_poprz_nast)) { Text("◀  ▶", style = MaterialTheme.typography.labelMedium, color = Color.White) }
+                    WideoSkrot(stringResource(R.string.wideo_trzymaj)) { Text("◀  ▶", style = MaterialTheme.typography.labelMedium, color = Color.White) }
+                    WideoSkrot(stringResource(R.string.wideo_menu)) { Text("▼", style = MaterialTheme.typography.labelMedium, color = Color.White) }
+                    WideoSkrot(stringResource(R.string.wideo_zamknij)) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, Modifier.size(14.dp), tint = Color.White) }
+                }
+            }
         }
+    }
+}
+
+/** Podpowiedź klawisza pod paskiem filmu: [klawisz] opis. */
+@Composable
+private fun WideoSkrot(opis: String, klawisz: @Composable () -> Unit) {
+    Row(Modifier.padding(end = 26.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.background(Color(0x40FFFFFF), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center,
+        ) { klawisz() }
+        Text(opis, style = MaterialTheme.typography.labelLarge, color = Color.White, modifier = Modifier.padding(start = 10.dp))
     }
 }
 
@@ -772,9 +918,9 @@ private fun OsobyRegel(osoby: List<Persoon>) {
 }
 
 /** Akcje dolnego paska przeglądarki (▼), jak okrągłe przyciski w Immichin. */
-enum class Akcja { POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, MAPA }
+enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, ALBUM, Z_ALBUMU, MAPA }
 
-fun akcjeDla(a: Asset?, zMapa: Boolean): List<Akcja> = buildList {
+fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false): List<Akcja> = buildList {
     add(Akcja.POKAZ)
     if (a != null) add(Akcja.ULUBIONE)
     add(Akcja.SZCZEGOLY)
@@ -782,6 +928,8 @@ fun akcjeDla(a: Asset?, zMapa: Boolean): List<Akcja> = buildList {
     if (a?.live != null) add(Akcja.LIVE)
     if (a != null) add(Akcja.UDOSTEPNIJ)
     if (Udostepnianie.koszyk.isNotEmpty()) add(Akcja.KOD_QR)
+    if (a != null) add(Akcja.ALBUM)
+    if (a != null && zAlbumu) add(Akcja.Z_ALBUMU)
     if (zMapa && a?.lat != null) add(Akcja.MAPA)
 }
 
@@ -823,6 +971,8 @@ private fun PasekAkcji(staat: KijkerStaat, akcje: List<Akcja>) {
             akcje.forEachIndexed { i, ak ->
                 val wybrany = i == staat.pasekWybor.coerceIn(0, akcje.lastIndex)
                 val (ikona, napis) = when (ak) {
+                    Akcja.POPRZEDNI -> Icons.Filled.SkipPrevious to stringResource(R.string.poprzedni)
+                    Akcja.NASTEPNY -> Icons.Filled.SkipNext to stringResource(R.string.nastepny)
                     Akcja.POKAZ -> (if (staat.diashow) Icons.Filled.Pause else Icons.Filled.Slideshow) to stringResource(if (staat.diashow) R.string.diashow_pauze_kort else R.string.diashow)
                     Akcja.SZCZEGOLY -> Icons.Filled.Info to stringResource(R.string.szczegoly)
                     Akcja.POWIEKSZ -> Icons.Filled.ZoomIn to stringResource(R.string.powieksz)
@@ -838,6 +988,13 @@ private fun PasekAkcji(staat: KijkerStaat, akcje: List<Akcja>) {
                             stringResource(if (w) R.string.udost_wybrane else R.string.udost_dodaj)
                     }
                     Akcja.KOD_QR -> androidx.compose.material.icons.Icons.Filled.QrCode2 to stringResource(R.string.udost_kod, Udostepnianie.koszyk.size)
+                    Akcja.ALBUM -> Icons.Filled.LibraryAdd to
+                        (if (Udostepnianie.koszyk.isNotEmpty()) stringResource(R.string.album_akcja_n, (Udostepnianie.koszyk.map { it.id } + listOfNotNull(staat.bron.op(staat.index)?.id)).distinct().size) else stringResource(R.string.album_akcja))
+                    Akcja.Z_ALBUMU -> {
+                        val usuniete = staat.bron.op(staat.index)?.let { staat.usunieteZAlbumu[it.id] } == true
+                        (if (usuniete) Icons.AutoMirrored.Filled.Undo else Icons.Filled.RemoveCircleOutline) to
+                            stringResource(if (usuniete) R.string.album_przywroc else R.string.album_usun)
+                    }
                 }
                 val skala by animateFloatAsState(if (wybrany) 1.08f else 1f, tween(140), label = "akcja")
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(92.dp)) {
@@ -864,6 +1021,12 @@ private fun ZoomPodpowiedz(staat: KijkerStaat) {
         Icon(Icons.Filled.ZoomIn, null, Modifier.size(20.dp), tint = Kleur.pinezka)
         Text("  ${"%.0f".format(staat.zoom)}×   ·   " + stringResource(R.string.zoom_hint), style = MaterialTheme.typography.labelLarge, color = Color.White)
     }
+}
+
+/** 83_000 ms -> "1:23", 3_723_000 -> "1:02:03" */
+fun czasFilmu(ms: Long): String {
+    val s = (ms / 1000).coerceAtLeast(0)
+    return if (s >= 3600) "%d:%02d:%02d".format(s / 3600, s / 60 % 60, s % 60) else "%d:%02d".format(s / 60, s % 60)
 }
 
 /** Albums waar deze foto in zit (leeg zolang ze laden of als er geen zijn). */

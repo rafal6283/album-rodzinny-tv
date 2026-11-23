@@ -60,9 +60,13 @@ class AlbumsStaat(scope: CoroutineScope) {
     val grid = LazyGridState()
     var laatsteFocus: String? = null
 
-    init {
-        scope.launch {
-            runCatching { Immich.albums() }.onSuccess { albums = it }.onFailure { fout = it.message; Log.w("Fotos", "albums", it) }
+    private val zakres = scope
+    init { herlaad() }
+
+    /** Lista albumów od nowa (po utworzeniu albumu, dodaniu zdjęć albo zmianie nazwy z telewizora). */
+    fun herlaad() {
+        zakres.launch {
+            runCatching { Immich.albums() }.onSuccess { albums = it; fout = null }.onFailure { fout = it.message; Log.w("Fotos", "albums", it) }
         }
     }
 
@@ -82,6 +86,9 @@ private fun zonderAccent(s: String) = java.text.Normalizer.normalize(s, java.tex
 
 @Composable
 fun AlbumsScherm(staat: AlbumsStaat, nav: Nav) {
+    val wersja = Edycja.wersjaAlbumow
+    val start = remember { wersja }
+    LaunchedEffect(wersja) { if (wersja != start) staat.herlaad() }
     val lijst = remember(staat.albums, staat.volgorde, staat.alleenGedeeld, staat.zoek) { staat.zichtbaar() }
     val eerste = remember { FocusRequester() }
     val terug = remember { FocusRequester() }

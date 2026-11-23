@@ -90,7 +90,7 @@ class LijstBron(val lijst: List<Asset>) : BeeldBron {
  * Losowa, „nieskończona” mieszanka zdjęć i filmów (przycisk „Losowo”): porcje z /search/random, kolejna doczytuje się,
  * gdy zostaje mniej niż 10 do końca. Powtórki z poprzednich porcji są pomijane.
  */
-class LosowaBron(private val scope: kotlinx.coroutines.CoroutineScope, private val ulubione: Boolean) : BeeldBron {
+class LosowaBron(private val scope: kotlinx.coroutines.CoroutineScope, private val ulubione: Boolean, private val tylkoFilmy: Boolean = false) : BeeldBron {
     private val lista = androidx.compose.runtime.mutableStateListOf<Asset>()
     private val widziane = HashSet<String>()
     private var laduje = false
@@ -99,7 +99,7 @@ class LosowaBron(private val scope: kotlinx.coroutines.CoroutineScope, private v
     suspend fun doladuj() {
         if (laduje || pustych >= 3) return
         laduje = true
-        val nowe = runCatching { Immich.losowe(PORCJA, ulubione) }.getOrDefault(emptyList()).filter { widziane.add(it.id) }
+        val nowe = runCatching { Immich.losowe(PORCJA, ulubione, tylkoFilmy) }.getOrDefault(emptyList()).filter { widziane.add(it.id) }
         if (nowe.isEmpty()) pustych++ else { pustych = 0; lista.addAll(nowe) }
         laduje = false
     }

@@ -219,6 +219,8 @@ class KaartStaat(private val scope: CoroutineScope) {
     var focus by mutableStateOf<String?>(null)
     /** camera bij het verlaten van de sectie, hersteld bij terugkomst */
     var bewaard: Camera? = null
+    /** widoki sprzed kolejnych przybliżeń (OK): Wstecz wraca o jeden poziom */
+    val historia = ArrayDeque<Camera>()
     /** "Toon op kaart" vanuit de viewer: hierheen vliegen zodra de kaart er is */
     var doel by mutableStateOf<Pair<Double, Double>?>(null)
     /** teller: de kaart moet de toetsen weer krijgen (viewer gesloten) */
@@ -227,6 +229,9 @@ class KaartStaat(private val scope: CoroutineScope) {
     var rekent by mutableIntStateOf(0)
     /** het laatste kaartframe was nog niet compleet: er komen nog tegels binnen */
     var tegelsOnaf by mutableStateOf(false)
+    /** nagłówek: elementy · miejsca · kraje */
+    var samenvatting by mutableStateOf<KaartSamenvatting?>(null)
+        private set
 
     init {
         scope.launch {
@@ -243,6 +248,7 @@ class KaartStaat(private val scope: CoroutineScope) {
                         Triple(x, y, idx)
                     }
                     wx = x; wy = y; markers = m; index = idx
+                    samenvatting = withContext(Dispatchers.Default) { maakSamenvatting(m) }
                     // alle zoomniveaus alvast uitrekenen (één keer per markerset), dan is elke latere stap meteen klaar
                     launch(Dispatchers.Default) {
                         val t = System.currentTimeMillis()
@@ -463,6 +469,9 @@ private class KaartMotor(
             if (!splitst) { open(c, KaartActie.BEKIJK); return@launch }
             focusWens = c.hoofd
             zoomDoel = doelZoom
+            // Wstecz wraca dokładnie tutaj (poziom wyżej), a nie od razu do całego świata
+            staat.historia.addLast(staat.camera.value)
+            if (staat.historia.size > 30) staat.historia.removeFirst()
             map.easeCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latVan((v[1] + v[3]) / 2), lonVan((v[0] + v[2]) / 2)), doelZoom), 650)
         }
     }
@@ -495,8 +504,24 @@ private class KaartMotor(
     fun terug(): Boolean {
         val map = kaart ?: return false
         val cam = staat.camera.value
-        if (cam.zoom <= wereldZoom + 0.2) return false
+        if (cam.zoom <= wereldZoom + 0.2) { staat.historia.clear(); return false }
         focusWens = focusCluster()?.hoofd ?: -1
+        // poziom wyżej: widok sprzed ostatniego przybliżenia (OK); wpisy, które nie są już „wyżej” (oddalono ręcznie), pomijamy
+        while (staat.historia.isNotEmpty()) {
+            val h = staat.historia.removeLast()
+            if (h.zoom < cam.zoom - 0.3) {
+                zoomDoel = h.zoom
+                map.easeCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latVan(h.cy), lonVan(h.cx)), h.zoom), 600)
+                return true
+            }
+        }
+        // bez historii (np. przybliżone ⏩ albo „Pokaż na mapie”): trzy poziomy wyżej w tym samym miejscu, na końcu cały świat
+        val nizej = cam.zoom - 3.0
+        if (nizej > wereldZoom + 0.5) {
+            zoomDoel = nizej
+            map.easeCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latVan(cam.cy), lonVan(cam.cx)), nizej), 600)
+            return true
+        }
         zoomDoel = wereldZoom
         // tijdens de vlucht door 12 zoomniveaus extra grove tegels (anders per niveau nieuwe tegels laden → 15 fps); bij stilstand terug
         if (kaartVlucht != 0) map.tileLodZoomShift = (kaartLod + kaartVlucht).toDouble()
@@ -560,6 +585,9 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
     LaunchedEffect(hintTot) { hint = true; delay((hintTot - System.currentTimeMillis()).coerceAtLeast(0)); hint = false }
     var stijlFout by remember { mutableStateOf(false) }
     var stijlKlaar by remember { mutableStateOf(false) }
+    /** rośnie przy każdym wczytaniu stylu (nowy styl = warstwy mapy cieplnej i krajów od nowa) */
+    var stijlWersja by remember { mutableIntStateOf(0) }
+    var warstwy by remember { mutableStateOf<KaartWarstwyDane?>(null) }
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Color(0xFF101418))) {
         val w = constraints.maxWidth; val h = constraints.maxHeight
@@ -656,7 +684,7 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
             val soort = staat.stijlSoort ?: return@LaunchedEffect
             if (motor.kaart == null) return@LaunchedEffect
             motor.kaart?.setStyle(Style.Builder().fromUri(url)) { stijl ->
-                stijlKlaar = true
+                stijlKlaar = true; stijlWersja++
                 if (!kaartAlles) {
                     val n = WEG_LAGEN.count { stijl.removeLayer(it) }
                     Log.i("Fotos", "kaartstijl ${soort.name}: $n lagen weg, ${stijl.layers.size} over")
@@ -670,6 +698,15 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
                     stijl.addLayerAt(org.maplibre.android.style.layers.RasterLayer("sat", "sat"), 0)
                 }
             }
+        }
+        // mapa cieplna i podświetlone kraje (ustawienia → Mapa)
+        val ctxW = LocalContext.current
+        LaunchedEffect(staat.markers) { staat.markers?.let { m -> warstwy = runCatching { zbudujWarstwy(ctxW, m) }.getOrNull() } }
+        val heat = Instellingen.kaartHeat; val kraje = Instellingen.kaartKraje
+        LaunchedEffect(stijlWersja, warstwy, kraje, motor.kaart) {
+            val d = warstwy ?: return@LaunchedEffect
+            if (stijlWersja == 0) return@LaunchedEffect
+            motor.kaart?.style?.takeIf { it.isFullyLoaded }?.let { ustawWarstwy(it, d, kraje) }
         }
         // clusterindex klaar: clusteren
         LaunchedEffect(staat.index) { if (staat.index != null) motor.hercluster(stil = true, altijd = true) }
@@ -748,25 +785,53 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
             if (stijlFout && !stijlKlaar) LandenLaag(staat.camera, w, h)
 
             val m = staat.markers
+            // mapa cieplna pod znacznikami (Compose, tania: tylko widoczne grupy)
+            if (heat && m != null) MapaCieplna(staat.clusters) { motor.schermPlek(it) }
             if (m != null) for (c in staat.clusters) key(c.sleutel) {
                 Marker(c, m, focus = c.sleutel == staat.focus, cam = staat.camera, w = w, h = h)
             }
-            // naam en aantal onder het gekozen cluster
+            // karta wybranej grupy po prawej (jak w Immichin): zdjęcie, nazwa, liczby, miniatury, podpowiedzi
+            // Karta zawsze nad znacznikami (zIndex) i zawsze po przeciwnej stronie niż wybrana grupa, więc nigdy jej nie
+            // zasłania: grupa w prawej części ekranu → karta po lewej (nagłówek wtedy znika). Karta zajmuje ~44 % szerokości z
+            // każdej strony, więc próg z histerezą (47–53 %) mieści się w wolnym pasie pośrodku,
+            // żeby karta nie skakała, gdy grupa jest blisko środka.
+            val strona by remember {
+                androidx.compose.runtime.derivedStateOf {
+                    val x = motor.focusCluster()?.let { motor.schermPlek(it).x / w } ?: 0.5f
+                    when { x > 0.53f -> 1; x < 0.47f -> -1; else -> 0 }
+                }
+            }
+            var kartaLewo by remember { mutableStateOf(false) }
+            LaunchedEffect(strona) { if (strona == 1) kartaLewo = true else if (strona == -1) kartaLewo = false }
+            val kartaX by animateFloatAsState(if (kartaLewo) 0f else 1f, tween(320), label = "kartaStrona")
             motor.focusCluster()?.let { c ->
-                key(c.sleutel) { FocusLabel(c, staat.naam(c), staat.camera, w, h) }
+                KaartKarta(
+                    c, staat,
+                    Modifier.align(androidx.compose.ui.BiasAlignment(kartaX * 2f - 1f, 0f)).padding(horizontal = 24.dp).zIndex(5f),
+                )
             }
 
             // kop linksboven (op een lichte of satellietkaart met een donker vlak erachter, anders onleesbaar)
             val donkereKaart = stijlKeuze == KaartStijl.DONKER
+            val kopZicht by animateFloatAsState(if (kartaLewo && motor.focusCluster() != null) 0f else 1f, tween(250), label = "kop")
             Column(
-                Modifier.padding(start = 24.dp, top = 20.dp)
+                Modifier.padding(start = 24.dp, top = 20.dp).graphicsLayer { alpha = kopZicht }
                     .then(if (donkereKaart) Modifier else Modifier.background(Color(0xB3000000), RoundedCornerShape(14.dp)).padding(horizontal = 14.dp, vertical = 8.dp)),
             ) {
-                Text(stringResource(R.string.kaart), style = MaterialTheme.typography.displaySmall)
-                val n = m?.aantal
+                Text(stringResource(R.string.kaart_etykieta).uppercase(Taal.locale), style = EtykietaStyl, maxLines = 1, modifier = Modifier.padding(bottom = 2.dp))
+                Text(stringResource(R.string.kaart), style = TytulStyl, color = Color.White)
+                val sv = staat.samenvatting
                 Text(
-                    when { staat.fout != null -> stringResource(R.string.kaart_niet_geladen, staat.fout.orEmpty()); n == null -> stringResource(R.string.laden); else -> pluralStringResource(R.plurals.fotos_met_locatie, n, Taal.getal(n)) },
-                    style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht,
+                    when {
+                        staat.fout != null -> stringResource(R.string.kaart_niet_geladen, staat.fout.orEmpty())
+                        sv == null -> stringResource(R.string.laden)
+                        else -> listOfNotNull(
+                            pluralStringResource(R.plurals.kaart_elementy, sv.elementy, Taal.getal(sv.elementy)),
+                            sv.miejsca.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.kaart_miejsca, it, Taal.getal(it)) },
+                            sv.kraje.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.kaart_kraje, it, Taal.getal(it)) },
+                        ).joinToString("  ·  ")
+                    },
+                    style = MaterialTheme.typography.titleMedium, color = Color.White, modifier = Modifier.padding(top = 2.dp),
                 )
             }
             if (stijlFout && !stijlKlaar) Text(
@@ -782,7 +847,7 @@ private fun KaartInhoud(staat: KaartStaat, nav: Nav, inBeeld: Boolean) {
                 if (staat.tegelsOnaf && !stijlFout) { delay(700); tegelsLang = true; delay(20_000); tegelsLang = false } else tegelsLang = false
             }
             val laadt = (staat.fout == null && (staat.markers == null || staat.index == null)) || rekentLang || tegelsLang
-            Laadpil(laadt, Modifier.align(Alignment.TopEnd).padding(top = if (stijlFout && !stijlKlaar) 56.dp else 22.dp, end = 24.dp))
+            Laadpil(laadt, Modifier.align(Alignment.BottomStart).padding(start = 24.dp, bottom = 22.dp))
             // bedieningshint onderin (verdwijnt vanzelf) en bronvermelding
             val hintAlpha by animateFloatAsState(if (hint) 1f else 0f, tween(400), label = "hint")
             Text(
@@ -848,18 +913,6 @@ private fun markerBeeld(id: String): coil3.request.ImageRequest {
     val px = with(LocalDensity.current) { (MARKER_DP * 1.3f).dp.roundToPx() }
     return remember(id) {
         coil3.request.ImageRequest.Builder(ctx).data(Immich.thumb(id)).size(px, px).precision(coil3.size.Precision.INEXACT).build()
-    }
-}
-
-@Composable
-private fun FocusLabel(c: Cluster, naam: String, cam: State<Camera>, w: Int, h: Int) {
-    Column(
-        Modifier.opPunt(cam, w, h, c.wx, c.wy, ankerY = 0f).zIndex(2f).padding(top = (MARKER_DP * 0.65f + 12).dp)
-            .background(Color(0xD9000000), RoundedCornerShape(10.dp)).padding(horizontal = 12.dp, vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        if (naam.isNotEmpty()) Text(naam, style = MaterialTheme.typography.titleSmall, color = Color.White, maxLines = 1, textAlign = TextAlign.Center)
-        Text(pluralStringResource(R.plurals.fotos, c.aantal, Taal.getal(c.aantal)), style = MaterialTheme.typography.labelSmall, color = Color(0xCCFFFFFF))
     }
 }
 

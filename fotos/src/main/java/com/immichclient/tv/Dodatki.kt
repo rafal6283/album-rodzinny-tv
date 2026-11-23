@@ -41,6 +41,9 @@ object Urodziny {
         private set
     private var pobrano: LocalDate? = null
 
+    /** Po zmianie daty urodzenia w aplikacji: przy następnym laduj() pobierz od nowa. */
+    fun uniewaznij() { pobrano = null }
+
     suspend fun laduj() {
         val dzis = LocalDate.now()
         if (pobrano == dzis) return
@@ -88,5 +91,24 @@ object Profile {
     fun usun(c: Context, nazwa: String) {
         Immich.ontkoppel(c, nazwa)
         przelacz(c, null)
+    }
+}
+
+/** Wznawianie filmów: pozycja przerwanego filmu (po id), najwyżej 300 ostatnich; od początku / po końcu = bez wpisu. */
+object Wznawianie {
+    private fun prefs(c: android.content.Context) = c.getSharedPreferences("wznawianie", android.content.Context.MODE_PRIVATE)
+
+    fun pozycja(c: android.content.Context, id: String): Long =
+        prefs(c).getString(id, null)?.substringBefore('|')?.toLongOrNull() ?: 0L
+
+    fun zapisz(c: android.content.Context, id: String, poz: Long, dl: Long) {
+        val p = prefs(c)
+        // krótkie filmy (< 1 min), sam początek i końcówka: nic do wznawiania
+        if (dl < 60_000 || poz < 10_000 || poz > dl - 15_000) { if (p.contains(id)) p.edit().remove(id).apply(); return }
+        val e = p.edit().putString(id, "$poz|${System.currentTimeMillis()}")
+        val wszystkie = p.all
+        if (wszystkie.size > 300) wszystkie.entries.sortedBy { (it.value as? String)?.substringAfter('|')?.toLongOrNull() ?: 0L }
+            .take(wszystkie.size - 300).forEach { e.remove(it.key) }
+        e.apply()
     }
 }

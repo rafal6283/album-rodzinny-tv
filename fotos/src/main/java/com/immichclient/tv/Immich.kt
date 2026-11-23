@@ -159,9 +159,10 @@ object Immich {
     // ---- Zoeken ----
 
     /** Slim zoeken (CLIP): "strand", "verjaardag met taart", "hond in de sneeuw". Volgorde = relevantie; taal = de app-taal. */
-    suspend fun zoekSlim(tekst: String, pagina: Int, alleenVideo: Boolean?): Pagina {
+    suspend fun zoekSlim(tekst: String, pagina: Int, alleenVideo: Boolean?, filtr: ZoekFiltr = ZoekFiltr()): Pagina {
         val body = JSONObject().put("query", tekst).put("language", Taal.code).put("size", 120).put("page", pagina)
         if (alleenVideo != null) body.put("type", if (alleenVideo) "VIDEO" else "IMAGE")
+        filtr.dopisz(body)
         return pagina(JSONObject(post("/search/smart", body)))
     }
 
@@ -177,10 +178,11 @@ object Immich {
      * Bestandsnaam / omschrijving / OCR (tekst op de foto), eventueel alleen foto's of video's. Zonder tekst = alle
      * foto's of video's van de tijdlijn, nieuwste eerst (zoals het type-filter in de web-app).
      */
-    suspend fun zoekTekst(tekst: String?, veld: String, pagina: Int, alleenVideo: Boolean? = null): Pagina {
+    suspend fun zoekTekst(tekst: String?, veld: String, pagina: Int, alleenVideo: Boolean? = null, filtr: ZoekFiltr = ZoekFiltr()): Pagina {
         val body = JSONObject().put("size", 250).put("page", pagina).put("order", "desc")
         if (tekst != null) body.put(veld, tekst) else body.put("visibility", "timeline")
         if (alleenVideo != null) body.put("type", if (alleenVideo) "VIDEO" else "IMAGE")
+        filtr.dopisz(body)
         return pagina(JSONObject(post("/search/metadata", body)))
     }
 
@@ -205,6 +207,25 @@ object Immich {
         val a = JSONObject(get("/people?size=1000&withHidden=false")).getJSONArray("people")
         List(a.length()) { i -> a.getJSONObject(i).let { Persoon(it.getString("id"), it.optString("name"), it.optBoolean("isFavorite")) } }
             .filter { it.naam.isNotBlank() }
+    }
+
+    /**
+     * Wszystkie rozpoznane osoby (sekcja Ludzie), także te bez imienia, w kolejności Immich (ulubione, potem z imieniem,
+     * potem wg liczby zdjęć). Stronami po 500, bo nienazwanych twarzy bywa kilka tysięcy.
+     */
+    suspend fun wszystkieOsoby(): List<Persoon> = withContext(Dispatchers.Default) {
+        val wynik = ArrayList<Persoon>()
+        var strona = 1
+        while (strona <= 40) {
+            val o = JSONObject(get("/people?size=500&page=$strona&withHidden=false"))
+            val a = o.getJSONArray("people")
+            for (i in 0 until a.length()) a.getJSONObject(i).let { p ->
+                if (!p.optBoolean("isHidden")) wynik.add(Persoon(p.getString("id"), p.optString("name").takeIf { it != "null" }.orEmpty().trim(), p.optBoolean("isFavorite")))
+            }
+            if (!o.optBoolean("hasNextPage") || a.length() == 0) break
+            strona++
+        }
+        wynik.distinctBy { it.id }
     }
 
     // ---- Albums ----
@@ -252,9 +273,10 @@ object Immich {
     }
 
     /** Losowe zdjęcia I filmy z osi czasu (przycisk „Losowo”); [ulubione] = tylko ulubione. */
-    suspend fun losowe(n: Int, ulubione: Boolean = false): List<Asset> = withContext(Dispatchers.Default) {
+    suspend fun losowe(n: Int, ulubione: Boolean = false, tylkoFilmy: Boolean = false): List<Asset> = withContext(Dispatchers.Default) {
         val q = JSONObject().put("size", n).put("visibility", "timeline").put("withExif", true)
         if (ulubione) q.put("isFavorite", true)
+        if (tylkoFilmy) q.put("type", "VIDEO")
         val a = JSONArray(post("/search/random", q))
         List(a.length()) { asset(a.getJSONObject(it)) }
     }
@@ -377,6 +399,70 @@ object Immich {
 
     private suspend fun put(pad: String, json: JSONObject) =
         haal(Request.Builder().url(api + pad).put(json.toString().toRequestBody("application/json".toMediaType())).build())
+
+    private suspend fun patch(pad: String, json: JSONObject) =
+        haal(Request.Builder().url(api + pad).patch(json.toString().toRequestBody("application/json".toMediaType())).build())
+    private suspend fun delete(pad: String, json: JSONObject) =
+        haal(Request.Builder().url(api + pad).delete(json.toString().toRequestBody("application/json".toMediaType())).build())
+
+    /** Zdjęcia osoby z okresu [od, do] (porównanie „kiedyś i dziś”), od najnowszych. */
+    suspend fun osobaWOkresie(osobaId: String, od: LocalDate?, doDnia: LocalDate?, n: Int, rosnaco: Boolean = false): List<Asset> = withContext(Dispatchers.Default) {
+        val body = JSONObject().put("size", n).put("page", 1).put("order", if (rosnaco) "asc" else "desc").put("withExif", true)
+            .put("personIds", JSONArray(listOf(osobaId))).put("type", "IMAGE")
+        od?.let { body.put("takenAfter", "${it}T00:00:00.000Z") }
+        doDnia?.let { body.put("takenBefore", "${it}T23:59:59.999Z") }
+        val a = JSONObject(post("/search/metadata", body)).getJSONObject("assets").getJSONArray("items")
+        List(a.length()) { asset(a.getJSONObject(it)) }
+    }
+
+    /** Pierwsza strona twarzy bez imienia (ekran „Kto to jest?”), w kolejności Immich (najczęstsze najpierw). */
+    suspend fun osobyBezImienia(): List<Persoon> = wszystkieOsoby().filter { it.naam.isBlank() }
+
+    /** Filmy z osi czasu (sekcja Filmy): od najnowszych albo najstarszych, opcjonalnie od wybranego miesiąca. */
+    suspend fun filmy(pagina: Int, nieuwsteEerst: Boolean, odMiesiaca: java.time.YearMonth?): Pagina {
+        val body = JSONObject().put("size", 250).put("page", pagina).put("order", if (nieuwsteEerst) "desc" else "asc")
+            .put("visibility", "timeline").put("type", "VIDEO")
+        odMiesiaca?.let {
+            if (nieuwsteEerst) body.put("takenBefore", "${it.atEndOfMonth()}T23:59:59.999Z")
+            else body.put("takenAfter", "${it.atDay(1)}T00:00:00.000Z")
+        }
+        return pagina(JSONObject(post("/search/metadata", body)))
+    }
+
+    // ---- Edycja: osoby i albumy (uprawnienia person.update / person.merge / album.create / album.update / albumAsset.*) ----
+
+    /** Jedna osoba z datą urodzenia i informacją, czy jest ukryta. */
+    suspend fun osoba(id: String): Pair<Persoon, Boolean> = withContext(Dispatchers.Default) {
+        val o = JSONObject(get("/people/$id"))
+        val ur = o.optString("birthDate").take(10).let { runCatching { LocalDate.parse(it) }.getOrNull() }
+        Persoon(o.getString("id"), o.optString("name").takeIf { it != "null" }.orEmpty(), o.optBoolean("isFavorite"), ur) to o.optBoolean("isHidden")
+    }
+
+    suspend fun zmienImie(id: String, imie: String) { put("/people/$id", JSONObject().put("name", imie.trim())) }
+
+    /** Data urodzenia osoby; null = usuń datę. */
+    suspend fun zmienUrodziny(id: String, data: LocalDate?) {
+        put("/people/$id", JSONObject().put("birthDate", data?.toString() ?: JSONObject.NULL))
+    }
+
+    suspend fun ukryjOsobe(id: String, ukryj: Boolean) { put("/people/$id", JSONObject().put("isHidden", ukryj)) }
+
+    /** Twarze osób [ids] przechodzą do osoby [cel]; osoby [ids] przestają istnieć. */
+    suspend fun polaczOsoby(cel: String, ids: List<String>) { post("/people/$cel/merge", JSONObject().put("ids", JSONArray(ids))) }
+
+    /** Nowy album z podanymi zdjęciami; zwraca jego id. */
+    suspend fun nowyAlbum(nazwa: String, ids: List<String>): String =
+        JSONObject(post("/albums", JSONObject().put("albumName", nazwa.trim()).put("assetIds", JSONArray(ids)))).getString("id")
+
+    /** Dodaj do albumu; zwraca liczbę faktycznie dodanych (pozostałe już w nim były). */
+    suspend fun dodajDoAlbumu(albumId: String, ids: List<String>): Int {
+        val a = JSONArray(put("/albums/$albumId/assets", JSONObject().put("ids", JSONArray(ids))))
+        return (0 until a.length()).count { a.getJSONObject(it).optBoolean("success") }
+    }
+
+    suspend fun usunZAlbumu(albumId: String, ids: List<String>) { delete("/albums/$albumId/assets", JSONObject().put("ids", JSONArray(ids))) }
+
+    suspend fun zmienNazweAlbumu(albumId: String, nazwa: String) { patch("/albums/$albumId", JSONObject().put("albumName", nazwa.trim())) }
 
     /** Ulubione z pilota (wymaga uprawnienia asset.update; bez niego Immich odpowiada 403). */
     suspend fun ustawUlubione(id: String, ulubione: Boolean) { put("/assets/$id", JSONObject().put("isFavorite", ulubione)) }

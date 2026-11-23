@@ -145,7 +145,7 @@ object Kanaly {
         val uri = runCatching { c.contentResolver.insert(TvContractCompat.Channels.CONTENT_URI, ch.toContentValues()) }
             .onFailure { Log.w(TAG, "brak obsługi kanałów w launcherze", it) }.getOrNull() ?: return -1
         val id = ContentUris.parseId(uri)
-        runCatching { ChannelLogoUtils.storeChannelLogo(c, id, android.graphics.BitmapFactory.decodeResource(c.resources, R.mipmap.ic_fotos)) }
+        runCatching { ChannelLogoUtils.storeChannelLogo(c, id, android.graphics.BitmapFactory.decodeResource(c.resources, R.mipmap.ic_album_rodzinny)) }
         // pierwszy kanał aplikacji launcher pokazuje sam; pozostałe użytkownik włącza (Ustawienia → Ekran główny)
         if (domyslny) runCatching { TvContractCompat.requestChannelBrowsable(c, id) }
         p.edit().putLong("kanal_${r.klucz}", id).apply()

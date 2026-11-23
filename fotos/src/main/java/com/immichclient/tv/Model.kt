@@ -97,3 +97,14 @@ fun lokaleTijd(s: String, offsetUren: Double): LocalDateTime {
     // timeline/bucket geeft fileCreatedAt in UTC + localOffsetHours; nul = al lokaal
     return if (offsetUren == 0.0) t else t.plus((offsetUren * 60).toLong(), ChronoUnit.MINUTES)
 }
+
+/** Dodatkowe filtry wyszukiwania (osoba, miasto, rok); puste = bez filtra. */
+@Immutable
+data class ZoekFiltr(val osoba: Persoon? = null, val miasto: String? = null, val rok: Int? = null) {
+    val pusty get() = osoba == null && miasto == null && rok == null
+    fun dopisz(body: org.json.JSONObject) {
+        osoba?.let { body.put("personIds", org.json.JSONArray(listOf(it.id))) }
+        miasto?.let { body.put("city", it) }
+        rok?.let { body.put("takenAfter", "$it-01-01T00:00:00.000Z").put("takenBefore", "$it-12-31T23:59:59.999Z") }
+    }
+}

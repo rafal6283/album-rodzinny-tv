@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Photo
@@ -115,8 +116,12 @@ class App : Application(), SingletonImageLoader.Factory {
 /** Een scherm met zijn eigen staat; blijft bewaard zolang het op de stapel staat (terug = zelfde plek, zelfde focus). */
 sealed class Scherm {
     class Tijdlijn(
-        val titel: String, val sub: String?, filter: Filter, nieuwsteEerst: Boolean, val metHerinneringen: Boolean, scope: CoroutineScope,
-    ) : Scherm() { val staat = TijdlijnStaat(filter, nieuwsteEerst, scope) }
+        titel: String, val sub: String?, filter: Filter, nieuwsteEerst: Boolean, val metHerinneringen: Boolean, scope: CoroutineScope,
+    ) : Scherm() {
+        val staat = TijdlijnStaat(filter, nieuwsteEerst, scope)
+        /** zmienny: nowe imię osoby / nowa nazwa albumu nadane z telewizora */
+        var titel by mutableStateOf(titel)
+    }
     class Albums(scope: CoroutineScope) : Scherm() { val staat = AlbumsStaat(scope) }
     class Verkennen(scope: CoroutineScope) : Scherm() { val staat = VerkenStaat(scope) }
     class Zoeken(scope: CoroutineScope) : Scherm() { val staat = ZoekStaat(scope) }
@@ -125,10 +130,12 @@ sealed class Scherm {
     /** alle foto's van een kaartcluster (lang OK op de kaart) */
     class KaartFotos(val titel: String, ids: List<String>, scope: CoroutineScope) : Scherm() { val staat = KaartFotosStaat(ids, scope) }
     /** alle personen (vanuit Zoeken), met zoekveld en sortering */
-    class Personen(val lijst: List<Persoon>) : Scherm() { val staat = PersonenStaat(lijst) }
+    class Personen(val staat: PersonenStaat) : Scherm()
     /** een map uit de mappenboom (null = het startpunt van de boom, zodra die geladen is) */
     class Mappen(boom: MappenBoom, knoop: MapKnoop?, scope: CoroutineScope) : Scherm() { val staat = MapStaat(boom, knoop, scope) }
     data object Instellingen : Scherm()
+    /** sekcja Filmy: kolejność, przejście do daty, losowo */
+    class Filmy(scope: CoroutineScope) : Scherm() { val staat = FilmyStaat(scope) }
     class Lijst(val titel: String, val sub: String?, val perDag: Boolean, scope: CoroutineScope, laad: suspend (Int) -> Pagina) : Scherm() {
         val res = Resultaten(scope).also { it.start(laad) }
     }
@@ -138,6 +145,8 @@ class Nav(
     val scope: CoroutineScope,
     val open: (Scherm) -> Unit,
     private val toon: (bron: BeeldBron, index: Int, titel: String?, diashow: Boolean, raster: RasterStaat?, naTerug: (() -> Unit)?) -> Unit,
+    /** bieżący ekran podrzędny zamknąć (np. oś czasu osoby po połączeniu jej z inną) */
+    val terug: () -> Unit = {},
 ) {
     /** Viewer openen; [raster] krijgt de focus terug, of [naTerug] wordt aangeroepen bij het sluiten (kaart). */
     fun bekijk(bron: BeeldBron, index: Int, titel: String?, diashow: Boolean, raster: RasterStaat?, naTerug: (() -> Unit)? = null) =
@@ -182,13 +191,15 @@ enum class Sectie(@StringRes val label: Int, val icoon: ImageVector) {
     ALBUMS(R.string.sectie_albums, Icons.Filled.PhotoLibrary),
     MAPPEN(R.string.sectie_mappen, Icons.Filled.Folder),
     FAVORIETEN(R.string.sectie_favorieten, Icons.Filled.Favorite),
+    /** wszystkie rozpoznane twarze, także bez imienia */
+    LUDZIE(R.string.personen, Icons.Filled.People),
     /** same filmy z osi czasu, od najnowszych */
     FILMY(R.string.sectie_filmy, Icons.Filled.VideoLibrary),
     INSTELLINGEN(R.string.sectie_instellingen, Icons.Filled.Settings);
 
     companion object {
         /** Kolejność w bocznej szynie, jak w Immichin: szukaj, zdjęcia+wideo, wspomnienia, ulubione, albumy, ludzie, mapa… */
-        val KOLEJNOSC = listOf(ZOEKEN, FOTOS, FILMY, HERINNERINGEN, FAVORIETEN, ALBUMS, VERKENNEN, KAART, MAPPEN, INSTELLINGEN)
+        val KOLEJNOSC = listOf(ZOEKEN, FOTOS, FILMY, HERINNERINGEN, FAVORIETEN, ALBUMS, LUDZIE, VERKENNEN, KAART, MAPPEN, INSTELLINGEN)
     }
 }
 
@@ -300,6 +311,18 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         InstelScherm(test = instelTest && !instellen, terug = if (gekoppeld) ({ instellen = false }) else null, klaar = { instellen = false; herstart() }, finish = finish)
         return
     }
+    // profil domownika z PIN-em: przy starcie najpierw PIN (albo przejście na wspólny profil główny)
+    val ctxPin = androidx.compose.ui.platform.LocalContext.current
+    var zablokowane by remember { mutableStateOf(Pin.ma(ctxPin, Immich.kijker)) }
+    if (zablokowane) {
+        val profil = Immich.kijker.orEmpty()
+        PinEkran(
+            stringResource(R.string.pin_tytul, profil), stringResource(R.string.pin_wpisz),
+            inne = stringResource(R.string.pin_na_glowny) to { Profile.przelacz(ctxPin, null); zablokowane = false; herstart() },
+            anuluj = null,
+        ) { pin -> Pin.sprawdz(ctxPin, profil, pin).also { if (it) zablokowane = false } }
+        return
+    }
     // Eén scope voor alle schermstaten, met een CoroutineExceptionHandler: een onverwachte fout in een coroutine (de
     // meeste zijn al met runCatching afgedekt) sluit dan niet de hele app, maar komt in de diagnose terecht.
     val scope = remember {
@@ -333,6 +356,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             scope = scope,
             open = { stapel.add(it) },
             toon = { bron, i, titel, dia, raster, naTerug -> if (i >= 0) kijker = Triple(KijkerStaat(bron, i, titel, dia), raster, naTerug) },
+            terug = { if (stapel.isNotEmpty()) stapel.removeAt(stapel.lastIndex) },
         )
     }
     fun wortel(s: Sectie): Scherm = wortels.getOrPut(s) {
@@ -342,11 +366,10 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             Sectie.ZOEKEN -> Scherm.Zoeken(scope)
             Sectie.VERKENNEN -> Scherm.Verkennen(scope)
             Sectie.KAART -> Scherm.Kaart(scope)
+            Sectie.LUDZIE -> Scherm.Personen(PersonenStaat(emptyList(), scope) { Immich.wszystkieOsoby() })
             Sectie.ALBUMS -> Scherm.Albums(scope)
             Sectie.MAPPEN -> Scherm.Mappen(MappenBoom(scope), null, scope)
-            Sectie.FILMY -> Scherm.Lijst(ctx.getString(R.string.sectie_filmy), ctx.getString(R.string.filmy_sub), false, scope) { p ->
-                Immich.zoekTekst(null, "originalFileName", p, alleenVideo = true)
-            }
+            Sectie.FILMY -> Scherm.Filmy(scope)
             Sectie.FAVORIETEN -> Scherm.Tijdlijn(ctx.getString(R.string.sectie_favorieten), null, Filter(favorieten = true), Instellingen.nieuwsteEerst, false, scope)
             Sectie.INSTELLINGEN -> Scherm.Instellingen
         }
@@ -375,6 +398,13 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             nav.bekijk(LijstBron(lista), i, tytul, id == null, null)
         }
         WejscieKanal.zadanie = null
+    }
+    // „Tego dnia” jako pokaz na start (Ustawienia → Oś czasu): raz na uruchomienie, tylko gdy są zdjęcia z tego dnia
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        if (!Instellingen.tegoDniaStart || TegoDniaStart.pokazano || testIndex >= 0 || WejscieKanal.zadanie != null) return@LaunchedEffect
+        TegoDniaStart.pokazano = true
+        val lista = TegoDniaStart.zasoby()
+        if (lista.isNotEmpty() && kijker == null) nav.bekijk(LijstBron(lista), 0, ctx.getString(R.string.tego_dnia), true, null)
     }
     if (testIndex >= 0) androidx.compose.runtime.LaunchedEffect(Unit) {
         val s = (wortel(Sectie.FOTOS) as Scherm.Tijdlijn).staat
@@ -482,7 +512,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                 ) {
                     // logo u góry szyny, jak w Immichin
                     Logo(Modifier.padding(start = 16.dp, top = 12.dp, bottom = 8.dp))
-                    for (s in Sectie.KOLEJNOSC) {
+                    for (s in Sectie.menu()) {
                         if (s == Sectie.INSTELLINGEN) Spacer(Modifier.height(16.dp))
                         NavigationDrawerItem(
                             selected = sectie == s && stapel.isEmpty(),
@@ -534,6 +564,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         is Scherm.Personen -> PersonenScherm(scherm.staat, nav)
                         is Scherm.Mappen -> MappenScherm(scherm, nav)
                         is Scherm.Lijst -> LijstScherm(scherm, nav)
+                        is Scherm.Filmy -> FilmyScherm(scherm.staat, nav)
                         is Scherm.Instellingen -> InstellingenScherm(opnieuwKoppelen = { instellen = true }, ontkoppeld = { sectie = Sectie.FOTOS }, toetsen = { toetsen = true })
                     }
                 }
@@ -548,6 +579,9 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                 k,
                 // "Toon op kaart" (OK in het infopaneel): viewer dicht, naar de kaartsectie, inzoomen op die plek
                 opKaart = { a ->
+                    // wywołane wciśnięciem OK: puszczenie tego samego OK nie może trafić w boczne menu (fokus na chwilę
+                    // ląduje na pierwszej pozycji, Szukaj, zanim mapa go przejmie) ani w mapę (OK = przybliż)
+                    Toetsen.okGeslikt = true
                     kijker = null; stapel.clear(); sectie = Sectie.KAART
                     (wortel(Sectie.KAART) as Scherm.Kaart).staat.toon(a)
                 },
@@ -559,5 +593,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         }
         // ekran udostępniania na samym wierzchu (otwierany z przeglądarki); po zamknięciu fokus wraca do przeglądarki
         if (Udostepnianie.otwarte) UdostepnianieScherm()
+        // komunikaty edycji (osoby, albumy) na samym wierzchu
+        EdycjaKomunikat(Modifier.align(androidx.compose.ui.Alignment.BottomCenter))
     }
 }
