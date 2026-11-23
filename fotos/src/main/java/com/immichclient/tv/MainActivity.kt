@@ -153,6 +153,15 @@ object WejscieKanal {
     }
 }
 
+/** Wyszukiwanie z systemu/Asystenta (ACTION_SEARCH, „szukaj … w Album Rodzinny”): tekst do sekcji Szukaj. */
+object WejscieSzukaj {
+    var zapytanie by mutableStateOf<String?>(null)
+    fun z(intent: android.content.Intent?) {
+        if (intent?.action != android.content.Intent.ACTION_SEARCH) return
+        zapytanie = intent.getStringExtra(android.app.SearchManager.QUERY)?.trim()?.takeIf { it.isNotEmpty() }
+    }
+}
+
 /** Signalen van toetsen die de activity afvangt (Terug lang ingedrukt). */
 object Toetsen {
     var langeTerug by androidx.compose.runtime.mutableIntStateOf(0)
@@ -196,7 +205,7 @@ class MainActivity : ComponentActivity() {
         start = android.os.SystemClock.uptimeMillis()
         // een eigen launcher kan het profiel meegeven ("kijker"); per profiel kan dan een eigen Immich-account gelden
         Immich.kiesAccount(this, intent.getStringExtra("kijker"))
-        if (savedInstanceState == null) WejscieKanal.z(intent)
+        if (savedInstanceState == null) { WejscieKanal.z(intent); WejscieSzukaj.z(intent) }
         // Test-extra's alleen bij een verse start vanaf de shell (`am start`, referrer com.android.shell). Bij een herstart
         // van de taak (proces opgeruimd door geheugennood, daarna de tegel in de launcher) geeft Android het óórspronkelijke
         // intent van de taak opnieuw mee (savedInstanceState != null) en zou `--ei test_index` blijven plakken: de app
@@ -259,11 +268,17 @@ class MainActivity : ComponentActivity() {
         return super.dispatchKeyEvent(e)
     }
 
+    /** aplikacja schodzi z ekranu: udostępnianie gościom się kończy */
+    override fun onStop() {
+        super.onStop()
+        Udostepnianie.zatrzymaj()
+    }
+
     // singleTask: draait hij al en komt er een ander profiel binnen met een eigen account, dan opnieuw opbouwen
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         okGezien = false
-        WejscieKanal.z(intent)
+        WejscieKanal.z(intent); WejscieSzukaj.z(intent)
         val oud = Immich.sleutel
         Immich.kiesAccount(this, intent.getStringExtra("kijker"))
         if (Immich.sleutel != oud) recreate()
@@ -340,6 +355,13 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
     // kanały na ekranie głównym: odśwież przy starcie (i zaplanuj okresowo); po zmianie ustawienia od razu
     val kanalyWl = Instellingen.kanaly
     androidx.compose.runtime.LaunchedEffect(kanalyWl) { kotlinx.coroutines.delay(2500); Kanaly.odswiezWTle(appCtx) }
+    val zSzukania = WejscieSzukaj.zapytanie
+    androidx.compose.runtime.LaunchedEffect(zSzukania) {
+        val q = zSzukania ?: return@LaunchedEffect
+        kijker = null; stapel.clear(); sectie = Sectie.ZOEKEN
+        (wortel(Sectie.ZOEKEN) as Scherm.Zoeken).staat.let { z -> z.tekst = q; z.zoek(appCtx) }
+        WejscieSzukaj.zapytanie = null
+    }
     // kafelek kanału kliknięty: przeglądarka na tym zdjęciu, ◀ ▶ przegląda resztę kanału
     val zKanalu = WejscieKanal.zadanie
     androidx.compose.runtime.LaunchedEffect(zKanalu) {
@@ -535,5 +557,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                 naTerug?.invoke()
             }
         }
+        // ekran udostępniania na samym wierzchu (otwierany z przeglądarki); po zamknięciu fokus wraca do przeglądarki
+        if (Udostepnianie.otwarte) UdostepnianieScherm()
     }
 }

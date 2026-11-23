@@ -21,6 +21,8 @@ data class Asset(
     /** GPS (null zonder locatie); voor de landkaart in de viewer */
     val lat: Double? = null,
     val lon: Double? = null,
+    /** Live Photo: id krótkiego filmu dołączonego do zdjęcia (null = zwykłe zdjęcie) */
+    val live: String? = null,
 )
 
 @Immutable data class Maand(val sleutel: String, val aantal: Int)
@@ -28,7 +30,7 @@ data class Asset(
     val id: String, val naam: String, val omslag: String?, val aantal: Int,
     val van: LocalDate?, val tot: LocalDate?, val bijgewerkt: String, val gedeeld: Boolean, val oudsteEerst: Boolean,
 )
-@Immutable data class Persoon(val id: String, val naam: String, val favoriet: Boolean)
+@Immutable data class Persoon(val id: String, val naam: String, val favoriet: Boolean, val urodziny: LocalDate? = null)
 @Immutable data class Plaats(val stad: String, val land: String, val omslag: String)
 @Immutable data class Herinnering(val id: String, val jaar: Int, val dag: LocalDate, val assets: List<Asset>) {
     val jarenGeleden get() = dag.year - jaar

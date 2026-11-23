@@ -70,6 +70,8 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     var bevestig by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     var groetInvoer by remember { mutableStateOf(false) }
+    var muzykaInvoer by remember { mutableStateOf(false) }
+    var profilInvoer by remember { mutableStateOf(false) }
     var controleren by remember { mutableStateOf(false) }
     // cachegrootte: schijf + geheugen, opnieuw gemeten na legen
     var cacheRonde by remember { mutableIntStateOf(0) }
@@ -148,6 +150,11 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         item { Keuzes(stringResource(R.string.videos), stringResource(R.string.dia_videos_uitleg), listOf(stringResource(R.string.afspelen), stringResource(R.string.overslaan)), if (Instellingen.diaVideos) 0 else 1) { Instellingen.diaVideos = it == 0 } }
         if (alles) item { Keuzes(stringResource(R.string.overgang), stringResource(R.string.overgang_uitleg), listOf(stringResource(R.string.vervagen), stringResource(R.string.schuiven)), if (Instellingen.diaSchuiven) 1 else 0) { Instellingen.diaSchuiven = it == 1 } }
         if (alles) item { Keuzes(stringResource(R.string.dia_beeld), stringResource(R.string.dia_beeld_uitleg), DiaBeeld.entries.map { stringResource(it.label) }, Instellingen.diaBeeld.ordinal) { Instellingen.diaBeeld = DiaBeeld.entries[it] } }
+        // muzyka w tle pokazu (liczba wierszy wliczona w dreamItem)
+        schakel(R.string.muzyka, R.string.muzyka_uitleg, uitAan, Instellingen.muzyka) { Instellingen.muzyka = it }
+        if (Instellingen.muzyka) item {
+            Actie(stringResource(R.string.muzyka_adres), Instellingen.muzykaUrl.ifBlank { stringResource(R.string.muzyka_adres_uitleg) }) { muzykaInvoer = true }
+        }
 
         // ---- Screensaver (item-index dreamItem() = de groepskop; de volgorde hierboven niet veranderen zonder die aan te passen) ----
         if (SCREENSAVER_AAN) {
@@ -185,6 +192,20 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         if (alles) schakel(R.string.ken_burns, R.string.dream_ken_burns_uitleg, uitAan, Instellingen.dreamKenBurns) { Instellingen.dreamKenBurns = it }
         if (alles) schakel(R.string.dream_info, R.string.dream_info_uitleg, uitAan, Instellingen.dreamInfo) { Instellingen.dreamInfo = it }
         if (alles) schakel(R.string.dream_ring, R.string.dream_ring_uitleg, uitAan, Instellingen.dreamRing) { Instellingen.dreamRing = it }
+        // ramka cyfrowa: godziny pracy i przyciemnienie wieczorem
+        item {
+            val godz = (0..23).toList()
+            Keuzes(stringResource(R.string.ramka_od), stringResource(R.string.ramka_od_uitleg), godz.map { "%d:00".format(it) }, Instellingen.ramkaOd.coerceIn(0, 23)) { Instellingen.ramkaOd = godz[it] }
+        }
+        item {
+            val godz = (1..24).toList()
+            Keuzes(stringResource(R.string.ramka_do), stringResource(R.string.ramka_do_uitleg), godz.map { "%d:00".format(it) }, (Instellingen.ramkaDo - 1).coerceIn(0, 23)) { Instellingen.ramkaDo = godz[it] }
+        }
+        item {
+            val poziomy = listOf(0, 30, 50, 70)
+            Keuzes(stringResource(R.string.ramka_ciemno), stringResource(R.string.ramka_ciemno_uitleg), poziomy.map { if (it == 0) stringResource(R.string.uit) else "$it %" },
+                poziomy.indexOf(Instellingen.ramkaCiemno).coerceAtLeast(0)) { Instellingen.ramkaCiemno = poziomy[it] }
+        }
         }
 
         groep(R.string.groep_bekijken)
@@ -275,6 +296,30 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         } }
         }
 
+        // profile domowników: każdy ze swoim kontem Immich i ustawieniami
+        groep(R.string.groep_profile)
+        item {
+            val nazwy = listOf<String?>(null) + Profile.lista(ctx)
+            Keuzes(stringResource(R.string.profil), stringResource(R.string.profil_uitleg), nazwy.map { it ?: stringResource(R.string.profil_glowny) },
+                nazwy.indexOf(Immich.kijker).coerceAtLeast(0)) {
+                if (nazwy[it] != Immich.kijker) {
+                    Profile.przelacz(ctx, nazwy[it])
+                    Taal.herstartSectie = Sectie.INSTELLINGEN
+                    (ctx as? android.app.Activity)?.recreate()
+                }
+            }
+        }
+        item { Actie(stringResource(R.string.profil_dodaj), stringResource(R.string.profil_dodaj_uitleg)) { profilInvoer = true } }
+        Immich.kijker?.let { aktywny ->
+            item {
+                Actie(stringResource(R.string.profil_usun, aktywny), stringResource(R.string.profil_usun_uitleg)) {
+                    Profile.usun(ctx, aktywny)
+                    Taal.herstartSectie = Sectie.INSTELLINGEN
+                    (ctx as? android.app.Activity)?.recreate()
+                }
+            }
+        }
+
         groep(R.string.groep_account)
         item { Info(stringResource(R.string.immich_server), Immich.server.ifBlank { "–" }) }
         item { Info(stringResource(R.string.ingelogd_als), ik?.let { "${it.naam}  ·  ${it.email}" } ?: "…") }
@@ -325,13 +370,21 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     if (persoonKiezer) KiesLijst(stringResource(R.string.dream_personen), persoonKeuzes(), Instellingen.dreamPersoon, sluit = { persoonKiezer = false }, meer = true) { id, naam ->
         Instellingen.wisselDreamPersoon(id, naam)
     }
+    if (muzykaInvoer) TekstInvoer(stringResource(R.string.muzyka_adres), Instellingen.muzykaUrl.ifBlank { "http://" }, actie = stringResource(R.string.actie_klaar), sluit = { muzykaInvoer = false }) {
+        Instellingen.muzykaUrl = it.trim(); muzykaInvoer = false
+    }
+    if (profilInvoer) TekstInvoer(stringResource(R.string.profil_nazwa), "", actie = stringResource(R.string.profil_dalej), sluit = { profilInvoer = false }) { nazwa ->
+        val n = nazwa.trim().replace(Regex("[^\\p{L}\\p{N} _-]"), "").take(24)
+        profilInvoer = false
+        if (n.isNotEmpty()) { Profile.docelowy = n; opnieuwKoppelen() }
+    }
     if (groetInvoer) TekstInvoer(stringResource(R.string.begroeting), Instellingen.groetTekst, actie = stringResource(R.string.actie_klaar), sluit = { groetInvoer = false }) {
         Instellingen.groetTekst = it; groetInvoer = false
     }
 }
 
 /** Item-index van de groepskop "Screensaver" in de lijst: kop + regel Basis/Alle + groep Diashow (1 + 3 of 6 regels). */
-private fun dreamItem(alles: Boolean) = 3 + if (alles) 6 else 3
+private fun dreamItem(alles: Boolean) = 3 + (if (alles) 6 else 3) + 1 + (if (Instellingen.muzyka) 1 else 0)
 /** Screensaver-groep in de instellingen tonen (sinds 2.2; false verbergt de groep weer, de DreamService blijft bestaan). */
 const val SCREENSAVER_AAN = true
 

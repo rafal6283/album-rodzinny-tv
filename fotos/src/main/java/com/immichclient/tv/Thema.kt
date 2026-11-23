@@ -1,5 +1,6 @@
 package com.immichclient.tv
 
+import androidx.compose.material.icons.filled.MotionPhotosOn
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.foundation.Image
 import androidx.compose.animation.core.animateFloatAsState
@@ -262,7 +263,11 @@ fun FotoVak(
         if (hash != null) Image(hash, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         AsyncImage(beeld(Immich.thumb(asset.id)), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         if (asset.video) VideoLabel(asset, Modifier.align(Alignment.TopEnd))
-        if (asset.favoriet) Icon(
+        else if (asset.live != null) Icon(
+            androidx.compose.material.icons.Icons.Filled.MotionPhotosOn, null,
+            Modifier.align(Alignment.TopEnd).padding(6.dp).size(18.dp), tint = Color.White,
+        )
+        if (Ulubione.jest(asset)) Icon(
             Icons.Filled.Favorite, null, Modifier.align(Alignment.BottomStart).padding(6.dp).size(16.dp), tint = Color.White,
         )
         if (focus) Box(Modifier.matchParentSize().border(3.dp, Color.White, vorm))

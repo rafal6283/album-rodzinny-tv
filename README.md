@@ -24,6 +24,24 @@ Fork aplikacji [TV Client for Immich](https://github.com/neforce/android-tv-immi
 - **Kanały na ekranie głównym Android TV**: „Najnowsze zdjęcia”, „Losowe zdjęcia” i „Tego dnia”, odświeżane co ~3 h.
   Kafelek otwiera zdjęcie w aplikacji. Miniatury idą przez dostawcę treści aplikacji (launcher nie dostaje klucza
   API), który udostępnia tylko zdjęcia z bieżących kanałów.
+- **Filmy** jako osobna sekcja i przycisk **Losowo** (losowa mieszanka zdjęć i filmów jako pokaz, także w Ulubionych).
+- **Udostępnianie gościom kodem QR**: w przeglądarce ▼ → Udostępnij wybierasz zdjęcia i filmy, telewizor pokazuje kod QR,
+  goście pobierają pliki w przeglądarce telefonu (tylko sieć domowa, jednorazowy kod, koniec po 10 min bez ruchu).
+  Zdjęcia idą w pełnej rozdzielczości jako JPEG, filmy w wersji do odtwarzania (oryginały wymagałyby uprawnienia
+  `asset.download`).
+- **Urodziny**: osoby z datą urodzenia w Immich pojawiają się na górze osi czasu (dziś i w najbliższym tygodniu);
+  OK otwiera ich zdjęcia.
+- **Ulubione pilotem** (▼ → Ulubione). Wymaga uprawnienia `asset.update` — nowe parowanie tworzy klucz z nim; przy
+  starym kluczu aplikacja podpowie ponowne połączenie.
+- **Live Photos**: ruchomy fragment odtwarza się raz po otwarciu zdjęcia, ponownie przyciskiem Live.
+- **Niezgodne filmy**: komunikat podaje kodek, rozdzielczość i podpowiedź, jak ustawić transkodowanie w Immich.
+- **Ramka cyfrowa**: wygaszacz z godzinami pracy (poza nimi czarny ekran z przygaszonym zegarem) i przyciemnianiem
+  wieczorem.
+- **Muzyka w tle pokazu**: adres strumienia lub pliku mp3 w ustawieniach; pauza na czas filmów.
+- **Kanał wybranego albumu** na ekranie głównym (przycisk „Na ekran główny” w albumie).
+- **Profile domowników**: każdy ze swoim kontem Immich i ustawieniami; dodawanie przez kod QR, przełączanie w
+  Ustawieniach.
+- **Wyszukiwanie systemowe**: intencja ACTION_SEARCH (np. „szukaj … w Album Rodzinny”) otwiera sekcję Szukaj.
 - **Polski** jako pełne tłumaczenie interfejsu (oprócz angielskiego, niderlandzkiego, niemieckiego, francuskiego i
   hiszpańskiego z oryginału).
 - Automatyczne sprawdzanie aktualizacji z GitHuba oryginału jest domyślnie **wyłączone** (zastąpiłoby tę wersję).

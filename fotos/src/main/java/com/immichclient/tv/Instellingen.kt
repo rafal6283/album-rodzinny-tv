@@ -59,6 +59,9 @@ object Instellingen {
     var diaSchuiven by bool("dia_schuiven", false)
     /** wat er tijdens een lopende diashow over de foto heen staat (ringetje, badge, datum/plaats, landkaart) */
     var diaBeeld by keuze("dia_beeld", DiaBeeld.ALLES)
+    /** muzyka w tle pokazu: włączona + adres strumienia lub pliku (radio internetowe, mp3 z serwera domowego) */
+    var muzyka by bool("muzyka", false)
+    var muzykaUrl by tekst("muzyka_url", "")
 
     // ---- Viewer ----
     var viewerKaart by keuze("viewer_kaart", KaartMaat.GROOT)
@@ -77,6 +80,9 @@ object Instellingen {
     var rijMaat by keuze("rij", RijMaat.NORMAAL)
     /** kanały na ekranie głównym Android TV (najnowsze, losowe, tego dnia) */
     var kanaly by bool("kanaly", true)
+    /** album pokazywany jako własny kanał na ekranie głównym (pusty = brak) */
+    var kanalAlbum by tekst("kanal_album", "")
+    var kanalAlbumNazwa by tekst("kanal_album_nazwa", "")
     /** siatka kwadratów jak w Immichin (jeden blok na miesiąc); wyłączone = układ Immich z dniami */
     var kwadraty by bool("kwadraty", true)
     var nieuwsteEerst by bool("nieuwste_eerst", true)
@@ -131,6 +137,11 @@ object Instellingen {
     var dreamRing by bool("dream_ring", true)
     /** screensaver die er stond vóór deze app werd ingesteld (om bij "uit" terug te zetten); per apparaat */
     var dreamVorige by tekst("dream_vorige", "", perApparaat = true)
+    /** ramka cyfrowa: godziny pracy wygaszacza (poza nimi czarny ekran z małym zegarem); 0–24 = zawsze */
+    var ramkaOd by getal("ramka_od", 0)
+    var ramkaDo by getal("ramka_do", 24)
+    /** przyciemnienie wieczorem (od 20:00) w procentach: 0 = wyłączone */
+    var ramkaCiemno by getal("ramka_ciemno", 0)
 
     /** Prefs lezen voor dit account; [kijker] = profiel met een eigen account, anders het algemene account. */
     fun laad(c: Context, kijker: String?) {

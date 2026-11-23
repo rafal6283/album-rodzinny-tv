@@ -50,7 +50,11 @@ object Kanaly {
         NAJNOWSZE("najnowsze", R.string.kanal_najnowsze),
         LOSOWE("losowe", R.string.kanal_losowe),
         WSPOMNIENIA("wspomnienia", R.string.kanal_wspomnienia),
+        /** wybrany album (przycisk „Na ekran główny” w albumie); nazwa kanału = nazwa albumu */
+        ALBUM("album", R.string.kanal_album),
     }
+
+    private fun nazwa(r: Rodzaj) = if (r == Rodzaj.ALBUM) Instellingen.kanalAlbumNazwa.ifBlank { Taal.ctx.getString(r.nazwa) } else Taal.ctx.getString(r.nazwa)
 
     /** Kanały działają od Androida 8 (API 26), czyli zawsze w tej aplikacji; launcher musi je jednak obsługiwać. */
     private fun prefs(c: Context) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -93,6 +97,10 @@ object Kanaly {
                 Immich.herinneringen(java.time.LocalDate.now()).sortedBy { it.jaar }.flatMap { it.assets }.take(30)
             }.getOrElse { Log.w(TAG, "wspomnienia", it); null },
         )
+        // kanał albumu: tylko gdy album jest wybrany; inaczej usuwamy go z ekranu głównego
+        val album = Instellingen.kanalAlbum
+        val zAlbumu = if (album.isBlank()) { usunKanal(c, Rodzaj.ALBUM); null }
+            else runCatching { Immich.zAlbumu(album, 30) }.getOrElse { Log.w(TAG, "album", it); null }
         var pierwszy = true
         for ((r, lista) in zestawy) {
             if (lista == null) continue // błąd sieci: zostaw stary stan kanału
@@ -100,6 +108,15 @@ object Kanaly {
             pierwszy = false
             if (kanal < 0) continue
             ustawProgramy(c, r, kanal, lista)
+        }
+        if (zAlbumu != null) {
+            val k = kanal(c, Rodzaj.ALBUM, domyslny = false)
+            if (k >= 0) {
+                // nazwa mogła się zmienić (inny album)
+                runCatching { c.contentResolver.update(TvContractCompat.buildChannelUri(k), Channel.Builder().setDisplayName(nazwa(Rodzaj.ALBUM)).build().toContentValues(), null, null) }
+                ustawProgramy(c, Rodzaj.ALBUM, k, zAlbumu)
+                runCatching { TvContractCompat.requestChannelBrowsable(c, k) }
+            }
         }
         Log.i(TAG, "kanały odświeżone")
     }
@@ -116,7 +133,7 @@ object Kanaly {
         }
         val zapisany = p.getLong("kanal_${r.klucz}", -1L)
         if (zapisany >= 0 && istnieje(c, zapisany)) return zapisany
-        val nazwa = Taal.ctx.getString(r.nazwa)
+        val nazwa = nazwa(r)
         val wejscie = Intent(c, MainActivity::class.java).setData(Uri.parse("immichtv://kanal/${r.klucz}"))
             .putExtra(EXTRA_KANAL, r.klucz).toUri(Intent.URI_INTENT_SCHEME)
         val ch = Channel.Builder()
@@ -149,7 +166,7 @@ object Kanaly {
         val cr = c.contentResolver
         // stare programy kanału usunąć
         runCatching { cr.delete(TvContractCompat.buildPreviewProgramsUriForChannel(kanal), null, null) }
-        val nazwa = Taal.ctx.getString(r.nazwa)
+        val nazwa = nazwa(r)
         lista.forEachIndexed { i, a ->
             // unikalne dane na kafelek: inaczej Android tylko przywraca działającą aplikację, bez nowej intencji
             val wejscie = Intent(c, MainActivity::class.java)
@@ -172,6 +189,14 @@ object Kanaly {
                 .onFailure { Log.w(TAG, "program", it) }
         }
         prefs(c).edit().putString("idy_${r.klucz}", lista.joinToString(",") { it.id }).apply()
+    }
+
+    private fun usunKanal(c: Context, r: Rodzaj) {
+        val p = prefs(c)
+        wlasneKanaly(c).filter { it.internalProviderId == r.klucz }.forEach { ch ->
+            runCatching { c.contentResolver.delete(TvContractCompat.buildChannelUri(ch.id), null, null) }
+        }
+        p.edit().remove("kanal_${r.klucz}").remove("idy_${r.klucz}").apply()
     }
 
     private fun usunWszystkie(c: Context) {

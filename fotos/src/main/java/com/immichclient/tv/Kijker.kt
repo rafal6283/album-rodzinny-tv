@@ -1,5 +1,10 @@
 package com.immichclient.tv
 
+import androidx.compose.material.icons.filled.QrCode2
+import androidx.compose.material.icons.filled.AddCircleOutline
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.MotionPhotosOn
 import androidx.compose.material.icons.filled.Favorite
 import android.content.Context
 import android.os.Handler
@@ -123,6 +128,7 @@ import androidx.tv.material3.Text
 import coil3.SingletonImageLoader
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Test (`--ez video_zonder_placeholder true`): doet alsof dit apparaat geen placeholder-surface mag gebruiken, zoals
@@ -140,6 +146,12 @@ class KijkerStaat(val bron: BeeldBron, start: Int, val titel: String?, diashow: 
     var actief by mutableLongStateOf(System.currentTimeMillis())
     var speeltVideo by mutableStateOf(false)
     var videoFout by mutableStateOf(false)
+    /** szczegóły niezgodnego filmu („HEVC 3840×2160 · brak dekodera”), pokazywane pod komunikatem */
+    var videoFoutOpis by mutableStateOf<String?>(null)
+    /** Live Photo: odtwarzany właśnie krótki film zdjęcia */
+    var liveGra by mutableStateOf(false)
+    /** krótki komunikat na dole ekranu (np. brak uprawnienia do ulubionych) */
+    var komunikat by mutableStateOf<String?>(null)
     var speler: ExoPlayer? = null
     /** dolny pasek akcji (▼): pokaz, szczegóły, powiększ, mapa */
     var pasek by mutableStateOf(false)
@@ -210,8 +222,10 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     // nowe zdjęcie = bez powiększenia
     LaunchedEffect(staat.index) { staat.zoom = 1f; staat.przesX = 0f; staat.przesY = 0f }
     // pasek akcji chowa się sam po chwili bez klawiszy
-    LaunchedEffect(staat.pasek, staat.actief) { if (staat.pasek) { delay(8000); staat.pasek = false } }
+    LaunchedEffect(staat.pasek, staat.actief) { if (staat.pasek) { delay(15_000); staat.pasek = false } }
     LaunchedEffect(Unit) { fr.requestFocus() }
+    // po zamknięciu ekranu udostępniania fokus wraca do przeglądarki
+    LaunchedEffect(Udostepnianie.otwarte) { if (!Udostepnianie.otwarte) { delay(50); runCatching { fr.requestFocus() } } }
     // Tijdens een diashow het scherm aan houden: anders start de systeem-screensaver (op o.a. de Google TV
     // Streamer niet uit te zetten) midden in de diashow. Gepauzeerd of gestopt geldt weer de gewone timeout.
     val view = LocalView.current
@@ -263,15 +277,26 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
 
     val ekran = with(LocalDensity.current) { androidx.compose.ui.platform.LocalConfiguration.current.let { it.screenWidthDp.dp.toPx() to it.screenHeightDp.dp.toPx() } }
     val akcje = akcjeDla(huidig, opKaart != null)
+    val zakres = androidx.compose.runtime.rememberCoroutineScope()
     fun wykonaj(ak: Akcja) {
-        staat.pasek = false
+        // ulubione i udostępnianie zostawiają pasek otwarty (widać zmianę na przycisku)
+        if (ak != Akcja.ULUBIONE && ak != Akcja.UDOSTEPNIJ) staat.pasek = false
         when (ak) {
             Akcja.POKAZ -> staat.diashow = !staat.diashow
             Akcja.SZCZEGOLY -> staat.info = !staat.info
             Akcja.POWIEKSZ -> { staat.diashow = false; staat.info = false; staat.zoomUstaw(2f, ekran.first, ekran.second) }
             Akcja.MAPA -> if (opKaart != null && huidig != null) opKaart(huidig)
+            Akcja.ULUBIONE -> if (huidig != null) zakres.launch { Ulubione.przelacz(huidig)?.let { staat.komunikat = ctx.getString(it) } }
+            Akcja.LIVE -> { staat.diashow = false; staat.liveGra = true }
+            Akcja.UDOSTEPNIJ -> if (huidig != null) Udostepnianie.przelacz(huidig)
+            Akcja.KOD_QR -> { staat.diashow = false; Udostepnianie.otworz(ctx) }
         }
     }
+    // Live Photo: krótki film odtwarza się sam raz po otwarciu zdjęcia (nie w trakcie pokazu)
+    LaunchedEffect(staat.index) { staat.liveGra = huidig?.live != null && !staat.diashow }
+    LaunchedEffect(staat.komunikat) { if (staat.komunikat != null) { delay(3500); staat.komunikat = null } }
+    // muzyka w tle pokazu slajdów (Ustawienia → Pokaz slajdów → Muzyka)
+    MuzykaPokazu(grac = staat.diashow && !staat.speeltVideo)
 
     BoxWithConstraints(
         Modifier.fillMaxSize().background(Color.Black).focusRequester(fr).focusable().onPreviewKeyEvent { e ->
@@ -390,6 +415,10 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
             enter = fadeIn() + androidx.compose.animation.slideInVertically { it / 3 }, exit = fadeOut(),
         ) { PasekAkcji(staat, akcje) }
         AnimatedVisibility(staat.zoom > 1f, Modifier.align(Alignment.BottomCenter), enter = fadeIn(), exit = fadeOut()) { ZoomPodpowiedz(staat) }
+        AnimatedVisibility(staat.komunikat != null, Modifier.align(Alignment.BottomCenter).padding(bottom = 140.dp), enter = fadeIn(), exit = fadeOut()) {
+            Text(staat.komunikat.orEmpty(), style = MaterialTheme.typography.titleMedium, color = Color.White,
+                modifier = Modifier.background(Color(0xE6181822), RoundedCornerShape(20.dp)).padding(horizontal = 22.dp, vertical = 12.dp))
+        }
         // Diashow rechtsboven: een badge (play-icoon + "Diashow") bij het starten, en kort "Diashow gepauzeerd" bij het
         // stoppen (OK, of handmatig bladeren); niet bij elke automatische wissel. Hij vervaagt na een paar seconden.
         // Het voortgangsringetje houdt zijn vaste plek: de badge vervaagt alleen (alpha) en houdt zijn ruimte.
@@ -473,12 +502,14 @@ private fun Beeld(a: Asset, staat: KijkerStaat, actief: Boolean, zicht: () -> Fl
             AsyncImage(pelny, null, mod, contentScale = ContentScale.Fit)
         }
         if (a.video && actief) Video(a, staat)
+        if (!a.video && actief && a.live != null && staat.liveGra) Video(a, staat, zrodlo = a.live, live = true)
+
     }
 }
 
 @OptIn(UnstableApi::class)
 @Composable
-private fun Video(a: Asset, staat: KijkerStaat) {
+private fun Video(a: Asset, staat: KijkerStaat, zrodlo: String = a.id, live: Boolean = false) {
     val ctx = LocalContext.current
     val speler = remember {
         // Kleine buffers: standaard reserveert ExoPlayer tot ~140 MB (50 s) aan video; op een box met 2 GB is dat
@@ -511,9 +542,10 @@ private fun Video(a: Asset, staat: KijkerStaat) {
     var verhouding by remember { mutableFloatStateOf(0f) }
     var gedraaid by remember { mutableStateOf(false) }
     DisposableEffect(a.id) {
-        staat.videoFout = false
+        staat.videoFout = false; staat.videoFoutOpis = null
         verhouding = 0f; gedraaid = false
-        speler.setMediaItem(MediaItem.fromUri(Immich.video(a.id)))
+        var format: androidx.media3.common.Format? = null
+        speler.setMediaItem(MediaItem.fromUri(Immich.video(zrodlo)))
         speler.prepare()
         speler.playWhenReady = true
         val luister = object : Player.Listener {
@@ -523,16 +555,23 @@ private fun Video(a: Asset, staat: KijkerStaat) {
             }
             override fun onTracksChanged(tracks: Tracks) {
                 val f = tracks.groups.firstOrNull { it.type == C.TRACK_TYPE_VIDEO }?.getTrackFormat(0) ?: return
+                format = f
                 gedraaid = f.rotationDegrees == 90 || f.rotationDegrees == 270
                 if (gedraaid) Log.i("Fotos", "video ${a.id}: gedraaid ${f.rotationDegrees}°, TextureView")
             }
             override fun onPlaybackStateChanged(s: Int) {
                 // diashow: na de video door naar de volgende
-                if (s == Player.STATE_ENDED) { staat.speeltVideo = false; if (staat.diashow) staat.diaVerder() }
+                if (s == Player.STATE_ENDED) {
+                    staat.speeltVideo = false
+                    if (live) staat.liveGra = false else if (staat.diashow) staat.diaVerder()
+                }
             }
             override fun onPlayerError(error: PlaybackException) {
                 Log.w("Fotos", "video ${a.id}", error)
-                staat.speeltVideo = false; staat.videoFout = true // diashow loopt dan na de diashow-tijd gewoon door
+                staat.speeltVideo = false
+                if (live) { staat.liveGra = false; return } // Live Photo bez filmu: zostaje samo zdjęcie
+                staat.videoFout = true // diashow loopt dan na de diashow-tijd gewoon door
+                staat.videoFoutOpis = opisBleduWideo(format, error)
             }
         }
         speler.addListener(luister)
@@ -565,12 +604,15 @@ private fun Video(a: Asset, staat: KijkerStaat) {
         if (staat.videoFout) Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(Icons.Filled.VideocamOff, null, Modifier.size(44.dp), tint = Kleur.zacht)
             Text(stringResource(R.string.video_fout), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht, modifier = Modifier.padding(top = 8.dp))
+            staat.videoFoutOpis?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = Kleur.tekst, modifier = Modifier.padding(top = 6.dp)) }
+            Text(stringResource(R.string.video_fout_rada), style = MaterialTheme.typography.bodySmall, color = Kleur.zacht,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 10.dp).width(560.dp))
         }
         // dun voortgangsbalkje onderin
         val deel by produceState(0f, speler) {
             while (true) { val d = speler.duration; value = if (d > 0) speler.currentPosition.toFloat() / d else 0f; delay(250) }
         }
-        Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(4.dp).background(Color(0x33FFFFFF))) {
+        if (!live) Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(4.dp).background(Color(0x33FFFFFF))) {
             Box(Modifier.fillMaxHeight().fillMaxWidth(deel).background(Kleur.primair))
         }
     }
@@ -603,7 +645,14 @@ private fun OnderBalk(a: Asset, staat: KijkerStaat, @Suppress("UNUSED_PARAMETER"
                     Icon(Icons.Filled.Place, null, Modifier.size(18.dp), tint = Kleur.pinezka)
                     Text(" $plaats", style = MaterialTheme.typography.titleMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Normal), color = Color(0xDDFFFFFF), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-                if (a.favoriet) {
+                if (a.live != null) {
+                    Spacer(Modifier.width(16.dp))
+                    Row(Modifier.background(Color(0x33FFFFFF), RoundedCornerShape(12.dp)).padding(horizontal = 8.dp, vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(androidx.compose.material.icons.Icons.Filled.MotionPhotosOn, null, Modifier.size(15.dp), tint = Color.White)
+                        Text(" LIVE", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                    }
+                }
+                if (Ulubione.jest(a)) {
                     Spacer(Modifier.width(16.dp))
                     Icon(androidx.compose.material.icons.Icons.Filled.Favorite, null, Modifier.size(18.dp), tint = Color(0xFFFF5C8A))
                 }
@@ -664,7 +713,7 @@ private fun InfoPaneel(a: Asset, staat: KijkerStaat, metKaartSprong: Boolean) {
                     )
                     d.camera?.let { InfoRegel(Icons.Filled.CameraAlt, it, listOfNotNull(d.instellingen, d.lens).joinToString("\n").ifEmpty { null }) }
                     (d.plaats ?: d.wspolrzedne)?.let { InfoRegel(Icons.Filled.Place, it, d.wspolrzedne.takeIf { d.plaats != null }) }
-                    if (d.ulubione || a.favoriet) InfoRegel(Icons.Filled.Favorite, stringResource(R.string.w_ulubionych), null, kolorIkony = Color(0xFFFF5C8A))
+                    if (Ulubione.jest(a)) InfoRegel(Icons.Filled.Favorite, stringResource(R.string.w_ulubionych), null, kolorIkony = Color(0xFFFF5C8A))
                     val albums = albumNamen(a.id)
                     if (albums.isNotEmpty()) InfoRegel(Icons.Filled.PhotoLibrary, albums.joinToString(", "), null, maxRegels = 3)
                     d.omschrijving?.let { InfoRegel(Icons.Filled.Description, it, null, maxRegels = 5) }
@@ -723,12 +772,48 @@ private fun OsobyRegel(osoby: List<Persoon>) {
 }
 
 /** Akcje dolnego paska przeglądarki (▼), jak okrągłe przyciski w Immichin. */
-enum class Akcja { POKAZ, SZCZEGOLY, POWIEKSZ, MAPA }
+enum class Akcja { POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, MAPA }
 
 fun akcjeDla(a: Asset?, zMapa: Boolean): List<Akcja> = buildList {
-    add(Akcja.POKAZ); add(Akcja.SZCZEGOLY)
+    add(Akcja.POKAZ)
+    if (a != null) add(Akcja.ULUBIONE)
+    add(Akcja.SZCZEGOLY)
     if (a != null && !a.video) add(Akcja.POWIEKSZ)
+    if (a?.live != null) add(Akcja.LIVE)
+    if (a != null) add(Akcja.UDOSTEPNIJ)
+    if (Udostepnianie.koszyk.isNotEmpty()) add(Akcja.KOD_QR)
     if (zMapa && a?.lat != null) add(Akcja.MAPA)
+}
+
+/**
+ * Muzyka w tle pokazu slajdów: strumień lub plik z adresu z ustawień (np. radio internetowe albo mp3 na serwerze
+ * domowym). Gra tylko podczas pokazu, pauzuje na czas filmów, w kółko.
+ */
+@OptIn(UnstableApi::class)
+@Composable
+private fun MuzykaPokazu(grac: Boolean) {
+    val url = Instellingen.muzykaUrl.trim()
+    if (!Instellingen.muzyka || url.isEmpty()) return
+    val ctx = LocalContext.current
+    val gracz = remember(url) {
+        ExoPlayer.Builder(ctx).build().apply {
+            setMediaItem(MediaItem.fromUri(url)); repeatMode = Player.REPEAT_MODE_ALL; volume = 0.7f; prepare()
+        }
+    }
+    DisposableEffect(gracz) { onDispose { gracz.release() } }
+    LaunchedEffect(grac, gracz) { gracz.playWhenReady = grac }
+}
+
+/** Opis niezgodnego filmu: kodek, rozdzielczość, przyczyna z odtwarzacza. */
+fun opisBleduWideo(f: androidx.media3.common.Format?, e: PlaybackException): String {
+    val kodek = when (f?.sampleMimeType) {
+        "video/hevc" -> "HEVC (H.265)"; "video/avc" -> "H.264"; "video/av01" -> "AV1"; "video/x-vnd.on2.vp9" -> "VP9"
+        "video/x-vnd.on2.vp8" -> "VP8"; "video/mp4v-es" -> "MPEG-4"; "video/dolby-vision" -> "Dolby Vision"
+        null -> null; else -> f.sampleMimeType
+    }
+    val roz = f?.takeIf { it.width > 0 && it.height > 0 }?.let { "${it.width}×${it.height}" }
+    val bity = f?.colorInfo?.colorTransfer?.takeIf { it == C.COLOR_TRANSFER_ST2084 || it == C.COLOR_TRANSFER_HLG }?.let { "HDR" }
+    return listOfNotNull(kodek, roz, bity, e.errorCodeName.removePrefix("ERROR_CODE_").lowercase().replace('_', ' ')).joinToString("  ·  ")
 }
 
 @Composable
@@ -742,16 +827,27 @@ private fun PasekAkcji(staat: KijkerStaat, akcje: List<Akcja>) {
                     Akcja.SZCZEGOLY -> Icons.Filled.Info to stringResource(R.string.szczegoly)
                     Akcja.POWIEKSZ -> Icons.Filled.ZoomIn to stringResource(R.string.powieksz)
                     Akcja.MAPA -> Icons.Filled.Map to stringResource(R.string.sectie_kaart)
+                    Akcja.ULUBIONE -> {
+                        val u = staat.bron.op(staat.index)?.let { Ulubione.jest(it) } == true
+                        (if (u) Icons.Filled.Favorite else androidx.compose.material.icons.Icons.Filled.FavoriteBorder) to stringResource(if (u) R.string.w_ulubionych_kort else R.string.ulubione_dodaj)
+                    }
+                    Akcja.LIVE -> androidx.compose.material.icons.Icons.Filled.MotionPhotosOn to "Live"
+                    Akcja.UDOSTEPNIJ -> {
+                        val w = staat.bron.op(staat.index)?.let { Udostepnianie.zawiera(it) } == true
+                        (if (w) androidx.compose.material.icons.Icons.Filled.CheckCircle else androidx.compose.material.icons.Icons.Filled.AddCircleOutline) to
+                            stringResource(if (w) R.string.udost_wybrane else R.string.udost_dodaj)
+                    }
+                    Akcja.KOD_QR -> androidx.compose.material.icons.Icons.Filled.QrCode2 to stringResource(R.string.udost_kod, Udostepnianie.koszyk.size)
                 }
                 val skala by animateFloatAsState(if (wybrany) 1.08f else 1f, tween(140), label = "akcja")
-                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(84.dp)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(92.dp)) {
                     Box(
                         Modifier.size(56.dp).graphicsLayer { scaleX = skala; scaleY = skala }
                             .background(if (wybrany) Color.White else Color(0x33FFFFFF), androidx.compose.foundation.shape.CircleShape),
                         contentAlignment = Alignment.Center,
                     ) { Icon(ikona, null, Modifier.size(24.dp), tint = if (wybrany) Color(0xFF101018) else Color.White) }
                     Text(napis, style = MaterialTheme.typography.titleSmall, color = if (wybrany) Color.White else Color(0xB3FFFFFF),
-                        maxLines = 1, modifier = Modifier.padding(top = 10.dp))
+                        maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 10.dp))
                 }
             }
         }

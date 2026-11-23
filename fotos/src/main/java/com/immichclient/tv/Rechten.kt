@@ -65,6 +65,8 @@ object Rechten {
         Recht("person.read", R.string.recht_person_read),
         Recht("map.read", R.string.recht_map_read),
         Recht("folder.read", R.string.recht_folder_read),
+        // ulubione z pilota (jedyna zmiana w bibliotece, jaką robi aplikacja)
+        Recht("asset.update", R.string.recht_asset_update),
     )
 
     /** null = nog niet gecontroleerd (of niet te bepalen); anders de ontbrekende rechten */

@@ -1,5 +1,7 @@
 package com.immichclient.tv
 
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.PlayCircle
 import android.util.Log
 import android.view.KeyEvent
@@ -320,6 +322,21 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                                 selected = false, onClick = { kiezer = true }, modifier = Modifier.focusRequester(datumKnop),
                                 leadingIcon = { Icon(Icons.Filled.CalendarMonth, null, Modifier.width(18.dp)) },
                             tekst = stringResource(R.string.ga_naar_datum))
+                            // album jako kanał na ekranie głównym Android TV
+                            staat.filter.albumId?.let { albumId ->
+                                val naEkranie = Instellingen.kanalAlbum == albumId
+                                val ctxK = androidx.compose.ui.platform.LocalContext.current
+                                Keuze(
+                                    selected = naEkranie,
+                                    onClick = {
+                                        if (naEkranie) { Instellingen.kanalAlbum = ""; Instellingen.kanalAlbumNazwa = "" }
+                                        else { Instellingen.kanalAlbum = albumId; Instellingen.kanalAlbumNazwa = scherm.titel }
+                                        Kanaly.odswiezWTle(ctxK)
+                                    },
+                                    leadingIcon = { Icon(androidx.compose.material.icons.Icons.Filled.Tv, null, Modifier.width(18.dp)) },
+                                    tekst = stringResource(if (naEkranie) R.string.kanal_album_jest else R.string.kanal_album_dodaj),
+                                )
+                            }
                             // „Losowo” (shuffle): losowe zdjęcia i filmy jako pokaz; w głównej osi czasu i w ulubionych
                             if (staat.filter.albumId == null && staat.filter.persoonId == null) {
                                 val tytulLosowo = stringResource(R.string.losowo)
@@ -340,6 +357,7 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                                 )
                             }
                         }
+                        if (scherm.metHerinneringen) UrodzinyRij(nav)
                         if (scherm.metHerinneringen && Instellingen.herinneringen) HerinneringenRij(nav)
                     }
                 }
@@ -548,6 +566,51 @@ fun HerinneringenRij(nav: Nav) {
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             items(lijst, key = { it.id }) { h -> HerinneringKaart(h, nav) }
+        }
+    }
+}
+
+/** Urodziny osób z Immich (dziś i w najbliższym tygodniu): karty z twarzą; OK = zdjęcia tej osoby. */
+@Composable
+fun UrodzinyRij(nav: Nav) {
+    LaunchedEffect(Unit) { Urodziny.laduj() }
+    val lista = Urodziny.lista
+    if (lista.isEmpty()) return
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.width(150.dp)) {
+            Text(stringResource(R.string.urodziny), style = MaterialTheme.typography.displaySmall, maxLines = 2)
+            Text(stringResource(R.string.urodziny_sub), style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht, modifier = Modifier.padding(top = 4.dp))
+        }
+        LazyRow(
+            Modifier.weight(1f),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            items(lista, key = { it.osoba.id }) { w -> UrodzinyKarta(w, nav) }
+        }
+    }
+}
+
+@Composable
+private fun UrodzinyKarta(w: Urodziny.Wpis, nav: Nav) {
+    val lat = pluralStringResource(R.plurals.lat, w.lat, w.lat)
+    val kiedy = when (w.zaIle) { 0 -> stringResource(R.string.urodziny_dzis, lat); 1 -> stringResource(R.string.urodziny_jutro, lat); else -> stringResource(R.string.urodziny_za, w.zaIle, lat) }
+    Card(
+        onClick = { nav.open(Scherm.Tijdlijn(w.osoba.naam, kiedy, Filter(persoonId = w.osoba.id), true, false, nav.scope)) },
+        modifier = Modifier.width(250.dp).height(112.dp),
+        shape = CardDefaults.shape(RoundedCornerShape(18.dp)),
+        scale = CardDefaults.scale(focusedScale = 1.06f),
+        border = CardDefaults.border(focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, Color.White), shape = RoundedCornerShape(18.dp))),
+    ) {
+        Row(
+            Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(Color(0xFF5B2A4A), Color(0xFF2A2340)))).padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(Modifier.border(2.dp, Color(0xFFF5B83D), androidx.compose.foundation.shape.CircleShape).padding(3.dp)) { Gezicht(w.osoba, 64.dp) }
+            Column(Modifier.padding(start = 14.dp)) {
+                Text(w.osoba.naam, style = MaterialTheme.typography.headlineSmall, color = Color.White, maxLines = 1)
+                Text((if (w.zaIle == 0) "🎂 " else "") + kiedy, style = MaterialTheme.typography.labelLarge, color = Color(0xE6FFFFFF), maxLines = 2)
+            }
         }
     }
 }

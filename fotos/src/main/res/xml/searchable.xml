@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Wyszukiwanie systemowe: zapytanie trafia do MainActivity (ACTION_SEARCH) i do sekcji Szukaj (inteligentne wyszukiwanie Immich). -->
+<searchable xmlns:android="http://schemas.android.com/apk/res/android"
+    android:label="@string/app_name"
+    android:hint="@string/zoek_hint"
+    android:voiceSearchMode="showVoiceSearchButton|launchRecognizer" />

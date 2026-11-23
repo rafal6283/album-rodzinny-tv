@@ -51,7 +51,7 @@ object Koppel {
     private const val TAG = "Fotos"
     private val POORTEN = 8791..8799
     /** Precies de rechten die de app nodig heeft (alleen lezen); zie x-immich-permission in de OpenAPI-spec. */
-    val RECHTEN = listOf("asset.read", "asset.view", "album.read", "memory.read", "person.read", "map.read", "user.read", "folder.read")
+    val RECHTEN = listOf("asset.read", "asset.view", "album.read", "memory.read", "person.read", "map.read", "user.read", "folder.read", "asset.update")
 
     sealed class Stand {
         data object Wacht : Stand()
@@ -215,8 +215,11 @@ object Koppel {
                 if (email.isEmpty() || ww.isEmpty()) throw KoppelFout(Tekst(R.string.fout_vul_email))
                 maakSleutel(basis, email, ww)
             }
-            Immich.zetSleutel(c, sleutel, null, basis)
-            main.post { Immich.kiesAccount(c, null) }
+            // „Dodaj profil”: klucz trafia do profilu domownika i ten profil staje się aktywny
+            val profil = Profile.docelowy
+            Immich.zetSleutel(c, sleutel, profil, basis)
+            if (profil != null) Profile.ustawAktywny(c, profil)
+            main.post { Profile.docelowy = null; Immich.kiesAccount(c, profil) }
             Log.i(TAG, "koppelen: gelukt met $basis" + if (test) " (test)" else "")
             zetStand(Stand.Klaar(naam, basis, waarschuwing))
             JSONObject().put("ok", true).put("titel", res.getString(R.string.klaar_titel))

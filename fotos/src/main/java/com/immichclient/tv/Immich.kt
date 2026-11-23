@@ -60,7 +60,8 @@ object Immich {
     /** Kies het account voor dit profiel (valt terug op het algemene account). */
     fun kiesAccount(c: Context, kijker: String?) {
         val p = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val k = kijker?.takeIf { it.isNotBlank() && p.contains("sleutel_$it") }
+        // bez wskazanego profilu: ostatnio wybrany profil domownika (Ustawienia → Profile), inaczej konto główne
+        val k = (kijker ?: p.getString(Profile.AKTYWNY, null))?.takeIf { it.isNotBlank() && p.contains("sleutel_$it") }
         this.kijker = k
         sleutel = p.getString(if (k != null) "sleutel_$k" else "sleutel", "") ?: ""
         server = p.getString(if (k != null) "server_$k" else "server", "") ?: ""
@@ -135,6 +136,7 @@ object Immich {
         val fav = o.optJSONArray("isFavorite")
         val lat = o.optJSONArray("latitude")
         val lon = o.optJSONArray("longitude")
+        val live = o.optJSONArray("livePhotoVideoId")
         fun coord(a: JSONArray?, i: Int) = a?.optDouble(i)?.takeIf { !it.isNaN() }
         List(ids.length()) { i ->
             Asset(
@@ -149,6 +151,7 @@ object Immich {
                 favoriet = fav?.optBoolean(i) ?: false,
                 lat = coord(lat, i),
                 lon = coord(lon, i),
+                live = live?.optString(i)?.takeIf { it.isNotEmpty() && it != "null" },
             )
         }
     }
@@ -194,6 +197,8 @@ object Immich {
             val exif = o.optJSONObject("exifInfo")
             Plaats(exif?.optString("city").orEmpty(), Landnaam.vertaal(exif?.optString("country").orEmpty()), o.getString("id"))
         }.filter { it.stad.isNotBlank() }
+            // to samo miasto dwa razy (np. różna pisownia kraju w EXIF) wywracało ekran Odkrywaj: klucz listy musi być unikalny
+            .distinctBy { it.stad to it.land }
     }
 
     suspend fun personen(): List<Persoon> = withContext(Dispatchers.Default) {
@@ -370,6 +375,27 @@ object Immich {
             ?: "https://tiles.immich.cloud/v1/style/${if (licht) "light" else "dark"}.json"
     }
 
+    private suspend fun put(pad: String, json: JSONObject) =
+        haal(Request.Builder().url(api + pad).put(json.toString().toRequestBody("application/json".toMediaType())).build())
+
+    /** Ulubione z pilota (wymaga uprawnienia asset.update; bez niego Immich odpowiada 403). */
+    suspend fun ustawUlubione(id: String, ulubione: Boolean) { put("/assets/$id", JSONObject().put("isFavorite", ulubione)) }
+
+    /** Osoby z datą urodzenia (urodziny na osi czasu). */
+    suspend fun osobyZUrodzinami(): List<Persoon> = withContext(Dispatchers.Default) {
+        val a = JSONObject(get("/people?size=1000&withHidden=false")).getJSONArray("people")
+        List(a.length()) { i -> a.getJSONObject(i) }.mapNotNull { o ->
+            val ur = o.optString("birthDate").take(10).let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: return@mapNotNull null
+            Persoon(o.getString("id"), o.optString("name"), o.optBoolean("isFavorite"), ur).takeIf { it.naam.isNotBlank() }
+        }
+    }
+
+    /** Najnowsze zdjęcia i filmy jednego albumu (kanał albumu na ekranie głównym). */
+    suspend fun zAlbumu(albumId: String, n: Int): List<Asset> = withContext(Dispatchers.Default) {
+        val a = JSONObject(get("/albums/$albumId")).optJSONArray("assets") ?: return@withContext emptyList()
+        List(a.length()) { asset(a.getJSONObject(it)) }.sortedByDescending { it.datum }.take(n)
+    }
+
     /** Jedno zdjęcie po id (kafelek kanału na ekranie głównym). */
     suspend fun zasob(id: String): Asset = withContext(Dispatchers.Default) { asset(JSONObject(get("/assets/$id"))) }
 
@@ -461,6 +487,7 @@ object Immich {
             favoriet = o.optBoolean("isFavorite"),
             lat = e?.optDouble("latitude")?.takeIf { !it.isNaN() },
             lon = e?.optDouble("longitude")?.takeIf { !it.isNaN() },
+            live = o.optString("livePhotoVideoId").takeIf { it.isNotEmpty() && it != "null" },
         )
     }
 }

@@ -341,6 +341,30 @@ private val DRIFT = listOf(Offset(0f, 0f), Offset(10f, 6f), Offset(-6f, 12f), Of
 /** Geheugencache na elke wissel terugbrengen tot ±3 previews (huidige, vorige, volgende); de rest staat op schijf. */
 private const val GEHEUGEN = 24L * 1024 * 1024
 
+/**
+ * Ramka cyfrowa: poza godzinami pracy (Ustawienia → Wygaszacz) zamiast zdjęć czarny ekran z małym, ciemnym zegarem
+ * (zdjęcia się wtedy nie wczytują); wieczorem (od 20:00) całość przyciemniona o ustawiony procent.
+ */
+@Composable
+fun RamkaCyfrowa(tresc: @Composable () -> Unit) {
+    var teraz by remember { mutableStateOf(java.time.LocalTime.now()) }
+    LaunchedEffect(Unit) { while (true) { delay(30_000); teraz = java.time.LocalTime.now() } }
+    val od = Instellingen.ramkaOd; val doG = Instellingen.ramkaDo
+    val h = teraz.hour
+    val pracuje = if (od < doG) h in od until doG else h >= od || h < doG // np. 7–24 albo 18–2
+    if (!pracuje) {
+        Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.BottomEnd) {
+            Text(teraz.format(Formaat.tijd), style = TytulStyl, color = Color(0x33FFFFFF), modifier = Modifier.padding(48.dp))
+        }
+        return
+    }
+    Box(Modifier.fillMaxSize()) {
+        tresc()
+        val ciemno = Instellingen.ramkaCiemno
+        if (ciemno > 0 && h >= 20) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = ciemno / 100f)))
+    }
+}
+
 @Composable
 fun DreamScherm(staat: DreamStaat) {
     val ctx = LocalContext.current
@@ -533,7 +557,7 @@ class FotoDream : DreamService(), LifecycleOwner, SavedStateRegistryOwner, ViewM
         view.setViewTreeLifecycleOwner(this)
         view.setViewTreeSavedStateRegistryOwner(this)
         view.setViewTreeViewModelStoreOwner(this)
-        view.setContent { FotosThema { DreamScherm(staat) } }
+        view.setContent { FotosThema { RamkaCyfrowa { DreamScherm(staat) } } }
         setContentView(view)
         isAttached = true
         Log.i("Fotos", "screensaver: gestart (${Instellingen.dreamBron}, ${Instellingen.dreamSeconden} s)")
