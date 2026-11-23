@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- App name and launcher variants (Settings → Name and icon) -->
-    <string name="app_name">Photos</string>
-    <string name="alias_fotos">Photos</string>
+    <string name="app_name">Album Rodzinny</string>
+    <string name="alias_fotos">Album Rodzinny</string>
     <string name="alias_album">Photo album</string>
     <string name="alias_herinneringen">Memories</string>
     <string name="alias_familie">Family photos</string>
@@ -356,11 +356,11 @@
     <string name="fout_onverwacht">Unexpected response from the server (HTTP %1$d on %2$s).</string>
     <string name="fout_rechten">This key is missing permissions: %1$s. Create a new key in Immich with exactly: %2$s.</string>
     <string name="onbekende_gebruiker">unknown user</string>
-    <string name="sleutel_naam">Photos on %s</string>
+    <string name="sleutel_naam">Album Rodzinny on %s</string>
 
     <!-- Phone page (served by the TV) -->
-    <string name="html_titel">Connect Photos</string>
-    <string name="html_kop">Photos on the TV</string>
+    <string name="html_titel">Connect Album Rodzinny</string>
+    <string name="html_kop">Album Rodzinny on the TV</string>
     <string name="html_sub">Connect to your Immich server</string>
     <string name="html_adres">Address of your Immich server</string>
     <string name="html_adres_voorbeeld">e.g. 192.168.1.10:2283 or photos.mydomain.com</string>
@@ -389,7 +389,7 @@
     <string name="minuten">%d min</string>
 
     <!-- Screensaver (2.1) -->
-    <string name="dream_naam">Photos (screensaver)</string>
+    <string name="dream_naam">Album Rodzinny (screensaver)</string>
     <string name="groep_screensaver">Screensaver</string>
     <string name="screensaver">Screensaver</string>
     <string name="dream_aan_uitleg">Use this app as the screensaver of this device</string>
@@ -436,7 +436,7 @@
     <string name="dream_zet_uit">Turn off now</string>
     <string name="dream_zet_uitleg">The previous screensaver is remembered and restored when you turn this off</string>
     <string name="dream_open_systeem">Open screensaver settings</string>
-    <string name="dream_open_systeem_uitleg">Pick \"Photos\" in the system settings</string>
+    <string name="dream_open_systeem_uitleg">Pick \"Album Rodzinny\" in the system settings</string>
     <string name="dream_auto_kop">Automatic (network debugging)</string>
     <string name="dream_auto_uitleg">The device connects to its own debug port and sets everything up. Requires Developer options → Network debugging (or \"ADB over network\"). The first time, the TV asks whether to allow debugging: choose Always allow.</string>
     <string name="dream_auto_knop">Set up automatically</string>
@@ -580,8 +580,12 @@
     <string name="nieuw_regel">What\'s new</string>
     <string name="nieuw_regel_uitleg">Changes in this version</string>
     <string-array name="wat_nieuw">
-        <item>Date format: day first or month first (“Sun, Sep 3, 2023”)</item>
-        <item>Time format: automatic, 24 hours or 12 hours</item>
+        <item>New name and look: Album Rodzinny — icon rail with logo, tinted background glow, serif headings</item>
+        <item>Timeline as square tiles with places in the month header (Settings → Timeline → Grid layout)</item>
+        <item>Photos and videos together everywhere; memories play videos too, with a Play all button</item>
+        <item>Photo details with faces, camera and file data; zoom up to 4×</item>
+        <item>Android TV home screen channels: newest, random and today\'s memories</item>
+        <item>Polish translation</item>
     </string-array>
 
     <!-- Immichin-stijl -->

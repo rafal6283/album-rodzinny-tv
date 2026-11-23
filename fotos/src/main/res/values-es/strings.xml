@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Fotos</string>
-    <string name="alias_fotos">Fotos</string>
+    <string name="app_name">Album Rodzinny</string>
+    <string name="alias_fotos">Album Rodzinny</string>
     <string name="alias_album">Álbum de fotos</string>
     <string name="alias_herinneringen">Recuerdos</string>
     <string name="alias_familie">Fotos familiares</string>
@@ -346,10 +346,10 @@
     <string name="fout_onverwacht">Respuesta inesperada del servidor (HTTP %1$d en %2$s).</string>
     <string name="fout_rechten">A esta clave le faltan permisos: %1$s. Crea en Immich una clave nueva con exactamente: %2$s.</string>
     <string name="onbekende_gebruiker">usuario desconocido</string>
-    <string name="sleutel_naam">Fotos en %s</string>
+    <string name="sleutel_naam">Album Rodzinny en %s</string>
 
-    <string name="html_titel">Conectar Fotos</string>
-    <string name="html_kop">Fotos en el televisor</string>
+    <string name="html_titel">Conectar Album Rodzinny</string>
+    <string name="html_kop">Album Rodzinny en el televisor</string>
     <string name="html_sub">Conecta con tu servidor Immich</string>
     <string name="html_adres">Dirección de tu servidor Immich</string>
     <string name="html_adres_voorbeeld">p. ej. 192.168.1.10:2283 o fotos.midominio.es</string>
@@ -378,7 +378,7 @@
     <string name="minuten">%d min</string>
 
     <!-- Salvapantallas (2.1) -->
-    <string name="dream_naam">Fotos (salvapantallas)</string>
+    <string name="dream_naam">Album Rodzinny (salvapantallas)</string>
     <string name="groep_screensaver">Salvapantallas</string>
     <string name="screensaver">Salvapantallas</string>
     <string name="dream_aan_uitleg">Usar esta aplicación como salvapantallas de este dispositivo</string>
@@ -425,7 +425,7 @@
     <string name="dream_zet_uit">Desactivar ahora</string>
     <string name="dream_zet_uitleg">El salvapantallas anterior se recuerda y se restaura al desactivar este</string>
     <string name="dream_open_systeem">Abrir los ajustes del salvapantallas</string>
-    <string name="dream_open_systeem_uitleg">Elige «Fotos» en los ajustes del sistema</string>
+    <string name="dream_open_systeem_uitleg">Elige «Album Rodzinny» en los ajustes del sistema</string>
     <string name="dream_auto_kop">Automático (depuración por red)</string>
     <string name="dream_auto_uitleg">El dispositivo se conecta a su propio puerto de depuración y lo configura todo él mismo. Requiere Opciones de desarrollador → Depuración por red (o «ADB por red»). La primera vez, el televisor pregunta si permitir la depuración: elige Permitir siempre.</string>
     <string name="dream_auto_knop">Configurar automáticamente</string>

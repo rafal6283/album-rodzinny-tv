@@ -1,5 +1,6 @@
 package com.immichclient.tv
 
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.foundation.Image
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -132,18 +133,31 @@ fun odcienSekcji(s: Sectie): Color = when (s) {
     Sectie.INSTELLINGEN -> Color(0xFF2A2A36)
 }
 
-/** Logo: cztery zaokrąglone kafelki w kolorach (czerwony, żółty, różowy, niebieski). */
+/**
+ * Logo „Album Rodzinny”: wachlarz trzech zdjęć (koralowe, morskie, bursztynowe) z białym serduszkiem na przednim.
+ * Ten sam znak rysuje banner_album_rodzinny.py dla banera i ikony launchera.
+ */
 @Composable
 fun Logo(modifier: Modifier = Modifier) {
-    androidx.compose.foundation.Canvas(modifier.size(28.dp)) {
+    androidx.compose.foundation.Canvas(modifier.size(30.dp)) {
         val g = size.width
-        val r = androidx.compose.ui.geometry.CornerRadius(g * 0.07f)
-        fun kafel(c: Color, x: Float, y: Float, w: Float, h: Float) =
-            drawRoundRect(c, androidx.compose.ui.geometry.Offset(x * g, y * g), androidx.compose.ui.geometry.Size(w * g, h * g), r)
-        kafel(Color(0xFFEF3B36), 0f, 0f, 0.56f, 0.40f)
-        kafel(Color(0xFFFBBC1F), 0.62f, 0f, 0.38f, 0.46f)
-        kafel(Color(0xFFEE7BB8), 0f, 0.46f, 0.36f, 0.54f)
-        kafel(Color(0xFF2F7BF5), 0.42f, 0.52f, 0.58f, 0.48f)
+        val kw = g * 0.56f; val kh = g * 0.68f
+        val r = androidx.compose.ui.geometry.CornerRadius(g * 0.09f)
+        fun karta(c: Color, kat: Float, dx: Float) = rotate(kat, pivot = androidx.compose.ui.geometry.Offset(g / 2 + dx * g, g * 0.92f)) {
+            drawRoundRect(c, androidx.compose.ui.geometry.Offset(g / 2 - kw / 2 + dx * g, g * 0.16f), androidx.compose.ui.geometry.Size(kw, kh), r)
+        }
+        karta(Color(0xFFEF5B5B), -16f, -0.08f)
+        karta(Color(0xFF34B3A0), 16f, 0.08f)
+        karta(Color(0xFFF5B83D), 0f, 0f)
+        // serduszko na przedniej karcie
+        val cx = g / 2; val cy = g * 0.50f; val s = g * 0.15f
+        val p = androidx.compose.ui.graphics.Path().apply {
+            moveTo(cx, cy + s * 0.95f)
+            cubicTo(cx - s * 1.5f, cy + s * 0.05f, cx - s * 0.95f, cy - s * 0.95f, cx, cy - s * 0.35f)
+            cubicTo(cx + s * 0.95f, cy - s * 0.95f, cx + s * 1.5f, cy + s * 0.05f, cx, cy + s * 0.95f)
+            close()
+        }
+        drawPath(p, Color.White)
     }
 }
 

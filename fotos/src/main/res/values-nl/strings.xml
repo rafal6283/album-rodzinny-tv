@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Foto\'s</string>
-    <string name="alias_fotos">Foto\'s</string>
+    <string name="app_name">Album Rodzinny</string>
+    <string name="alias_fotos">Album Rodzinny</string>
     <string name="alias_album">Fotoalbum</string>
     <string name="alias_herinneringen">Herinneringen</string>
     <string name="alias_familie">Familiefoto\'s</string>
@@ -340,10 +340,10 @@
     <string name="fout_onverwacht">Onverwacht antwoord van de server (HTTP %1$d op %2$s).</string>
     <string name="fout_rechten">Deze sleutel mist rechten: %1$s. Maak in Immich een nieuwe sleutel met precies: %2$s.</string>
     <string name="onbekende_gebruiker">onbekende gebruiker</string>
-    <string name="sleutel_naam">Foto\'s op %s</string>
+    <string name="sleutel_naam">Album Rodzinny op %s</string>
 
-    <string name="html_titel">Foto\'s koppelen</string>
-    <string name="html_kop">Foto\'s op de tv</string>
+    <string name="html_titel">Album Rodzinny koppelen</string>
+    <string name="html_kop">Album Rodzinny op de tv</string>
     <string name="html_sub">Koppel met je Immich-server</string>
     <string name="html_adres">Adres van je Immich-server</string>
     <string name="html_adres_voorbeeld">bijv. 192.168.1.10:2283 of foto.mijndomein.nl</string>
@@ -372,7 +372,7 @@
     <string name="minuten">%d min</string>
 
     <!-- Screensaver (2.1) -->
-    <string name="dream_naam">Foto\'s (screensaver)</string>
+    <string name="dream_naam">Album Rodzinny (screensaver)</string>
     <string name="groep_screensaver">Screensaver</string>
     <string name="screensaver">Screensaver</string>
     <string name="dream_aan_uitleg">Deze app als screensaver van dit apparaat gebruiken</string>
@@ -419,7 +419,7 @@
     <string name="dream_zet_uit">Nu uitzetten</string>
     <string name="dream_zet_uitleg">De vorige screensaver wordt onthouden en komt terug als je dit uitzet</string>
     <string name="dream_open_systeem">Screensaver-instellingen openen</string>
-    <string name="dream_open_systeem_uitleg">Kies \"Foto\'s\" in de systeeminstellingen</string>
+    <string name="dream_open_systeem_uitleg">Kies \"Album Rodzinny\" in de systeeminstellingen</string>
     <string name="dream_auto_kop">Automatisch (netwerkfoutopsporing)</string>
     <string name="dream_auto_uitleg">Het apparaat verbindt met zijn eigen foutopsporingspoort en stelt alles zelf in. Vereist Ontwikkelaarsopties → Netwerkfoutopsporing (of \"ADB via netwerk\"). De eerste keer vraagt de tv of foutopsporing mag: kies Altijd toestaan.</string>
     <string name="dream_auto_knop">Automatisch instellen</string>

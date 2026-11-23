@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Nazwa aplikacji i warianty w launcherze (Ustawienia → Nazwa i ikona) -->
-    <string name="app_name">Zdjęcia</string>
-    <string name="alias_fotos">Zdjęcia</string>
+    <string name="app_name">Album Rodzinny</string>
+    <string name="alias_fotos">Album Rodzinny</string>
     <string name="alias_album">Album ze zdjęciami</string>
     <string name="alias_herinneringen">Wspomnienia</string>
     <string name="alias_familie">Zdjęcia rodzinne</string>
@@ -368,11 +368,11 @@
     <string name="fout_onverwacht">Nieoczekiwana odpowiedź serwera (HTTP %1$d na %2$s).</string>
     <string name="fout_rechten">Temu kluczowi brakuje uprawnień: %1$s. Utwórz w Immich nowy klucz z dokładnie tymi: %2$s.</string>
     <string name="onbekende_gebruiker">nieznany użytkownik</string>
-    <string name="sleutel_naam">Zdjęcia na %s</string>
+    <string name="sleutel_naam">Album Rodzinny na %s</string>
 
     <!-- Strona na telefonie (serwowana przez TV) -->
-    <string name="html_titel">Połącz Zdjęcia</string>
-    <string name="html_kop">Zdjęcia na telewizorze</string>
+    <string name="html_titel">Połącz Album Rodzinny</string>
+    <string name="html_kop">Album Rodzinny na telewizorze</string>
     <string name="html_sub">Połącz ze swoim serwerem Immich</string>
     <string name="html_adres">Adres serwera Immich</string>
     <string name="html_adres_voorbeeld">np. 192.168.1.10:2283 lub zdjecia.mojadomena.pl</string>
@@ -401,7 +401,7 @@
     <string name="minuten">%d min</string>
 
     <!-- Wygaszacz -->
-    <string name="dream_naam">Zdjęcia (wygaszacz)</string>
+    <string name="dream_naam">Album Rodzinny (wygaszacz)</string>
     <string name="groep_screensaver">Wygaszacz ekranu</string>
     <string name="screensaver">Wygaszacz ekranu</string>
     <string name="dream_aan_uitleg">Używaj tej aplikacji jako wygaszacza ekranu</string>
@@ -448,7 +448,7 @@
     <string name="dream_zet_uit">Wyłącz teraz</string>
     <string name="dream_zet_uitleg">Poprzedni wygaszacz zostanie zapamiętany i przywrócony po wyłączeniu</string>
     <string name="dream_open_systeem">Otwórz ustawienia wygaszacza</string>
-    <string name="dream_open_systeem_uitleg">Wybierz „Zdjęcia” w ustawieniach systemu</string>
+    <string name="dream_open_systeem_uitleg">Wybierz „Album Rodzinny” w ustawieniach systemu</string>
     <string name="dream_auto_kop">Automatycznie (debugowanie sieciowe)</string>
     <string name="dream_auto_uitleg">Urządzenie łączy się z własnym portem debugowania i wszystko konfiguruje. Wymaga Opcje programisty → Debugowanie sieciowe (lub „ADB przez sieć”). Za pierwszym razem telewizor zapyta, czy zezwolić na debugowanie: wybierz Zawsze zezwalaj.</string>
     <string name="dream_auto_knop">Skonfiguruj automatycznie</string>
@@ -594,10 +594,11 @@
     <string name="nieuw_regel">Co nowego</string>
     <string name="nieuw_regel_uitleg">Zmiany w tej wersji</string>
     <string-array name="wat_nieuw">
-        <item>Nowy wygląd w stylu Immichin: boczna szyna z logo, kolorowa poświata tła, szeryfowe nagłówki</item>
-        <item>Oś czasu jako siatka kwadratów z miejscami w nagłówku miesiąca (Ustawienia → Oś czasu → Układ)</item>
-        <item>Zdjęcia i filmy razem wszędzie; wspomnienia odtwarzają też filmy</item>
-        <item>Wspomnienia z ostatnich dwóch tygodni i przycisk „Odtwórz wszystkie”</item>
+        <item>Nowa nazwa i wygląd: Album Rodzinny — boczna szyna z logo, kolorowa poświata tła, szeryfowe nagłówki</item>
+        <item>Oś czasu jako siatka kwadratów z miejscami w nagłówku miesiąca (Ustawienia → Oś czasu → Układ siatki)</item>
+        <item>Zdjęcia i filmy razem wszędzie; wspomnienia odtwarzają też filmy, przycisk „Odtwórz wszystkie”</item>
+        <item>Szczegóły zdjęcia z twarzami osób, danymi aparatu i pliku; powiększanie zdjęć do 4×</item>
+        <item>Kanały na ekranie głównym Android TV: najnowsze, losowe i dzisiejsze wspomnienia</item>
         <item>Polska wersja językowa</item>
     </string-array>
 

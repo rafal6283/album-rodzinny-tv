@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Photos</string>
-    <string name="alias_fotos">Photos</string>
+    <string name="app_name">Album Rodzinny</string>
+    <string name="alias_fotos">Album Rodzinny</string>
     <string name="alias_album">Album photo</string>
     <string name="alias_herinneringen">Souvenirs</string>
     <string name="alias_familie">Photos de famille</string>
@@ -346,10 +346,10 @@
     <string name="fout_onverwacht">Réponse inattendue du serveur (HTTP %1$d sur %2$s).</string>
     <string name="fout_rechten">Il manque des droits à cette clé : %1$s. Créez dans Immich une nouvelle clé avec exactement : %2$s.</string>
     <string name="onbekende_gebruiker">utilisateur inconnu</string>
-    <string name="sleutel_naam">Photos sur %s</string>
+    <string name="sleutel_naam">Album Rodzinny sur %s</string>
 
-    <string name="html_titel">Connecter Photos</string>
-    <string name="html_kop">Photos sur le téléviseur</string>
+    <string name="html_titel">Connecter Album Rodzinny</string>
+    <string name="html_kop">Album Rodzinny sur le téléviseur</string>
     <string name="html_sub">Connexion à votre serveur Immich</string>
     <string name="html_adres">Adresse de votre serveur Immich</string>
     <string name="html_adres_voorbeeld">ex. 192.168.1.10:2283 ou photos.mondomaine.fr</string>
@@ -378,7 +378,7 @@
     <string name="minuten">%d min</string>
 
     <!-- Écran de veille (2.1) -->
-    <string name="dream_naam">Photos (écran de veille)</string>
+    <string name="dream_naam">Album Rodzinny (écran de veille)</string>
     <string name="groep_screensaver">Écran de veille</string>
     <string name="screensaver">Écran de veille</string>
     <string name="dream_aan_uitleg">Utiliser cette application comme écran de veille de cet appareil</string>
@@ -425,7 +425,7 @@
     <string name="dream_zet_uit">Désactiver maintenant</string>
     <string name="dream_zet_uitleg">L\'écran de veille précédent est mémorisé et rétabli quand vous désactivez celui-ci</string>
     <string name="dream_open_systeem">Ouvrir les réglages de l\'écran de veille</string>
-    <string name="dream_open_systeem_uitleg">Choisissez « Photos » dans les réglages du système</string>
+    <string name="dream_open_systeem_uitleg">Choisissez « Album Rodzinny » dans les réglages du système</string>
     <string name="dream_auto_kop">Automatique (débogage réseau)</string>
     <string name="dream_auto_uitleg">L\'appareil se connecte à son propre port de débogage et configure tout lui-même. Nécessite Options pour les développeurs → Débogage réseau (ou « ADB via le réseau »). La première fois, le téléviseur demande s\'il faut autoriser le débogage : choisissez Toujours autoriser.</string>
     <string name="dream_auto_knop">Configurer automatiquement</string>
