@@ -666,13 +666,12 @@
     </plurals>
 
     <!-- sekcja Ludzie, przewijanie filmów, karta mapy -->
-    <string name="t_wideo_przewijanie">en un vídeo: avanzar / retroceder 10 s (mantén: más rápido); al inicio / tras el final: anterior / siguiente</string>
+    <string name="t_wideo_przewijanie">"en un vídeo: pulsación corta anterior / siguiente, mantén: avanzar / retroceder"</string>
     <string name="persoon_bez_imienia">"Sin nombre"</string>
     <string name="ludzie_sub">"%1$s personas · %2$s con nombre"</string>
     <string name="ludzie_wszyscy">"Todos"</string>
     <string name="ludzie_z_imieniem">"Con nombre"</string>
     <string name="ludzie_bez_imienia">"Sin nombre"</string>
-    <string name="wideo_hint">"◀ ▶ avanzar / retroceder (mantén: más rápido)   ·   OK pausa   ·   ▼ anterior / siguiente"</string>
     <string name="poprzedni">"Anterior"</string>
     <string name="nastepny">"Siguiente"</string>
     <string name="kaart_etykieta">"Lugares donde has estado"</string>
@@ -699,4 +698,9 @@
     <string name="menu_kolejnosc_uitleg">"Ordena las secciones del menú lateral"</string>
     <string name="menu_kolejnosc_hint">"OK coger / soltar   ·   ▲▼ mover   ·   Atrás cerrar"</string>
     <string name="menu_domyslna">"Restaurar el orden predeterminado"</string>
+    <string name="wideo_ok">"Reproducir / pausa"</string>
+    <string name="wideo_poprz_nast">"Anterior / siguiente"</string>
+    <string name="wideo_trzymaj">"Mantén: avanzar"</string>
+    <string name="wideo_menu">"Más"</string>
+    <string name="wideo_zamknij">"Cerrar"</string>
 </resources>

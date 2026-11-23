@@ -699,13 +699,12 @@
     </plurals>
 
     <!-- sekcja Ludzie, przewijanie filmów, karta mapy -->
-    <string name="t_wideo_przewijanie">w filmie: przewijanie o 10 s (przytrzymaj: szybciej); na początku / po końcu: poprzedni / następny</string>
+    <string name="t_wideo_przewijanie">"w filmie: krótko poprzedni / następny, przytrzymaj: przewijanie"</string>
     <string name="persoon_bez_imienia">"Bez imienia"</string>
     <string name="ludzie_sub">"Osoby: %1$s · z imieniem: %2$s"</string>
     <string name="ludzie_wszyscy">"Wszyscy"</string>
     <string name="ludzie_z_imieniem">"Z imieniem"</string>
     <string name="ludzie_bez_imienia">"Bez imienia"</string>
-    <string name="wideo_hint">"◀ ▶ przewijanie (przytrzymaj: szybciej)   ·   OK pauza   ·   ▼ poprzedni / następny"</string>
     <string name="poprzedni">"Poprzedni"</string>
     <string name="nastepny">"Następny"</string>
     <string name="kaart_etykieta">"Miejsca, w których byliście"</string>
@@ -738,4 +737,9 @@
     <string name="menu_kolejnosc_uitleg">"Ułóż sekcje bocznego menu po swojemu"</string>
     <string name="menu_kolejnosc_hint">"OK chwyć / upuść   ·   ▲▼ przesuń chwyconą sekcję   ·   Wstecz zamknij"</string>
     <string name="menu_domyslna">"Przywróć domyślną kolejność"</string>
+    <string name="wideo_ok">"Odtwórz / pauza"</string>
+    <string name="wideo_poprz_nast">"Poprzedni / następny"</string>
+    <string name="wideo_trzymaj">"Przytrzymaj: przewijanie"</string>
+    <string name="wideo_menu">"Więcej"</string>
+    <string name="wideo_zamknij">"Zamknij"</string>
 </resources>

@@ -659,13 +659,12 @@
     </plurals>
 
     <!-- sekcja Ludzie, przewijanie filmów, karta mapy -->
-    <string name="t_wideo_przewijanie">in een video: 10 s spoelen (vasthouden: sneller); aan het begin / na het einde: vorige / volgende</string>
+    <string name="t_wideo_przewijanie">"in een video: kort vorige / volgende, vasthouden: spoelen"</string>
     <string name="persoon_bez_imienia">"Zonder naam"</string>
     <string name="ludzie_sub">"%1$s personen · %2$s met naam"</string>
     <string name="ludzie_wszyscy">"Iedereen"</string>
     <string name="ludzie_z_imieniem">"Met naam"</string>
     <string name="ludzie_bez_imienia">"Zonder naam"</string>
-    <string name="wideo_hint">"◀ ▶ spoelen (vasthouden: sneller)   ·   OK pauze   ·   ▼ vorige / volgende"</string>
     <string name="poprzedni">"Vorige"</string>
     <string name="nastepny">"Volgende"</string>
     <string name="kaart_etykieta">"Waar je bent geweest"</string>
@@ -692,4 +691,9 @@
     <string name="menu_kolejnosc_uitleg">"Zet de onderdelen van het zijmenu in je eigen volgorde"</string>
     <string name="menu_kolejnosc_hint">"OK oppakken / neerzetten   ·   ▲▼ verplaatsen   ·   Terug sluiten"</string>
     <string name="menu_domyslna">"Standaardvolgorde herstellen"</string>
+    <string name="wideo_ok">"Afspelen / pauze"</string>
+    <string name="wideo_poprz_nast">"Vorige / volgende"</string>
+    <string name="wideo_trzymaj">"Vasthouden: spoelen"</string>
+    <string name="wideo_menu">"Meer"</string>
+    <string name="wideo_zamknij">"Sluiten"</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.immichclient.tv
 
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.CheckCircle
@@ -157,19 +158,30 @@ class KijkerStaat(val bron: BeeldBron, start: Int, val titel: String?, diashow: 
     var speler: ExoPlayer? = null
     /** chwila ostatniego przewinięcia filmu (pasek czasu jest wtedy widoczny przez kilka sekund) */
     var przewinieto by mutableLongStateOf(0L)
-    /** pozycja docelowa ostatniego przewinięcia: kolejne naciśnięcia sumują się, zanim odtwarzacz zdąży przeskoczyć */
-    private var przewinDoel = 0L
+    /** pozycja docelowa przewijania: kolejne kroki sumują się, zanim odtwarzacz zdąży przeskoczyć (pokazywana na pasku) */
+    var przewinDoel by mutableLongStateOf(0L)
+        private set
+    private var ostatniSkok = 0L
+    /** strzałka wciśnięta w filmie (kod klawisza): krótko = poprzedni / następny, przytrzymana = przewijanie */
+    var strzalka = 0
+    var strzalkaPrzewija = false
 
-    /** Przewiń film o [deltaMs] (ujemne = do tyłu), w granicach filmu. */
+    /** Przewiń film o [deltaMs] (ujemne = do tyłu), w granicach filmu; odtwarzacz skacze najwyżej co 300 ms. */
     fun przewin(deltaMs: Long) {
         val sp = speler ?: return
         val teraz = System.currentTimeMillis()
         val baza = if (teraz - przewinieto < 1200) przewinDoel else sp.currentPosition
         val dl = sp.duration.takeIf { it > 0 }
         przewinDoel = (baza + deltaMs).coerceAtLeast(0L).let { if (dl != null) it.coerceAtMost((dl - 500).coerceAtLeast(0L)) else it }
-        sp.seekTo(przewinDoel)
+        if (teraz - ostatniSkok > 300) { sp.seekTo(przewinDoel); ostatniSkok = teraz }
         przewinieto = teraz
         actief = teraz
+    }
+
+    /** Koniec przewijania: skok dokładnie do pozycji docelowej. */
+    fun przewinKoniec() {
+        speler?.seekTo(przewinDoel)
+        przewinieto = System.currentTimeMillis()
     }
     /** dolny pasek akcji (▼): pokaz, szczegóły, powiększ, mapa */
     var pasek by mutableStateOf(false)
@@ -320,8 +332,31 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
 
     BoxWithConstraints(
         Modifier.fillMaxSize().background(Color.Black).focusRequester(fr).focusable().onPreviewKeyEvent { e ->
-            if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
             val k = e.key.nativeKeyCode
+            // --- film (poza pokazem slajdów): ◀ ▶ krótko = poprzedni / następny, przytrzymane = przewijanie. Działa dopiero
+            // po własnym wciśnięciu w filmie (puszczenie strzałki, którą tu przyszliśmy ze zdjęcia, nic nie robi) ---
+            val sp = staat.speler
+            if ((k == KeyEvent.KEYCODE_DPAD_LEFT || k == KeyEvent.KEYCODE_DPAD_RIGHT) && huidig?.video == true && sp != null &&
+                !staat.diashow && !staat.videoFout && !staat.info && !staat.pasek) {
+                val kier = if (k == KeyEvent.KEYCODE_DPAD_RIGHT) 1 else -1
+                staat.actief = System.currentTimeMillis()
+                if (e.type == KeyEventType.KeyDown) {
+                    val powt = e.nativeKeyEvent.repeatCount
+                    if (powt == 0) { staat.strzalka = k; staat.strzalkaPrzewija = false }
+                    else if (staat.strzalka == k) {
+                        // ok. 20 powtórzeń na sekundę: cały film w ~6 s, po 3 s trzymania dwa razy szybciej
+                        val dl = sp.duration.takeIf { it > 0 } ?: 600_000L
+                        val krok = (dl / 120).coerceIn(1_000L, 60_000L) * (if (powt > 60) 2 else 1)
+                        staat.strzalkaPrzewija = true
+                        staat.przewin(kier * krok)
+                    }
+                } else if (e.type == KeyEventType.KeyUp && staat.strzalka == k) {
+                    staat.strzalka = 0
+                    if (staat.strzalkaPrzewija) { staat.strzalkaPrzewija = false; staat.przewinKoniec() } else ga(kier)
+                }
+                return@onPreviewKeyEvent true
+            }
+            if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
             staat.actief = System.currentTimeMillis()
             // --- tryb powiększenia: strzałki przesuwają, OK/⏩ bliżej, ⏪ dalej ---
             if (staat.zoom > 1f) {
@@ -350,24 +385,10 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
                     else -> false
                 }
             }
-            // poprzedni / następny element zawsze (także w filmie): kanał ▲▼, ⏮ ⏭, strona w górę / w dół
+            // poprzedni / następny element zawsze: kanał ▲▼, ⏮ ⏭, strona w górę / w dół
             when (k) {
                 KeyEvent.KEYCODE_MEDIA_NEXT, KeyEvent.KEYCODE_CHANNEL_UP, KeyEvent.KEYCODE_PAGE_DOWN -> { staat.diashow = false; ga(1); return@onPreviewKeyEvent true }
                 KeyEvent.KEYCODE_MEDIA_PREVIOUS, KeyEvent.KEYCODE_CHANNEL_DOWN, KeyEvent.KEYCODE_PAGE_UP -> { staat.diashow = false; ga(-1); return@onPreviewKeyEvent true }
-            }
-            // --- film (poza pokazem slajdów): ◀ ▶ przewijają; przytrzymane coraz szybciej (10 s → 30 s → 60 s).
-            // ◀ na samym początku filmu = poprzedni element, ▶ po końcu filmu = następny ---
-            val sp = staat.speler
-            if (huidig?.video == true && sp != null && !staat.diashow && !staat.videoFout && !staat.info &&
-                (k == KeyEvent.KEYCODE_DPAD_LEFT || k == KeyEvent.KEYCODE_DPAD_RIGHT)) {
-                val powt = e.nativeKeyEvent.repeatCount
-                val krok = when { powt >= 15 -> 60_000L; powt >= 5 -> 30_000L; else -> 10_000L }
-                if (k == KeyEvent.KEYCODE_DPAD_LEFT) {
-                    if (powt == 0 && sp.currentPosition < 1500 && System.currentTimeMillis() - staat.przewinieto > 1200) ga(-1) else staat.przewin(-krok)
-                } else {
-                    if (powt == 0 && sp.playbackState == Player.STATE_ENDED) ga(1) else staat.przewin(krok)
-                }
-                return@onPreviewKeyEvent true
             }
             when (k) {
                 KeyEvent.KEYCODE_DPAD_LEFT -> { staat.diashow = false; ga(-1); true }
@@ -391,8 +412,8 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
                     staat.actief = System.currentTimeMillis(); true
                 }
                 // ⏩ / ⏪: in een video 10 s, anders 10 foto's
-                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> { if (huidig?.video == true && staat.speler != null) staat.przewin(if (e.nativeKeyEvent.repeatCount >= 5) 60_000 else 30_000) else ga(10); true }
-                KeyEvent.KEYCODE_MEDIA_REWIND -> { if (huidig?.video == true && staat.speler != null) staat.przewin(if (e.nativeKeyEvent.repeatCount >= 5) -60_000 else -30_000) else ga(-10); true }
+                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> { if (huidig?.video == true && staat.speler != null) { staat.przewin(30_000); staat.przewinKoniec() } else ga(10); true }
+                KeyEvent.KEYCODE_MEDIA_REWIND -> { if (huidig?.video == true && staat.speler != null) { staat.przewin(-30_000); staat.przewinKoniec() } else ga(-10); true }
                 else -> false
             }
         },
@@ -651,31 +672,49 @@ private fun Video(a: Asset, staat: KijkerStaat, zrodlo: String = a.id, live: Boo
         val czas by produceState(0L to 0L, speler) {
             while (true) { value = speler.currentPosition to speler.duration.coerceAtLeast(0L); delay(200) }
         }
-        val (poz, dl) = czas
-        val deel = if (dl > 0) (poz.toFloat() / dl).coerceIn(0f, 1f) else 0f
-        // pełny pasek z czasem: kilka sekund po przewinięciu, na pauzie i przez chwilę po starcie filmu
-        val start = remember(a.id) { System.currentTimeMillis() }
         val teraz by produceState(System.currentTimeMillis()) { while (true) { value = System.currentTimeMillis(); delay(250) } }
+        val (pozOdtw, dl) = czas
+        val poz = if (teraz - staat.przewinieto < 1200 || staat.strzalkaPrzewija) staat.przewinDoel else pozOdtw
+        val deel = if (dl > 0) (poz.toFloat() / dl).coerceIn(0f, 1f) else 0f
+        // pełny pasek z podpowiedziami: po każdym klawiszu (i przy starcie filmu) przez kilka sekund oraz na pauzie
         val pauza = !staat.speeltVideo && speler.playbackState == Player.STATE_READY && !speler.playWhenReady
-        val pelny = !live && !staat.videoFout && dl > 0 && (teraz - staat.przewinieto < 3500 || pauza || teraz - start < 4000)
+        val pelny = !live && !staat.videoFout && !staat.pasek && !staat.info && (teraz - staat.actief < 4000 || pauza || staat.strzalkaPrzewija)
         if (!live) androidx.compose.animation.AnimatedContent(pelny, Modifier.align(Alignment.BottomStart).fillMaxWidth(), label = "pasekWideo") { duzy ->
             if (!duzy) Box(Modifier.fillMaxWidth().height(4.dp).background(Color(0x33FFFFFF))) {
                 Box(Modifier.fillMaxHeight().fillMaxWidth(deel).background(Kleur.primair))
             } else Column(
-                Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xC0000000))))
-                    .padding(start = 48.dp, end = 48.dp, top = 40.dp, bottom = 28.dp),
+                Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xD0000000))))
+                    .padding(start = 40.dp, end = 40.dp, top = 56.dp, bottom = 26.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(if (pauza) Icons.Filled.Pause else Icons.Filled.PlayArrow, null, Modifier.size(22.dp), tint = Color.White)
-                    Text("  " + czasFilmu(poz) + "  /  " + czasFilmu(dl), style = MaterialTheme.typography.titleMedium, color = Color.White)
-                    Box(Modifier.weight(1f))
-                    Text(stringResource(R.string.wideo_hint), style = MaterialTheme.typography.labelLarge, color = Color(0xCCFFFFFF))
+                    Icon(if (pauza) Icons.Filled.Pause else Icons.Filled.PlayArrow, null, Modifier.size(28.dp), tint = Color.White)
+                    Text(czasFilmu(poz), style = MaterialTheme.typography.titleMedium, color = Color.White, modifier = Modifier.padding(start = 14.dp, end = 16.dp))
+                    Box(Modifier.weight(1f).height(6.dp).background(Color(0x40FFFFFF), RoundedCornerShape(3.dp))) {
+                        Box(Modifier.fillMaxHeight().fillMaxWidth(deel).background(Kleur.primair, RoundedCornerShape(3.dp)))
+                    }
+                    Text(czasFilmu(dl), style = MaterialTheme.typography.titleMedium, color = Color.White, modifier = Modifier.padding(start = 16.dp))
                 }
-                Box(Modifier.padding(top = 12.dp).fillMaxWidth().height(6.dp).background(Color(0x40FFFFFF), RoundedCornerShape(3.dp))) {
-                    Box(Modifier.fillMaxHeight().fillMaxWidth(deel).background(Kleur.primair, RoundedCornerShape(3.dp)))
+                Row(Modifier.padding(top = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    WideoSkrot(stringResource(R.string.wideo_ok)) { Text("OK", style = MaterialTheme.typography.labelMedium, color = Color.White) }
+                    WideoSkrot(stringResource(R.string.wideo_poprz_nast)) { Text("◀  ▶", style = MaterialTheme.typography.labelMedium, color = Color.White) }
+                    WideoSkrot(stringResource(R.string.wideo_trzymaj)) { Text("◀  ▶", style = MaterialTheme.typography.labelMedium, color = Color.White) }
+                    WideoSkrot(stringResource(R.string.wideo_menu)) { Text("▼", style = MaterialTheme.typography.labelMedium, color = Color.White) }
+                    WideoSkrot(stringResource(R.string.wideo_zamknij)) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, Modifier.size(14.dp), tint = Color.White) }
                 }
             }
         }
+    }
+}
+
+/** Podpowiedź klawisza pod paskiem filmu: [klawisz] opis. */
+@Composable
+private fun WideoSkrot(opis: String, klawisz: @Composable () -> Unit) {
+    Row(Modifier.padding(end = 26.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.background(Color(0x40FFFFFF), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center,
+        ) { klawisz() }
+        Text(opis, style = MaterialTheme.typography.labelLarge, color = Color.White, modifier = Modifier.padding(start = 10.dp))
     }
 }
 
@@ -836,8 +875,6 @@ private fun OsobyRegel(osoby: List<Persoon>) {
 enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, MAPA }
 
 fun akcjeDla(a: Asset?, zMapa: Boolean): List<Akcja> = buildList {
-    // w filmie ◀ ▶ przewijają, więc poprzedni / następny element także tutaj
-    if (a?.video == true) { add(Akcja.POPRZEDNI); add(Akcja.NASTEPNY) }
     add(Akcja.POKAZ)
     if (a != null) add(Akcja.ULUBIONE)
     add(Akcja.SZCZEGOLY)

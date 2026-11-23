@@ -659,13 +659,12 @@
     </plurals>
 
     <!-- sekcja Ludzie, przewijanie filmów, karta mapy -->
-    <string name="t_wideo_przewijanie">im Video: 10 s spulen (halten: schneller); am Anfang / nach dem Ende: zurück / weiter</string>
+    <string name="t_wideo_przewijanie">"im Video: kurz zurück / weiter, halten: spulen"</string>
     <string name="persoon_bez_imienia">"Ohne Namen"</string>
     <string name="ludzie_sub">"%1$s Personen · %2$s mit Namen"</string>
     <string name="ludzie_wszyscy">"Alle"</string>
     <string name="ludzie_z_imieniem">"Mit Namen"</string>
     <string name="ludzie_bez_imienia">"Ohne Namen"</string>
-    <string name="wideo_hint">"◀ ▶ spulen (halten: schneller)   ·   OK Pause   ·   ▼ zurück / weiter"</string>
     <string name="poprzedni">"Zurück"</string>
     <string name="nastepny">"Weiter"</string>
     <string name="kaart_etykieta">"Orte, an denen du warst"</string>
@@ -692,4 +691,9 @@
     <string name="menu_kolejnosc_uitleg">"Bereiche im Seitenmenü selbst anordnen"</string>
     <string name="menu_kolejnosc_hint">"OK aufnehmen / ablegen   ·   ▲▼ verschieben   ·   Zurück schließen"</string>
     <string name="menu_domyslna">"Standardreihenfolge wiederherstellen"</string>
+    <string name="wideo_ok">"Wiedergabe / Pause"</string>
+    <string name="wideo_poprz_nast">"Zurück / weiter"</string>
+    <string name="wideo_trzymaj">"Halten: spulen"</string>
+    <string name="wideo_menu">"Mehr"</string>
+    <string name="wideo_zamknij">"Schließen"</string>
 </resources>

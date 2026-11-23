@@ -681,13 +681,12 @@
     </plurals>
 
     <!-- sekcja Ludzie, przewijanie filmów, karta mapy -->
-    <string name="t_wideo_przewijanie">in a video: seek 10 s (hold: faster); at the start / after the end: previous / next</string>
+    <string name="t_wideo_przewijanie">"in a video: short press previous / next, hold to seek"</string>
     <string name="persoon_bez_imienia">"No name"</string>
     <string name="ludzie_sub">"%1$s people · %2$s named"</string>
     <string name="ludzie_wszyscy">"All"</string>
     <string name="ludzie_z_imieniem">"Named"</string>
     <string name="ludzie_bez_imienia">"Unnamed"</string>
-    <string name="wideo_hint">"◀ ▶ seek (hold: faster)   ·   OK pause   ·   ▼ previous / next"</string>
     <string name="poprzedni">"Previous"</string>
     <string name="nastepny">"Next"</string>
     <string name="kaart_etykieta">"Places you\'ve been"</string>
@@ -714,4 +713,9 @@
     <string name="menu_kolejnosc_uitleg">"Arrange the sections of the side menu"</string>
     <string name="menu_kolejnosc_hint">"OK pick up / drop   ·   ▲▼ move the picked section   ·   Back close"</string>
     <string name="menu_domyslna">"Restore default order"</string>
+    <string name="wideo_ok">"Play / pause"</string>
+    <string name="wideo_poprz_nast">"Previous / next"</string>
+    <string name="wideo_trzymaj">"Hold to seek"</string>
+    <string name="wideo_menu">"More"</string>
+    <string name="wideo_zamknij">"Close"</string>
 </resources>

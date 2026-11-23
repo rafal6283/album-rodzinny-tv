@@ -19,9 +19,9 @@ Fork aplikacji [TV Client for Immich](https://github.com/neforce/android-tv-immi
   (przysłona · czas · ISO · ogniskowa, obiektyw), miejsce ze współrzędnymi, ulubione, albumy, opis i — opcjonalnie —
   mała mapa kraju.
 - **Pasek akcji** (▼ w przeglądarce): pokaz slajdów, szczegóły, powiększenie, mapa.
-- **Przewijanie filmów pilotem**: ◀ ▶ przewijają o 10 s (przytrzymane coraz szybciej: 30 s, 60 s), ⏪︎ ⏩︎ o 30 s;
-  pasek z czasem pokazuje się przy przewijaniu i na pauzie. Poprzedni / następny film: ▼ → ⏮ ⏭, przyciski kanału
-  albo ◀ na samym początku / ▶ po końcu filmu.
+- **Sterowanie filmem jak w Immichin**: krótkie ◀ ▶ = poprzedni / następny, przytrzymane ◀ ▶ = przewijanie (cały film
+  w kilka sekund, po chwili szybciej), OK = pauza, ⏪︎ ⏩︎ = 30 s. Pod filmem pasek czasu z podpowiedziami klawiszy
+  (po każdym klawiszu i na pauzie).
 - **Ludzie** jako osobna sekcja w menu: wszystkie twarze rozpoznane przez Immich, także bez imienia, z filtrem
   Wszyscy / Z imieniem / Bez imienia, wyszukiwaniem i sortowaniem.
 - **Kolejność menu**: Ustawienia → Wygląd → Kolejność menu; OK chwyta sekcję, ▲▼ ją przesuwają (Ustawienia zostają na dole).
