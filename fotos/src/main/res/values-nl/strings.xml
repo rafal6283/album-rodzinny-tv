@@ -139,7 +139,7 @@
         <item quantity="other">%s foto\'s met locatie</item>
     </plurals>
     <string name="kaart_geen_achtergrond">Kaartachtergrond niet beschikbaar (geen internet)</string>
-    <string name="kaart_hint">"◀▶▲▼ kiezen / schuiven   ·   OK inzoomen   ·   OK lang: alle foto\'s   ·   ⏯ diashow   ·   ⏪︎⏩︎ zoomen   ·   Terug: hele wereld"</string>
+    <string name="kaart_hint">"◀▶▲▼ kiezen / schuiven   ·   OK inzoomen   ·   OK lang: alle foto\'s   ·   ⏯ diashow   ·   ⏪︎⏩︎ zoomen   ·   Terug: niveau hoger"</string>
 
     <string name="instellingen">Instellingen</string>
     <string name="instellingen_sub">"◀ ▶ of OK: waarde kiezen   ·   Terug lang ingedrukt: menu   ·   INFO: toetsen"</string>
@@ -286,7 +286,7 @@
     <string name="t_kaart_pijlen">groep kiezen, of de kaart schuiven</string>
     <string name="t_kaart_ok">inzoomen op de groep; valt hij niet meer uiteen: openen</string>
     <string name="t_kaart_zoom">uitzoomen / inzoomen</string>
-    <string name="t_kaart_terug">hele wereld; nog eens: startscherm</string>
+    <string name="t_kaart_terug">niveau hoger (het beeld van vóór het inzoomen); vanaf de hele wereld: startscherm</string>
     <string name="t_kaart_links">◀ op wereldniveau</string>
 
     <string name="koppel_titel">Koppel met je Immich</string>

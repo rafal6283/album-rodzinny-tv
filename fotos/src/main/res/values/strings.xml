@@ -151,7 +151,7 @@
         <item quantity="other">%s photos with a location</item>
     </plurals>
     <string name="kaart_geen_achtergrond">Map background unavailable (no internet)</string>
-    <string name="kaart_hint">"◀▶▲▼ select / pan   ·   OK zoom in   ·   hold OK: all photos   ·   ⏯ slideshow   ·   ⏪︎⏩︎ zoom   ·   Back: whole world"</string>
+    <string name="kaart_hint">"◀▶▲▼ select / pan   ·   OK zoom in   ·   hold OK: all photos   ·   ⏯ slideshow   ·   ⏪︎⏩︎ zoom   ·   Back: one level up"</string>
 
     <!-- Settings -->
     <string name="instellingen">Settings</string>
@@ -300,7 +300,7 @@
     <string name="t_kaart_pijlen">select a group, or pan the map</string>
     <string name="t_kaart_ok">zoom in on the group; if it no longer splits: open</string>
     <string name="t_kaart_zoom">zoom out / in</string>
-    <string name="t_kaart_terug">whole world; again: start screen</string>
+    <string name="t_kaart_terug">one level up (the view before zooming in); from the whole world: start screen</string>
     <string name="t_kaart_links">◀ at world level</string>
 
     <!-- Connect screen (TV) -->

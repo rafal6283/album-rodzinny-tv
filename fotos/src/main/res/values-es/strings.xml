@@ -145,7 +145,7 @@
         <item quantity="other">%s fotos con ubicación</item>
     </plurals>
     <string name="kaart_geen_achtergrond">Fondo del mapa no disponible (sin internet)</string>
-    <string name="kaart_hint">"◀▶▲▼ elegir / mover   ·   OK acercar   ·   Mantén OK: todas las fotos   ·   ⏯ presentación   ·   ⏪︎⏩︎ zoom   ·   Atrás: todo el mundo"</string>
+    <string name="kaart_hint">"◀▶▲▼ elegir / mover   ·   OK acercar   ·   Mantén OK: todas las fotos   ·   ⏯ presentación   ·   ⏪︎⏩︎ zoom   ·   Atrás: nivel superior"</string>
 
     <string name="instellingen">Ajustes</string>
     <string name="instellingen_sub">"◀ ▶ u OK: elegir valor   ·   Mantén Atrás: menú   ·   INFO: teclas"</string>
@@ -292,7 +292,7 @@
     <string name="t_kaart_pijlen">elegir un grupo, o mover el mapa</string>
     <string name="t_kaart_ok">acercar al grupo; si ya no se divide: abrir</string>
     <string name="t_kaart_zoom">alejar / acercar</string>
-    <string name="t_kaart_terug">todo el mundo; otra vez: pantalla de inicio</string>
+    <string name="t_kaart_terug">nivel superior (la vista antes de acercar); desde el mundo entero: pantalla de inicio</string>
     <string name="t_kaart_links">◀ a nivel mundial</string>
 
     <string name="koppel_titel">Conecta con tu Immich</string>

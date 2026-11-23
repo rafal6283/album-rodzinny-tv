@@ -163,7 +163,7 @@
         <item quantity="other">%s zdjęcia z lokalizacją</item>
     </plurals>
     <string name="kaart_geen_achtergrond">Tło mapy niedostępne (brak internetu)</string>
-    <string name="kaart_hint">"◀▶▲▼ wybór / przesuwanie   ·   OK przybliż   ·   przytrzymaj OK: wszystkie zdjęcia   ·   ⏯ pokaz   ·   ⏪︎⏩︎ zoom   ·   Wstecz: cały świat"</string>
+    <string name="kaart_hint">"◀▶▲▼ wybór / przesuwanie   ·   OK przybliż   ·   przytrzymaj OK: wszystkie zdjęcia   ·   ⏯ pokaz   ·   ⏪︎⏩︎ zoom   ·   Wstecz: poziom wyżej"</string>
 
     <!-- Ustawienia -->
     <string name="instellingen">Ustawienia</string>
@@ -312,7 +312,7 @@
     <string name="t_kaart_pijlen">wybierz grupę albo przesuń mapę</string>
     <string name="t_kaart_ok">przybliż grupę; jeśli już się nie dzieli: otwórz</string>
     <string name="t_kaart_zoom">oddal / przybliż</string>
-    <string name="t_kaart_terug">cały świat; ponownie: ekran startowy</string>
+    <string name="t_kaart_terug">poziom wyżej (widok sprzed przybliżenia); z całego świata: ekran startowy</string>
     <string name="t_kaart_links">◀ na poziomie świata</string>
 
     <!-- Ekran łączenia (TV) -->

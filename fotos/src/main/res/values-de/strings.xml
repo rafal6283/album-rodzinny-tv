@@ -139,7 +139,7 @@
         <item quantity="other">%s Fotos mit Standort</item>
     </plurals>
     <string name="kaart_geen_achtergrond">Kartenhintergrund nicht verfügbar (kein Internet)</string>
-    <string name="kaart_hint">"◀▶▲▼ wählen / verschieben   ·   OK zoomen   ·   OK lang: alle Fotos   ·   ⏯ Diashow   ·   ⏪︎⏩︎ Zoomstufe   ·   Zurück: ganze Welt"</string>
+    <string name="kaart_hint">"◀▶▲▼ wählen / verschieben   ·   OK zoomen   ·   OK lang: alle Fotos   ·   ⏯ Diashow   ·   ⏪︎⏩︎ Zoomstufe   ·   Zurück: eine Ebene höher"</string>
 
     <string name="instellingen">Einstellungen</string>
     <string name="instellingen_sub">"◀ ▶ oder OK: Wert wählen   ·   Zurück lang drücken: Menü   ·   INFO: Tasten"</string>
@@ -286,7 +286,7 @@
     <string name="t_kaart_pijlen">Gruppe wählen, oder die Karte verschieben</string>
     <string name="t_kaart_ok">auf die Gruppe zoomen; teilt sie sich nicht mehr: öffnen</string>
     <string name="t_kaart_zoom">heraus- / hineinzoomen</string>
-    <string name="t_kaart_terug">ganze Welt; nochmal: Startbildschirm</string>
+    <string name="t_kaart_terug">eine Ebene höher (Ansicht vor dem Zoomen); von der ganzen Welt: Startbildschirm</string>
     <string name="t_kaart_links">◀ auf Weltebene</string>
 
     <string name="koppel_titel">Mit deinem Immich verbinden</string>

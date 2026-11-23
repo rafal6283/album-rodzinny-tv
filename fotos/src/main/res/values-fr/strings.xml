@@ -145,7 +145,7 @@
         <item quantity="other">%s photos géolocalisées</item>
     </plurals>
     <string name="kaart_geen_achtergrond">Fond de carte indisponible (pas d\'Internet)</string>
-    <string name="kaart_hint">"◀▶▲▼ choisir / déplacer   ·   OK zoomer   ·   OK long : toutes les photos   ·   ⏯ diaporama   ·   ⏪︎⏩︎ zoom   ·   Retour : monde entier"</string>
+    <string name="kaart_hint">"◀▶▲▼ choisir / déplacer   ·   OK zoomer   ·   OK long : toutes les photos   ·   ⏯ diaporama   ·   ⏪︎⏩︎ zoom   ·   Retour : niveau supérieur"</string>
 
     <string name="instellingen">Paramètres</string>
     <string name="instellingen_sub">"◀ ▶ ou OK : choisir une valeur   ·   Retour maintenu : menu   ·   INFO : touches"</string>
@@ -292,7 +292,7 @@
     <string name="t_kaart_pijlen">choisir un groupe, ou déplacer la carte</string>
     <string name="t_kaart_ok">zoomer sur le groupe ; s\'il ne se divise plus : ouvrir</string>
     <string name="t_kaart_zoom">zoom arrière / avant</string>
-    <string name="t_kaart_terug">monde entier ; encore : écran d\'accueil</string>
+    <string name="t_kaart_terug">niveau supérieur (vue avant le zoom) ; depuis le monde entier : écran d’accueil</string>
     <string name="t_kaart_links">◀ au niveau du monde</string>
 
     <string name="koppel_titel">Connexion à votre Immich</string>

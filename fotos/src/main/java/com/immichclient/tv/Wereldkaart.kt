@@ -219,6 +219,8 @@ class KaartStaat(private val scope: CoroutineScope) {
     var focus by mutableStateOf<String?>(null)
     /** camera bij het verlaten van de sectie, hersteld bij terugkomst */
     var bewaard: Camera? = null
+    /** widoki sprzed kolejnych przybliżeń (OK): Wstecz wraca o jeden poziom */
+    val historia = ArrayDeque<Camera>()
     /** "Toon op kaart" vanuit de viewer: hierheen vliegen zodra de kaart er is */
     var doel by mutableStateOf<Pair<Double, Double>?>(null)
     /** teller: de kaart moet de toetsen weer krijgen (viewer gesloten) */
@@ -467,6 +469,9 @@ private class KaartMotor(
             if (!splitst) { open(c, KaartActie.BEKIJK); return@launch }
             focusWens = c.hoofd
             zoomDoel = doelZoom
+            // Wstecz wraca dokładnie tutaj (poziom wyżej), a nie od razu do całego świata
+            staat.historia.addLast(staat.camera.value)
+            if (staat.historia.size > 30) staat.historia.removeFirst()
             map.easeCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latVan((v[1] + v[3]) / 2), lonVan((v[0] + v[2]) / 2)), doelZoom), 650)
         }
     }
@@ -499,8 +504,24 @@ private class KaartMotor(
     fun terug(): Boolean {
         val map = kaart ?: return false
         val cam = staat.camera.value
-        if (cam.zoom <= wereldZoom + 0.2) return false
+        if (cam.zoom <= wereldZoom + 0.2) { staat.historia.clear(); return false }
         focusWens = focusCluster()?.hoofd ?: -1
+        // poziom wyżej: widok sprzed ostatniego przybliżenia (OK); wpisy, które nie są już „wyżej” (oddalono ręcznie), pomijamy
+        while (staat.historia.isNotEmpty()) {
+            val h = staat.historia.removeLast()
+            if (h.zoom < cam.zoom - 0.3) {
+                zoomDoel = h.zoom
+                map.easeCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latVan(h.cy), lonVan(h.cx)), h.zoom), 600)
+                return true
+            }
+        }
+        // bez historii (np. przybliżone ⏩ albo „Pokaż na mapie”): trzy poziomy wyżej w tym samym miejscu, na końcu cały świat
+        val nizej = cam.zoom - 3.0
+        if (nizej > wereldZoom + 0.5) {
+            zoomDoel = nizej
+            map.easeCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latVan(cam.cy), lonVan(cam.cx)), nizej), 600)
+            return true
+        }
         zoomDoel = wereldZoom
         // tijdens de vlucht door 12 zoomniveaus extra grove tegels (anders per niveau nieuwe tegels laden → 15 fps); bij stilstand terug
         if (kaartVlucht != 0) map.tileLodZoomShift = (kaartLod + kaartVlucht).toDouble()
