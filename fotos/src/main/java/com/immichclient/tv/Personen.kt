@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -98,6 +99,7 @@ fun zonderAccenten(s: String) = java.text.Normalizer.normalize(s, java.text.Norm
 @Composable
 fun PersonenScherm(staat: PersonenStaat, nav: Nav) {
     val lijst = remember(staat.alle, staat.zoek, staat.opNaam, staat.kto, Edycja.wersjaOsob) { staat.zichtbaar() }
+    LaunchedEffect(Unit) { Kalendarz.laduj() }
     val persoon = stringResource(R.string.persoon)
     val bezImienia = stringResource(R.string.persoon_bez_imienia)
     var zoekOpen by remember { mutableStateOf(false) }
@@ -159,6 +161,11 @@ fun PersonenScherm(staat: PersonenStaat, nav: Nav) {
                         scale = CardDefaults.scale(focusedScale = 1.08f),
                     ) { AsyncImage(beeld(Immich.gezicht(p.id)), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
                     if (p.naam.isNotBlank()) Text(p.naam, style = MaterialTheme.typography.labelMedium, maxLines = 2, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
+                    // najbliższe urodziny (jeśli w Immich jest data urodzenia)
+                    Kalendarz.urodzinyOsoby(p.id)?.let { w ->
+                        Text(opisUrodzin(w, krotko = true), style = MaterialTheme.typography.labelSmall, color = if (w.zaIle <= 7) Color(0xFFF5B83D) else Kleur.zacht,
+                            maxLines = 2, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 2.dp))
+                    }
                     else Text(bezImienia, style = MaterialTheme.typography.labelMedium, color = Kleur.zacht, maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
                 }
             }

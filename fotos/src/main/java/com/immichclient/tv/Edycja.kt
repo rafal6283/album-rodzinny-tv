@@ -125,7 +125,7 @@ fun OsobaMenu(id: String, imie: String, ustawTytul: (String) -> Unit, poPolaczen
             okno = null
             if (nowe.isNotBlank() && nowe.trim() != nazwa) scope.launch {
                 runCatching { Immich.zmienImie(id, nowe) }
-                    .onSuccess { Edycja.imiona[id] = nowe.trim(); Edycja.wersjaOsob++; ustawTytul(nowe.trim()); Urodziny.uniewaznij(); Kalendarz.uniewaznij(); komunikat(Taal.s(R.string.zapisano)) }
+                    .onSuccess { Edycja.imiona[id] = nowe.trim(); Edycja.wersjaOsob++; ustawTytul(nowe.trim()); Urodziny.uniewaznij(); Kalendarz.uniewaznij(); Kalendarz.laduj(); komunikat(Taal.s(R.string.zapisano)) }
                     .onFailure { komunikat(Edycja.blad(it)) }
             }
         }
@@ -133,7 +133,7 @@ fun OsobaMenu(id: String, imie: String, ustawTytul: (String) -> Unit, poPolaczen
             okno = null
             scope.launch {
                 runCatching { Immich.zmienUrodziny(id, nowa) }
-                    .onSuccess { urodziny = nowa; Urodziny.uniewaznij(); Kalendarz.uniewaznij(); komunikat(Taal.s(R.string.zapisano)) }
+                    .onSuccess { urodziny = nowa; Urodziny.uniewaznij(); Kalendarz.uniewaznij(); Kalendarz.laduj(); komunikat(Taal.s(R.string.zapisano)) }
                     .onFailure { komunikat(Edycja.blad(it)) }
             }
         }

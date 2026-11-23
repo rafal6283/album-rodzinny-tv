@@ -195,6 +195,11 @@ object Kalendarz {
 
     fun uniewaznij() { pobrano = null }
 
+    /** najbliższe urodziny osoby (null = brak daty urodzenia w Immich) */
+    fun urodzinyOsoby(id: String): Wpis? = lista.firstOrNull { it.osoba?.id == id } ?: wszystkieUrodziny[id]
+    /** wszystkie osoby z datą (lista powyżej jest przycięta do 40 pozycji) */
+    private var wszystkieUrodziny: Map<String, Wpis> = emptyMap()
+
     private fun najblizsza(d: LocalDate, dzis: LocalDate): LocalDate {
         fun wRoku(r: Int) = runCatching { d.withYear(r) }.getOrElse { LocalDate.of(r, 2, 28) }
         val t = wRoku(dzis.year)
@@ -218,9 +223,18 @@ object Kalendarz {
             val za = ChronoUnit.DAYS.between(dzis, n).toInt()
             if (za > 30) null else Wpis(n, za, n.year - od.year, null, a)
         }
+        wszystkieUrodziny = urodziny.associateBy { it.osoba!!.id }
         lista = (urodziny + rocznice).sortedWith(compareBy({ it.zaIle }, { it.osoba == null })).take(40)
         pobrano = dzis
     }
+}
+
+/** „🎂 12 gru · za 19 dni · 8 lat” — urodziny osoby pod jej twarzą (Ludzie) i w nagłówku jej osi czasu. */
+@Composable
+fun opisUrodzin(w: Kalendarz.Wpis, krotko: Boolean): String {
+    val fmt = remember(krotko) { java.time.format.DateTimeFormatter.ofPattern(if (krotko) "d MMM" else "d MMMM", Taal.locale) }
+    val kiedy = when (w.zaIle) { 0 -> stringResource(R.string.kalendarz_dzis); 1 -> stringResource(R.string.kalendarz_jutro); else -> stringResource(R.string.kalendarz_za, w.zaIle) }
+    return "🎂 " + w.data.format(fmt) + " · " + kiedy + " · " + pluralStringResource(R.plurals.lat, w.lat, w.lat)
 }
 
 /** Wiersz „Nadchodzące” we Wspomnieniach; OK otwiera zdjęcia osoby albo album. */

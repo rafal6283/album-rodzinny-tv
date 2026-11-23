@@ -319,8 +319,13 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                     Column {
                         // begroeting (instelling) boven de hoofdtijdlijn: automatisch ("Goedemiddag, <voornaam>") of eigen tekst
                         val groet = if (scherm.metHerinneringen) groetTekst() else null
+                        // oś czasu osoby: najbliższe urodziny w podtytule
+                        val urodziny = staat.filter.persoonId?.let { id ->
+                            LaunchedEffect(id) { Kalendarz.laduj() }
+                            Kalendarz.urodzinyOsoby(id)?.let { opisUrodzin(it, krotko = false) }
+                        }
                         SchermKop(
-                            groet ?: titel, if (groet != null) titel else scherm.sub,
+                            groet ?: titel, if (groet != null) titel else listOfNotNull(scherm.sub, urodziny).joinToString("  ·  "),
                             etykieta = if (scherm.metHerinneringen) stringResource(R.string.etyk_biblioteka) else if (scherm.staat.filter.favorieten) stringResource(R.string.etyk_ulubione) else null,
                         ) {
                             Keuze(
