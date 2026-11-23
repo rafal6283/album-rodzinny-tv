@@ -796,4 +796,9 @@
     </plurals>
     <string name="filmy_od">"vanaf %1$s"</string>
     <string name="filmy_od_poczatku">"Vanaf het begin"</string>
+    <string name="kalendarz">"Binnenkort"</string>
+    <string name="kalendarz_sub">"verjaardagen en albumjubilea"</string>
+    <string name="kalendarz_dzis">"vandaag"</string>
+    <string name="kalendarz_jutro">"morgen"</string>
+    <string name="kalendarz_za">"over %d dagen"</string>
 </resources>

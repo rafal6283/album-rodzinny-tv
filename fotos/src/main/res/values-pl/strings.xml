@@ -844,4 +844,9 @@
     </plurals>
     <string name="filmy_od">"od %1$s"</string>
     <string name="filmy_od_poczatku">"Od początku"</string>
+    <string name="kalendarz">"Nadchodzące"</string>
+    <string name="kalendarz_sub">"urodziny i rocznice albumów"</string>
+    <string name="kalendarz_dzis">"dziś"</string>
+    <string name="kalendarz_jutro">"jutro"</string>
+    <string name="kalendarz_za">"za %d dni"</string>
 </resources>

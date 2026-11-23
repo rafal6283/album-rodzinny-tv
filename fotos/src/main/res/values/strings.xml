@@ -818,4 +818,9 @@
     </plurals>
     <string name="filmy_od">"from %1$s"</string>
     <string name="filmy_od_poczatku">"From the start"</string>
+    <string name="kalendarz">"Coming up"</string>
+    <string name="kalendarz_sub">"birthdays and album anniversaries"</string>
+    <string name="kalendarz_dzis">"today"</string>
+    <string name="kalendarz_jutro">"tomorrow"</string>
+    <string name="kalendarz_za">"in %d days"</string>
 </resources>

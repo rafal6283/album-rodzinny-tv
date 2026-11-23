@@ -796,4 +796,9 @@
     </plurals>
     <string name="filmy_od">"ab %1$s"</string>
     <string name="filmy_od_poczatku">"Von Anfang an"</string>
+    <string name="kalendarz">"Demnächst"</string>
+    <string name="kalendarz_sub">"Geburtstage und Album-Jahrestage"</string>
+    <string name="kalendarz_dzis">"heute"</string>
+    <string name="kalendarz_jutro">"morgen"</string>
+    <string name="kalendarz_za">"in %d Tagen"</string>
 </resources>

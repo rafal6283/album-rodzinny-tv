@@ -181,3 +181,95 @@ private fun PolowaPorownania(a: Asset?, etykieta: String, brak: String, modifier
         }
     }
 }
+
+/**
+ * Kalendarz we Wspomnieniach: urodziny wszystkich osób z datą urodzenia (najbliższy rok) i rocznice albumów
+ * (najbliższe 30 dni), posortowane po dacie.
+ */
+object Kalendarz {
+    class Wpis(val data: LocalDate, val zaIle: Int, val lat: Int, val osoba: Persoon?, val album: Album?)
+
+    var lista by mutableStateOf<List<Wpis>>(emptyList())
+        private set
+    private var pobrano: LocalDate? = null
+
+    fun uniewaznij() { pobrano = null }
+
+    private fun najblizsza(d: LocalDate, dzis: LocalDate): LocalDate {
+        fun wRoku(r: Int) = runCatching { d.withYear(r) }.getOrElse { LocalDate.of(r, 2, 28) }
+        val t = wRoku(dzis.year)
+        return if (t.isBefore(dzis)) wRoku(dzis.year + 1) else t
+    }
+
+    suspend fun laduj() {
+        val dzis = LocalDate.now()
+        if (pobrano == dzis) return
+        val osoby = runCatching { Immich.osobyZUrodzinami() }.onFailure { Log.w("Fotos", "kalendarz osoby", it) }.getOrDefault(emptyList())
+        val albumy = runCatching { Immich.albums() }.onFailure { Log.w("Fotos", "kalendarz albumy", it) }.getOrDefault(emptyList())
+        val urodziny = osoby.mapNotNull { p ->
+            val ur = p.urodziny ?: return@mapNotNull null
+            val n = najblizsza(ur, dzis)
+            Wpis(n, ChronoUnit.DAYS.between(dzis, n).toInt(), n.year - ur.year, p, null)
+        }
+        val rocznice = albumy.mapNotNull { a ->
+            val od = a.van ?: return@mapNotNull null
+            if (od.year >= dzis.year || a.aantal == 0) return@mapNotNull null
+            val n = najblizsza(od, dzis)
+            val za = ChronoUnit.DAYS.between(dzis, n).toInt()
+            if (za > 30) null else Wpis(n, za, n.year - od.year, null, a)
+        }
+        lista = (urodziny + rocznice).sortedWith(compareBy({ it.zaIle }, { it.osoba == null })).take(40)
+        pobrano = dzis
+    }
+}
+
+/** Wiersz „Nadchodzące” we Wspomnieniach; OK otwiera zdjęcia osoby albo album. */
+@Composable
+fun KalendarzRij(nav: Nav) {
+    LaunchedEffect(Unit) { Kalendarz.laduj() }
+    val lista = Kalendarz.lista
+    if (lista.isEmpty()) return
+    val fmt = remember { java.time.format.DateTimeFormatter.ofPattern("d MMMM", Taal.locale) }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(stringResource(R.string.kalendarz), style = MaterialTheme.typography.displaySmall)
+            Text("   " + stringResource(R.string.kalendarz_sub), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht, modifier = Modifier.padding(bottom = 6.dp))
+        }
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 12.dp),
+        ) {
+            items(lista, key = { (it.osoba?.id ?: it.album?.id).orEmpty() + it.data }) { w ->
+                val kiedy = when (w.zaIle) { 0 -> stringResource(R.string.kalendarz_dzis); 1 -> stringResource(R.string.kalendarz_jutro); else -> stringResource(R.string.kalendarz_za, w.zaIle) }
+                val opis = if (w.osoba != null) pluralStringResource(R.plurals.lat, w.lat, w.lat) else pluralStringResource(R.plurals.lat_temu, w.lat, w.lat)
+                val nazwa = w.osoba?.let { Edycja.imie(it) } ?: w.album?.naam.orEmpty()
+                Card(
+                    onClick = {
+                        w.osoba?.let { nav.open(Scherm.Tijdlijn(nazwa, opis, Filter(persoonId = it.id), true, false, nav.scope)) }
+                        w.album?.let { nav.open(Scherm.Tijdlijn(it.naam, opis, Filter(albumId = it.id), !it.oudsteEerst, false, nav.scope)) }
+                    },
+                    modifier = Modifier.width(260.dp).height(120.dp),
+                    shape = CardDefaults.shape(RoundedCornerShape(18.dp)),
+                    scale = CardDefaults.scale(focusedScale = 1.06f),
+                ) {
+                    Row(
+                        Modifier.fillMaxSize().background(Brush.horizontalGradient(
+                            if (w.osoba != null) listOf(Color(0xFF5B2A4A), Color(0xFF2A2340)) else listOf(Color(0xFF2C3E58), Color(0xFF1E2238)),
+                        )).padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (w.osoba != null) Gezicht(w.osoba, 62.dp)
+                        else w.album?.omslag?.let {
+                            AsyncImage(beeld(Immich.thumb(it)), null, Modifier.width(62.dp).height(62.dp).clip(RoundedCornerShape(12.dp)), contentScale = ContentScale.Crop)
+                        }
+                        Column(Modifier.padding(start = 12.dp)) {
+                            Text(w.data.format(fmt) + "  ·  " + kiedy, style = MaterialTheme.typography.labelMedium, color = Color(0xFFF5B83D), maxLines = 1)
+                            Text((if (w.osoba != null) "🎂 " else "") + nazwa, style = MaterialTheme.typography.titleMedium, color = Color.White, maxLines = 1)
+                            Text(opis, style = MaterialTheme.typography.labelMedium, color = Color(0xCCFFFFFF), maxLines = 1)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

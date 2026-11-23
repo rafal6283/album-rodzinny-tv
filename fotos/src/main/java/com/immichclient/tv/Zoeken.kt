@@ -571,6 +571,8 @@ fun HerinneringenScherm(staat: HerinneringStaat, nav: Nav) {
                 )
             }
         }
+        // nadchodzące urodziny i rocznice albumów
+        item(key = "kalendarz") { KalendarzRij(nav) }
         if (staat.klaar && staat.dagen.all { it.second.isEmpty() }) item { Melding(stringResource(R.string.geen_herinneringen), null) }
         staat.dagen.forEachIndexed { di, (dag, lijst) ->
             if (lijst.isEmpty()) return@forEachIndexed
