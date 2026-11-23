@@ -161,12 +161,12 @@ fun PersonenScherm(staat: PersonenStaat, nav: Nav) {
                         scale = CardDefaults.scale(focusedScale = 1.08f),
                     ) { AsyncImage(beeld(Immich.gezicht(p.id)), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
                     if (p.naam.isNotBlank()) Text(p.naam, style = MaterialTheme.typography.labelMedium, maxLines = 2, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
+                    else Text(bezImienia, style = MaterialTheme.typography.labelMedium, color = Kleur.zacht, maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
                     // najbliższe urodziny (jeśli w Immich jest data urodzenia)
                     Kalendarz.urodzinyOsoby(p.id)?.let { w ->
                         Text(opisUrodzin(w, krotko = true), style = MaterialTheme.typography.labelSmall, color = if (w.zaIle <= 7) Color(0xFFF5B83D) else Kleur.zacht,
                             maxLines = 2, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 2.dp))
                     }
-                    else Text(bezImienia, style = MaterialTheme.typography.labelMedium, color = Kleur.zacht, maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
                 }
             }
         }
