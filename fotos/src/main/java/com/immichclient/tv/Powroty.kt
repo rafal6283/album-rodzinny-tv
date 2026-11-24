@@ -77,7 +77,7 @@ class PowrotyStaat(scope: CoroutineScope) {
 @Composable
 fun PowrotyScherm(staat: PowrotyStaat, nav: Nav) {
     val pierwszy = remember { FocusRequester() }
-    LaunchedEffect(staat.lista.isNotEmpty()) { delay(80); runCatching { pierwszy.requestFocus() } }
+    PamiecEkranu("powroty")
     LazyColumn(
         contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 80.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxSize(),
@@ -100,7 +100,7 @@ fun PowrotyScherm(staat: PowrotyStaat, nav: Nav) {
                     items(p.lata, key = { it.first }) { (rok, a) ->
                         Card(
                             onClick = { nav.open(Scherm.Lijst(p.miasto, rok.toString(), true, nav.scope) { s -> Immich.zoekTekst(null, "", s, null, ZoekFiltr(miasto = p.miasto, rok = rok)) }) },
-                            modifier = (if (p === staat.lista.firstOrNull() && rok == p.lata.first().first) Modifier.focusRequester(pierwszy) else Modifier).width(220.dp).height(150.dp),
+                            modifier = Modifier.pamiecFokusu("powroty", p.miasto + rok, pierwszy = p === staat.lista.firstOrNull() && rok == p.lata.first().first).width(220.dp).height(150.dp),
                             shape = CardDefaults.shape(RoundedCornerShape(16.dp)),
                             scale = CardDefaults.scale(focusedScale = 1.06f),
                         ) {

@@ -97,7 +97,7 @@ class SynologyStaat(private val scope: CoroutineScope) {
         private set
 
     private suspend fun sprawdz() {
-        problemMiniatur = albumy?.firstNotNullOfOrNull { it.okladka }?.let { Synology.sprawdzMiniature(it) }
+        problemMiniatur = albumy?.firstNotNullOfOrNull { it.okladka }?.let { Synology.dobierzWariant(Taal.ctx, it) }
     }
 
     fun wejdz(f: Synology.FolderSyno) { sciezka = sciezka + f; laduj() }
@@ -154,7 +154,7 @@ fun SynologyScherm(staat: SynologyStaat, nav: Nav) {
         if (wspolna) items(staat.foldery.orEmpty(), key = { "f" + it.id }) { f ->
             Card(
                 onClick = { staat.wejdz(f) },
-                modifier = Modifier.fillMaxWidth().aspectRatio(2.2f),
+                modifier = Modifier.pamiecFokusu("synology", "f" + f.id).fillMaxWidth().aspectRatio(2.2f),
                 shape = CardDefaults.shape(RoundedCornerShape(16.dp)),
                 scale = CardDefaults.scale(focusedScale = 1.06f),
             ) {
@@ -164,11 +164,11 @@ fun SynologyScherm(staat: SynologyStaat, nav: Nav) {
                 }
             }
         }
-        else items(staat.albumy.orEmpty(), key = { "a" + it.id + it.haslo.orEmpty() }) { a ->
+        else items(staat.albumy.orEmpty(), key = { "a" + it.id + it.haslo.orEmpty() + "/" + wersja }) { a ->
             Column {
                 Card(
                     onClick = { nav.open(Scherm.Lijst(a.nazwa, a.wlasciciel ?: "Synology Photos", true, nav.scope) { p -> Synology.elementy(a, p) }) },
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1.35f),
+                    modifier = Modifier.pamiecFokusu("synology", "a" + a.id + a.haslo.orEmpty()).fillMaxWidth().aspectRatio(1.35f),
                     shape = CardDefaults.shape(RoundedCornerShape(16.dp)),
                     scale = CardDefaults.scale(focusedScale = 1.06f),
                 ) {
@@ -182,7 +182,8 @@ fun SynologyScherm(staat: SynologyStaat, nav: Nav) {
             }
         }
     }
-    LaunchedEffect(Unit) { delay(60); runCatching { pierwszy.requestFocus() } }
+    PamiecEkranu("synology")
+    LaunchedEffect(Unit) { delay(60); if (PamiecFokusu.ostatni("synology") == null) runCatching { pierwszy.requestFocus() } }
     if (logowanie) SynologyLogowanie { logowanie = false; staat.laduj() }
 }
 

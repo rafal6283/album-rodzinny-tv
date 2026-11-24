@@ -49,6 +49,7 @@ object Synology {
         val p = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         adres = p.getString("adres", "").orEmpty(); konto = p.getString("konto", "").orEmpty()
         haslo = p.getString("haslo", "").orEmpty(); sid = p.getString("sid", "").orEmpty()
+        wariant = p.getInt("wariant_miniatur", 0)
         stan++
     }
 
@@ -259,29 +260,74 @@ object Synology {
 
     fun jestSyno(id: String) = id.startsWith("syno:")
 
+    /**
+     * Wariant wywołania miniatury: DSM / Synology Photos różnią się wersją API i tym, czy wartości mają być w cudzysłowach
+     * („JSON”, jak w przeglądarce Synology Photos). Aplikacja dobiera działający wariant sama ([dobierzWariant]).
+     */
+    @Volatile private var wariant = 0
+    private const val WARIANTY = 5
+
     /** Adres miniatury: rozmiar sm (siatka), m, xl (przeglądarka, pełny ekran). */
-    fun miniatura(id: String, rozmiar: String): String {
+    fun miniatura(id: String, rozmiar: String): String = miniaturaW(wariant, id, rozmiar)
+
+    private fun miniaturaW(w: Int, id: String, rozmiar: String): String {
         val c = id.split(':')
         val unit = c.getOrNull(2).orEmpty(); val klucz = c.getOrNull(3).orEmpty(); val dod = c.getOrNull(4).orEmpty()
-        val p = mutableListOf("mode" to "download", "id" to unit, "type" to "unit", "size" to rozmiar, "cache_key" to klucz)
-        if (dod.startsWith("P")) p += "passphrase" to dod.drop(1)
-        val api = if (dod == "T") "SYNO.FotoTeam.Thumbnail" else "SYNO.Foto.Thumbnail"
-        // wersja 1: jedyna, którą SYNO.Foto.Thumbnail obsługuje na każdym DSM 7 (z wersją 2 NAS zwracał błąd zamiast obrazka)
-        return url(api, "get", 1, *p.toTypedArray()).toString()
+        val team = dod == "T"
+        val haslo = dod.takeIf { it.startsWith("P") }?.drop(1)
+        fun q(x: String) = "\"$x\""
+        val api = if (team) "SYNO.FotoTeam.Thumbnail" else "SYNO.Foto.Thumbnail"
+        return when (w) {
+            // entry.cgi, wartości zwykłe, wersja 1 / 2
+            0, 1 -> {
+                val p = mutableListOf("mode" to "download", "id" to unit, "type" to "unit", "size" to rozmiar, "cache_key" to klucz)
+                haslo?.let { p += "passphrase" to it }
+                url(api, "get", w + 1, *p.toTypedArray()).toString()
+            }
+            // entry.cgi, wartości w cudzysłowach, z mode albo bez
+            2, 3 -> {
+                val p = mutableListOf("id" to unit, "type" to q("unit"), "size" to q(rozmiar), "cache_key" to q(klucz))
+                if (w == 2) p += "mode" to q("download")
+                haslo?.let { p += "passphrase" to q(it) }
+                url(api, "get", 2, *p.toTypedArray()).toString()
+            }
+            // ścieżka REST Synology Photos (/synofoto/api/v2/…)
+            else -> {
+                val b = ("$adres/synofoto/api/v2/${if (team) "t" else "p"}/Thumbnail/get".toHttpUrlOrNull() ?: throw IOException("niepoprawny adres Synology")).newBuilder()
+                    .addQueryParameter("id", unit).addQueryParameter("cache_key", q(klucz)).addQueryParameter("type", q("unit"))
+                    .addQueryParameter("size", q(rozmiar)).addQueryParameter("_sid", sid)
+                haslo?.let { b.addQueryParameter("passphrase", q(it)) }
+                b.build().toString()
+            }
+        }
     }
 
     /**
-     * Sprawdzenie miniatury (gdy siatka zostaje pusta): pobiera jedną i zwraca null = obrazek dotarł, albo opis
-     * odpowiedzi NAS (kod HTTP, typ, początek treści) — trafia też do Diagnostyki.
+     * Dobór wariantu miniatur: próbuje po kolei (najpierw zapamiętany); pierwszy, który zwraca obrazek, zostaje.
+     * null = działa; inaczej odpowiedź NAS dla każdego wariantu (pod zakładkami i w Diagnostyce).
      */
-    suspend fun sprawdzMiniature(id: String): String? = withContext(Dispatchers.IO) {
-        runCatching {
-            polaczenia.newCall(Request.Builder().url(miniatura(id, "sm")).build()).execute().use { r ->
-                val typ = r.header("Content-Type").orEmpty()
-                if (r.isSuccessful && typ.startsWith("image")) null
-                else "HTTP ${r.code} $typ ${r.body?.string().orEmpty().take(160)}"
+    suspend fun dobierzWariant(c: Context, probaId: String): String? = withContext(Dispatchers.IO) {
+        val wyniki = ArrayList<String>()
+        for (w in listOf(wariant) + (0 until WARIANTY).filter { it != wariant }) {
+            val opis = runCatching {
+                polaczenia.newCall(Request.Builder().url(miniaturaW(w, probaId, "sm")).build()).execute().use { r ->
+                    val typ = r.header("Content-Type").orEmpty()
+                    if (r.isSuccessful && typ.startsWith("image")) null
+                    else "${r.code} ${typ.substringBefore(';')} ${r.body?.string().orEmpty().replace(Regex("\\s+"), " ").take(60)}"
+                }
+            }.getOrElse { it.message ?: it.toString() }
+            if (opis == null) {
+                if (w != wariant) {
+                    wariant = w
+                    c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt("wariant_miniatur", w).apply()
+                    stan++ // siatki przerysowują się z nowymi adresami
+                }
+                Log.i(TAG, "miniatury: wariant $w")
+                return@withContext null
             }
-        }.getOrElse { it.message ?: it.toString() }?.also { Diagnose.noteer("synology miniatura", IOException(it)) }
+            wyniki += "w$w: $opis"
+        }
+        wyniki.joinToString("  |  ").also { Diagnose.noteer("synology miniatury", IOException(it)) }
     }
 
     /** Adres filmu (pobranie oryginału, odtwarzacz czyta go strumieniowo). */

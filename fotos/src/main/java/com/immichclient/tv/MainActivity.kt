@@ -514,7 +514,11 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             if (popupDicht) { kotlinx.coroutines.delay(48); if (!inhoudHeeftFocus.value) runCatching { inhoudFocus.requestFocus() } }
             // przeglądarka zamknięta (Wstecz z filmu albo zdjęcia): fokus wraca na siatkę (zdjęcie, na którym skończyłeś),
             // a gdyby jeszcze go tam nie było — na treść ekranu, nigdy do bocznego menu
-            if (kijkerByl) { kotlinx.coroutines.delay(400); if (!inhoudHeeftFocus.value) runCatching { inhoudFocus.requestFocus() } }
+            if (kijkerByl) { kotlinx.coroutines.delay(150); if (!inhoudHeeftFocus.value) runCatching { inhoudFocus.requestFocus() } }
+            // nowy ekran (sekcja, podstrona, powrót z podstrony): gdyby sam nie przejął fokusu, trafia on na treść, nie do menu
+            if (!popupDicht && !kijkerByl && !wisselSleutel.second && !popup) {
+                kotlinx.coroutines.delay(600); if (!inhoudHeeftFocus.value && !ladeFocusNu.value) runCatching { inhoudFocus.requestFocus() }
+            }
             kotlinx.coroutines.delay(800)
             wisselt.value = false
         }
@@ -545,7 +549,10 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         NavigationDrawerItem(
                             selected = sectie == s && stapel.isEmpty(),
                             modifier = (if (sectie == s) Modifier.focusRequester(ladeFocus) else Modifier)
-                                .onFocusChanged { if (it.isFocused && !ladeBinnen.value) Log.i("Fotos", "lade: binnen op ${s.name} (huidig ${sectie.name})") },
+                                .onFocusChanged { if (it.isFocused && !ladeBinnen.value) Log.i("Fotos", "lade: binnen op ${s.name} (huidig ${sectie.name})") }
+                                // w trakcie przejścia (zamknięcie przeglądarki, okna, zmiana ekranu) żadna pozycja menu nie może
+                                // przechwycić fokusu — inaczej menu na chwilę się rozwija i lista „skacze”
+                                .focusProperties { canFocus = !ladeDicht },
                             onClick = {
                                 stapel.clear(); sectie = s
                                 lade.setValue(DrawerValue.Closed)
@@ -631,9 +638,16 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                     (wortel(Sectie.KAART) as Scherm.Kaart).staat.toon(a)
                 },
             ) { laatste ->
-                kijker = null
-                if (raster != null && laatste != null) raster.terugNaar = laatste.id
-                naTerug?.invoke()
+                if (raster != null && laatste != null) {
+                    // najpierw fokus na element siatki (pod przeglądarką, przewinięty do niego), dopiero potem zamknięcie:
+                    // fokus ani przez chwilę nie jest „bezdomny”, więc nie ucieka do bocznego menu
+                    raster.focusDoel = laatste.id; raster.terugNaar = laatste.id
+                    val zamykany = kijker
+                    scope.launch { kotlinx.coroutines.delay(120); if (kijker === zamykany) { kijker = null; naTerug?.invoke() } }
+                } else {
+                    kijker = null
+                    naTerug?.invoke()
+                }
             }
         }
         // ekran udostępniania na samym wierzchu (otwierany z przeglądarki); po zamknięciu fokus wraca do przeglądarki

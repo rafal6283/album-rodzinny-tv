@@ -289,7 +289,8 @@ fun KalendarzRij(nav: Nav, minione: Boolean = false) {
                         w.osoba?.let { otworzUrodziny(nav, it, nazwa) }
                         w.album?.let { nav.open(Scherm.Tijdlijn(it.naam, opis, Filter(albumId = it.id), !it.oudsteEerst, false, nav.scope)) }
                     },
-                    modifier = Modifier.width(260.dp).height(120.dp),
+                    modifier = Modifier.pamiecFokusu("rocznice", (w.osoba?.id ?: w.album?.id).orEmpty() + w.data, pierwszy = !minione && w === lista.first())
+                        .width(260.dp).height(120.dp),
                     shape = CardDefaults.shape(RoundedCornerShape(18.dp)),
                     scale = CardDefaults.scale(focusedScale = 1.06f),
                 ) {
@@ -345,6 +346,7 @@ fun otworzUrodziny(nav: Nav, osoba: Persoon, nazwa: String) {
 @Composable
 fun RoczniceScherm(nav: Nav) {
     LaunchedEffect(Unit) { Kalendarz.laduj() }
+    PamiecEkranu("rocznice")
     val pusto = Kalendarz.lista.isEmpty() && Kalendarz.minione.isEmpty()
     androidx.compose.foundation.lazy.LazyColumn(
         contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 80.dp),

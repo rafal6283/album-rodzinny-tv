@@ -681,7 +681,7 @@ fun HerinneringenScherm(staat: HerinneringStaat, nav: Nav) {
                     Modifier.offset(x = (-10).dp), horizontalArrangement = Arrangement.spacedBy(18.dp),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp),
                 ) {
-                    items(staat.inne, key = { it.id }) { h -> HerinneringKaart(h, nav, breedte = 240f, hoogte = 135f) }
+                    items(staat.inne, key = { it.id }) { h -> HerinneringKaart(h, nav, breedte = 240f, hoogte = 135f, modifier = Modifier.pamiecFokusu("wspomnienia", h.id)) }
                 }
             }
         }
@@ -700,7 +700,7 @@ fun HerinneringenScherm(staat: HerinneringStaat, nav: Nav) {
                     ) {
                         items(lijst, key = { it.id }) { h ->
                             Box(if (di == staat.dagen.indexOfFirst { it.second.isNotEmpty() } && h == lijst.first()) Modifier.focusRequester(eerste) else Modifier) {
-                                HerinneringKaart(h, nav, breedte = 240f, hoogte = 135f)
+                                HerinneringKaart(h, nav, breedte = 240f, hoogte = 135f, modifier = Modifier.pamiecFokusu("wspomnienia", h.id))
                             }
                         }
                     }
@@ -708,7 +708,9 @@ fun HerinneringenScherm(staat: HerinneringStaat, nav: Nav) {
             }
         }
     }
-    LaunchedEffect(staat.klaar) { delay(50); runCatching { eerste.requestFocus() } }
+    PamiecEkranu("wspomnienia")
+    // start: pierwsza karta — chyba że wracamy, wtedy karta, z której wyszliśmy (pamięć fokusu)
+    LaunchedEffect(staat.klaar) { delay(50); if (PamiecFokusu.ostatni("wspomnienia") == null) runCatching { eerste.requestFocus() } }
 }
 
 class HerinneringStaat(scope: CoroutineScope) {
