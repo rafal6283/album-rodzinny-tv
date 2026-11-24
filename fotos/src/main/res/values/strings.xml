@@ -940,4 +940,7 @@
         <item quantity="one">%d month</item>
         <item quantity="other">%d months</item>
     </plurals>
+    <string name="synology_port">"The NAS rejected plain HTTP on its HTTPS port. Use http://…:5000 or https://…:5001"</string>
+    <string name="synology_konto_wylaczone">"Account disabled or without access to Synology Photos (the built-in guest account is usually disabled)"</string>
+    <string name="synology_zablokowany">"The TV's address is blocked in DSM after failed logins (Control Panel → Security → Account)"</string>
 </resources>

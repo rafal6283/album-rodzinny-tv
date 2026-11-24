@@ -651,7 +651,7 @@ private fun Video(a: Asset, staat: KijkerStaat, zrodlo: String = a.id, live: Boo
             }
         }
         ExoPlayer.Builder(ctx, renderers).setLoadControl(buffers)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(OkHttpDataSource.Factory(Immich.http))).build()
+            .setMediaSourceFactory(DefaultMediaSourceFactory(OkHttpDataSource.Factory(Synology.polaczenia))).build()
     }
     // Eigen weergave i.p.v. PlayerView: verhouding uit onVideoSizeChanged (bij 90°/270° al omgewisseld) en voor
     // gedraaide video's (staande telefoonvideo's, vaak MOV) een TextureView. Met een SurfaceView laat Android de

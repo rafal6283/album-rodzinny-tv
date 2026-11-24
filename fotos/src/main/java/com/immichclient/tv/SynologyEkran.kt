@@ -208,7 +208,10 @@ fun SynologyLogowanie(sluit: () -> Unit) {
                         blad = when ((e as? Synology.Blad)?.kod) {
                             400 -> ctx.getString(R.string.synology_zle_haslo)
                             403, 404 -> ctx.getString(R.string.synology_potrzebny_otp)
-                            else -> ctx.getString(R.string.synology_blad, e.message.orEmpty())
+                            401, 402 -> ctx.getString(R.string.synology_konto_wylaczone)
+                            407 -> ctx.getString(R.string.synology_zablokowany)
+                            else -> if (e.message.orEmpty().contains("HTTP 400")) ctx.getString(R.string.synology_port)
+                                else ctx.getString(R.string.synology_blad, e.message.orEmpty())
                         }
                     }
             }

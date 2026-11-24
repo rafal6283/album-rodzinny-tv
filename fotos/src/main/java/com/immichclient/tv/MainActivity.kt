@@ -89,7 +89,7 @@ class App : Application(), SingletonImageLoader.Factory {
      * (GPU-geheugen, telt mee in "Graphics" van meminfo); met 35 % van de grote heap stond er 220 MB aan previews in de cache.
      */
     override fun newImageLoader(context: PlatformContext) = ImageLoader.Builder(context)
-        .components { add(OkHttpNetworkFetcherFactory(callFactory = { Immich.http })) }
+        .components { add(OkHttpNetworkFetcherFactory(callFactory = { Synology.polaczenia })) }
         .memoryCache { MemoryCache.Builder().maxSizeBytes(CACHE_MB * 1024L * 1024).build() }
         .diskCache { DiskCache.Builder().directory(cacheDir.resolve("beelden").toOkioPath()).maxSizeBytes(400L * 1024 * 1024).build() }
         .build()

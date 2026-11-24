@@ -968,4 +968,7 @@
         <item quantity="many">%d miesięcy</item>
         <item quantity="other">%d miesiąca</item>
     </plurals>
+    <string name="synology_port">"NAS odrzucił połączenie HTTP na porcie HTTPS. Użyj http://…:5000 albo https://…:5001"</string>
+    <string name="synology_konto_wylaczone">"Konto wyłączone albo bez dostępu do Synology Photos (wbudowane konto Gość jest zwykle wyłączone)"</string>
+    <string name="synology_zablokowany">"Adres telewizora zablokowany w DSM po nieudanych logowaniach (Panel sterowania → Zabezpieczenia → Konto)"</string>
 </resources>
