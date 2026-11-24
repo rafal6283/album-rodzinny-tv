@@ -97,7 +97,13 @@ class SynologyStaat(private val scope: CoroutineScope) {
         private set
 
     private suspend fun sprawdz() {
-        problemMiniatur = albumy?.firstNotNullOfOrNull { it.okladka }?.let { Synology.dobierzWariant(Taal.ctx, it) }
+        val okl = albumy?.firstNotNullOfOrNull { it.okladka }?.let { Synology.dobierzWariant(Taal.ctx, it) } ?: run { problemMiniatur = null; return }
+        // okładka nie działa: próba na zdjęciu z pierwszego albumu (inna przestrzeń / inny identyfikator)
+        val album = albumy?.firstOrNull { it.ile > 0 }
+        val el = album?.let { runCatching { Synology.elementy(it, 1).lista.firstOrNull() }.getOrNull() }
+        val zdj = el?.let { Synology.dobierzWariant(Taal.ctx, it.id) }
+        problemMiniatur = if (el != null && zdj == null) null
+        else "$okl  ‖  ${Taal.s(R.string.synology_zdjecie)}: ${zdj ?: "-"}  ‖  ${Synology.surowyElement ?: ""}"
     }
 
     fun wejdz(f: Synology.FolderSyno) { sciezka = sciezka + f; laduj() }
@@ -143,7 +149,7 @@ fun SynologyScherm(staat: SynologyStaat, nav: Nav) {
                             tekst = stringResource(R.string.synology_zdjecia_folderu))
                     }
                 }
-                staat.problemMiniatur?.let { Text(stringResource(R.string.synology_miniatury_blad, it), style = MaterialTheme.typography.bodySmall, color = Color(0xFFFCA5A5), maxLines = 3) }
+                staat.problemMiniatur?.let { Text(stringResource(R.string.synology_miniatury_blad, it), style = MaterialTheme.typography.bodySmall, color = Color(0xFFFCA5A5), maxLines = 6) }
                 if (Synology.skonfigurowane) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Keuze(selected = staat.zakladka == SynoZakladka.MOJE, onClick = { staat.wybierz(SynoZakladka.MOJE) }, modifier = Modifier.focusRequester(pierwszy), tekst = stringResource(R.string.synology_moje))
                     Keuze(selected = staat.zakladka == SynoZakladka.UDOSTEPNIONE, onClick = { staat.wybierz(SynoZakladka.UDOSTEPNIONE) }, tekst = stringResource(R.string.synology_udostepnione))
