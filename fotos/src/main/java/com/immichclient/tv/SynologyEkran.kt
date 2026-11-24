@@ -81,8 +81,8 @@ class SynologyStaat(private val scope: CoroutineScope) {
         scope.launch {
             runCatching {
                 when (z) {
-                    SynoZakladka.MOJE -> { albumy = null; albumy = Synology.albumy() }
-                    SynoZakladka.UDOSTEPNIONE -> { albumy = null; albumy = Synology.albumyUdostepnione() }
+                    SynoZakladka.MOJE -> { albumy = null; albumy = Synology.albumy(); sprawdz() }
+                    SynoZakladka.UDOSTEPNIONE -> { albumy = null; albumy = Synology.albumyUdostepnione(); sprawdz() }
                     SynoZakladka.WSPOLNA -> {
                         if (sciezka.isEmpty()) sciezka = listOf(Synology.folderGlowny())
                         foldery = null; foldery = Synology.podfoldery(sciezka.last().id)
@@ -90,6 +90,14 @@ class SynologyStaat(private val scope: CoroutineScope) {
                 }
             }.onFailure { fout = it.message; Log.w("Fotos", "synology $z", it) }
         }
+    }
+
+    /** wynik testu jednej miniatury (null = w porządku); pokazywany pod listą, gdy obrazki się nie wczytują */
+    var problemMiniatur by mutableStateOf<String?>(null)
+        private set
+
+    private suspend fun sprawdz() {
+        problemMiniatur = albumy?.firstNotNullOfOrNull { it.okladka }?.let { Synology.sprawdzMiniature(it) }
     }
 
     fun wejdz(f: Synology.FolderSyno) { sciezka = sciezka + f; laduj() }
@@ -135,6 +143,7 @@ fun SynologyScherm(staat: SynologyStaat, nav: Nav) {
                             tekst = stringResource(R.string.synology_zdjecia_folderu))
                     }
                 }
+                staat.problemMiniatur?.let { Text(stringResource(R.string.synology_miniatury_blad, it), style = MaterialTheme.typography.bodySmall, color = Color(0xFFFCA5A5), maxLines = 3) }
                 if (Synology.skonfigurowane) Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Keuze(selected = staat.zakladka == SynoZakladka.MOJE, onClick = { staat.wybierz(SynoZakladka.MOJE) }, modifier = Modifier.focusRequester(pierwszy), tekst = stringResource(R.string.synology_moje))
                     Keuze(selected = staat.zakladka == SynoZakladka.UDOSTEPNIONE, onClick = { staat.wybierz(SynoZakladka.UDOSTEPNIONE) }, tekst = stringResource(R.string.synology_udostepnione))
@@ -208,7 +217,10 @@ fun SynologyLogowanie(sluit: () -> Unit) {
                         blad = when ((e as? Synology.Blad)?.kod) {
                             400 -> ctx.getString(R.string.synology_zle_haslo)
                             403, 404 -> ctx.getString(R.string.synology_potrzebny_otp)
-                            else -> ctx.getString(R.string.synology_blad, e.message.orEmpty())
+                            401, 402 -> ctx.getString(R.string.synology_konto_wylaczone)
+                            407 -> ctx.getString(R.string.synology_zablokowany)
+                            else -> if (e.message.orEmpty().contains("HTTP 400")) ctx.getString(R.string.synology_port)
+                                else ctx.getString(R.string.synology_blad, e.message.orEmpty())
                         }
                     }
             }

@@ -918,4 +918,10 @@
         <item quantity="one">%d maand</item>
         <item quantity="other">%d maanden</item>
     </plurals>
+    <string name="synology_port">"De NAS weigerde HTTP op de HTTPS-poort. Gebruik http://…:5000 of https://…:5001"</string>
+    <string name="synology_konto_wylaczone">"Account uitgeschakeld of zonder toegang tot Synology Photos (het ingebouwde gastaccount staat meestal uit)"</string>
+    <string name="synology_zablokowany">"Het adres van de tv is in DSM geblokkeerd na mislukte aanmeldingen (Configuratiescherm → Beveiliging → Account)"</string>
+    <string name="update_przewin">"▲▼ door de tekst scrollen"</string>
+    <string name="rosla_diagnoza">"Foto's van de persoon: %1$d · met gezicht: %2$d"</string>
+    <string name="synology_miniatury_blad">"Miniaturen laden niet — antwoord van de NAS: %1$s"</string>
 </resources>

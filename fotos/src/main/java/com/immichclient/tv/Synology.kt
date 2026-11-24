@@ -9,7 +9,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 import org.json.JSONObject
 import java.io.IOException
 import java.time.LocalDateTime
@@ -58,12 +64,50 @@ object Synology {
         stan++
     }
 
-    /** „192.168.1.10:5000” → „http://192.168.1.10:5000” (bez ukośnika na końcu). */
+    /**
+     * „192.168.1.10” → „http://192.168.1.10:5000”; „…:5001” (domyślny port HTTPS w DSM) → zawsze „https://…:5001”,
+     * bo zwykłe HTTP na port HTTPS DSM odrzuca błędem 400.
+     */
     fun normalizuj(a: String): String {
         var s = a.trim().trimEnd('/')
-        if (!s.startsWith("http://") && !s.startsWith("https://")) s = "http://$s"
+        val maSchemat = s.startsWith("http://") || s.startsWith("https://")
+        val host = s.substringAfter("://").substringBefore('/')
+        if (!maSchemat) s = (if (host.endsWith(":5001")) "https://" else "http://") + s
+        if (s.startsWith("http://") && host.endsWith(":5001")) s = "https://" + s.removePrefix("http://")
+        if (!host.contains(':')) s = s.replaceFirst(host, host + if (s.startsWith("https://")) ":5001" else ":5000")
         return s
     }
+
+    /**
+     * NAS w sieci domowej ma zwykle certyfikat „z podpisem własnym”, którego Android nie uznaje. Dla adresu NAS z sieci
+     * lokalnej (192.168.x, 10.x, 172.16–31.x, *.local) aplikacja przyjmuje taki certyfikat; dla adresów publicznych
+     * obowiązuje zwykła weryfikacja.
+     */
+    private val klientLan: OkHttpClient by lazy {
+        val ufaj = object : X509TrustManager {
+            override fun checkClientTrusted(c: Array<out X509Certificate>?, t: String?) {}
+            override fun checkServerTrusted(c: Array<out X509Certificate>?, t: String?) {}
+            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+        }
+        val ssl = SSLContext.getInstance("TLS").apply { init(null, arrayOf<TrustManager>(ufaj), SecureRandom()) }
+        Immich.http.newBuilder().sslSocketFactory(ssl.socketFactory, ufaj).hostnameVerifier { _, _ -> true }.build()
+    }
+
+    private fun lokalny(host: String): Boolean {
+        if (host.endsWith(".local")) return true
+        val p = host.split('.').mapNotNull { it.toIntOrNull() }
+        if (p.size != 4) return false
+        return p[0] == 10 || (p[0] == 192 && p[1] == 168) || (p[0] == 172 && p[1] in 16..31)
+    }
+
+    /** Czy to adres skonfigurowanego NAS w sieci lokalnej (wtedy klient z certyfikatami z podpisem własnym). */
+    fun naszLokalny(u: HttpUrl): Boolean {
+        val nas = adres.toHttpUrlOrNull() ?: return false
+        return u.host == nas.host && u.port == nas.port && lokalny(u.host)
+    }
+
+    /** Wszystkie połączenia aplikacji (Immich, obrazy, filmy): do lokalnego NAS przez [klientLan], reszta zwykle. */
+    val polaczenia = okhttp3.Call.Factory { r -> if (naszLokalny(r.url)) klientLan.newCall(r) else Immich.http.newCall(r) }
 
     private fun url(api: String, metoda: String, wersja: Int, vararg param: Pair<String, String>, zSid: Boolean = true): HttpUrl {
         val b = ("$adres/webapi/entry.cgi".toHttpUrlOrNull() ?: throw IOException("niepoprawny adres Synology")).newBuilder()
@@ -77,9 +121,9 @@ object Synology {
     class Blad(val kod: Int) : IOException("Synology $kod")
 
     private suspend fun wywolaj(u: HttpUrl): JSONObject = withContext(Dispatchers.IO) {
-        Immich.http.newCall(Request.Builder().url(u).build()).execute().use { r ->
+        polaczenia.newCall(Request.Builder().url(u).build()).execute().use { r ->
             val body = r.body?.string().orEmpty()
-            if (!r.isSuccessful) throw IOException("Synology HTTP ${r.code}")
+            if (!r.isSuccessful) throw IOException("Synology HTTP ${r.code}" + if (r.code == 400 && body.contains("HTTPS", true)) " (HTTPS)" else "")
             val o = JSONObject(body)
             if (!o.optBoolean("success")) throw Blad(o.optJSONObject("error")?.optInt("code") ?: -1)
             o.optJSONObject("data") ?: JSONObject()
@@ -222,7 +266,22 @@ object Synology {
         val p = mutableListOf("mode" to "download", "id" to unit, "type" to "unit", "size" to rozmiar, "cache_key" to klucz)
         if (dod.startsWith("P")) p += "passphrase" to dod.drop(1)
         val api = if (dod == "T") "SYNO.FotoTeam.Thumbnail" else "SYNO.Foto.Thumbnail"
-        return url(api, "get", if (dod == "T") 1 else 2, *p.toTypedArray()).toString()
+        // wersja 1: jedyna, którą SYNO.Foto.Thumbnail obsługuje na każdym DSM 7 (z wersją 2 NAS zwracał błąd zamiast obrazka)
+        return url(api, "get", 1, *p.toTypedArray()).toString()
+    }
+
+    /**
+     * Sprawdzenie miniatury (gdy siatka zostaje pusta): pobiera jedną i zwraca null = obrazek dotarł, albo opis
+     * odpowiedzi NAS (kod HTTP, typ, początek treści) — trafia też do Diagnostyki.
+     */
+    suspend fun sprawdzMiniature(id: String): String? = withContext(Dispatchers.IO) {
+        runCatching {
+            polaczenia.newCall(Request.Builder().url(miniatura(id, "sm")).build()).execute().use { r ->
+                val typ = r.header("Content-Type").orEmpty()
+                if (r.isSuccessful && typ.startsWith("image")) null
+                else "HTTP ${r.code} $typ ${r.body?.string().orEmpty().take(160)}"
+            }
+        }.getOrElse { it.message ?: it.toString() }?.also { Diagnose.noteer("synology miniatura", IOException(it)) }
     }
 
     /** Adres filmu (pobranie oryginału, odtwarzacz czyta go strumieniowo). */

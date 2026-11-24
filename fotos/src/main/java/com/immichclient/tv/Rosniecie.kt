@@ -51,8 +51,8 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
-/** Klatka animacji: zdjęcie i ramka twarzy osoby (ułamki x1, y1, x2, y2). */
-class Klatka(val zdjecie: Asset, val twarz: FloatArray)
+/** Klatka animacji: zdjęcie i ramka twarzy osoby (ułamki x1, y1, x2, y2); null = twarzy nie udało się odczytać. */
+class Klatka(val zdjecie: Asset, val twarz: FloatArray?)
 
 /**
  * „Jak rosła Ola”: zdjęcia osoby z każdego roku (do 3 na rok, rozłożone w roku), wykadrowane tak, że twarz jest zawsze
@@ -67,23 +67,33 @@ class RosniecieStaat(val osobaId: String, val imie: String, scope: CoroutineScop
         private set
     var nr by mutableIntStateOf(0)
     var pauza by mutableStateOf(false)
+    /** diagnostyka: ile zdjęć osoby znaleziono i w ilu odczytano twarz */
+    var zdjec by mutableIntStateOf(0)
+        private set
+    var twarzy by mutableIntStateOf(0)
+        private set
+    var blad by mutableStateOf<String?>(null)
+        private set
 
     init {
         scope.launch {
             urodziny = runCatching { Immich.osoba(osobaId).first.urodziny }.getOrNull()
-            val najstarsze = runCatching { Immich.osobaWOkresie(osobaId, null, null, 1, rosnaco = true).firstOrNull() }.getOrNull()
+            val najstarsze = runCatching { Immich.osobaWOkresie(osobaId, null, null, 1, rosnaco = true).firstOrNull() }
+                .onFailure { blad = it.message; android.util.Log.w("Fotos", "jak rosła", it) }.getOrNull()
             val odRoku = maxOf(najstarsze?.datum?.year ?: LocalDate.now().year, urodziny?.year ?: 0)
             for (r in odRoku..LocalDate.now().year) {
-                val zRoku = runCatching { Immich.osobaWOkresie(osobaId, LocalDate.of(r, 1, 1), LocalDate.of(r, 12, 31), 60, rosnaco = true) }.getOrDefault(emptyList())
+                val zRoku = runCatching { Immich.osobaWOkresie(osobaId, LocalDate.of(r, 1, 1), LocalDate.of(r, 12, 31), 60, rosnaco = true) }
+                    .onFailure { blad = it.message }.getOrDefault(emptyList())
                 if (zRoku.isEmpty()) continue
-                // trzy zdjęcia rozłożone w roku (początek, środek, koniec)
-                val wybrane = listOf(0, zRoku.size / 2, zRoku.size - 1).distinct().map { zRoku[it] }
-                for (a in wybrane) {
-                    val t = Immich.twarzOsoby(a.id, osobaId) ?: continue
-                    // za małe twarze (tłum, tło) wyglądałyby jak rozmyta plama po powiększeniu
-                    if (t[3] - t[1] < 0.06f) continue
-                    klatki.add(Klatka(a, t))
-                }
+                zdjec += zRoku.size
+                // kilka zdjęć z roku: wybieramy te z największą twarzą (najwyżej 3)
+                val kandydaci = listOf(0, zRoku.size / 4, zRoku.size / 2, 3 * zRoku.size / 4, zRoku.size - 1).distinct().map { zRoku[it] }
+                val zTwarza = kandydaci.map { it to Immich.twarzOsoby(it.id, osobaId) }
+                val dobre = zTwarza.filter { (_, t) -> t != null && t[3] - t[1] >= 0.03f }.sortedByDescending { (_, t) -> t!![3] - t[1] }.take(3).sortedBy { it.first.datum }
+                twarzy += zTwarza.count { it.second != null }
+                if (dobre.isNotEmpty()) dobre.forEach { (a, t) -> klatki.add(Klatka(a, t)) }
+                // twarzy nie da się odczytać (np. serwer ich nie podaje): zdjęcie i tak trafia do animacji, bez wyrównania
+                else klatki.add(Klatka(zRoku[zRoku.size / 2], null))
             }
             gotowe = true
         }
@@ -124,9 +134,11 @@ fun RosniecieScherm(staat: RosniecieStaat) {
         val szer = constraints.maxWidth.toFloat(); val wys = constraints.maxHeight.toFloat()
         val k = staat.klatki.getOrNull(staat.nr.coerceAtMost((n - 1).coerceAtLeast(0)))
         AnimatedContent(k, transitionSpec = { fadeIn(tween(450)) togetherWith fadeOut(tween(450)) }, label = "rosniecie") { kl ->
-            if (kl != null) {
+            if (kl != null && kl.twarz == null) {
+                AsyncImage(preview(kl.zdjecie.id), null, Modifier.fillMaxSize(), contentScale = ContentScale.Fit)
+            } else if (kl != null) {
                 // twarz = 42 % wysokości ekranu, jej środek w środku ekranu (lekko powyżej, jak w portrecie)
-                val t = kl.twarz
+                val t = kl.twarz!!
                 val fh = (t[3] - t[1]).coerceAtLeast(0.02f)
                 val hObrazu = 0.42f * wys / fh
                 val wObrazu = hObrazu * kl.zdjecie.ratio.coerceIn(0.2f, 5f)
@@ -147,6 +159,11 @@ fun RosniecieScherm(staat: RosniecieStaat) {
             Text(stringResource(R.string.rosla_nazwa, staat.imie).uppercase(Taal.locale), style = EtykietaStyl)
             Text(k?.let { staat.podpis(it.zdjecie) } ?: if (staat.gotowe) stringResource(R.string.rosla_brak) else stringResource(R.string.laden),
                 style = TytulStyl, color = Color.White)
+            // gdy nic nie wyszło: co dokładnie się udało (do zgłoszenia problemu)
+            if (staat.gotowe && n == 0 || (staat.gotowe && staat.twarzy == 0 && n > 0)) Text(
+                stringResource(R.string.rosla_diagnoza, staat.zdjec, staat.twarzy) + (staat.blad?.let { "  ·  $it" } ?: ""),
+                style = MaterialTheme.typography.bodySmall, color = Kleur.zacht,
+            )
             Text(
                 listOfNotNull(k?.zdjecie?.datum?.toLocalDate()?.format(Formaat.dagJaar), if (n > 0) "${staat.nr + 1} / $n" + (if (!staat.gotowe) "+" else "") else null,
                     if (staat.pauza) "⏸" else null).joinToString("  ·  "),

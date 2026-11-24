@@ -544,7 +544,26 @@ object Immich {
             }
             null
         }
-    }.getOrNull()
+    }.getOrNull() ?: twarzZFaces(assetId, osobaId)
+
+    /** Zapasowo: GET /faces?id=<zdjęcie> (twarze z ramkami i osobą); null przy braku uprawnienia albo twarzy. */
+    private suspend fun twarzZFaces(assetId: String, osobaId: String): FloatArray? = runCatching {
+        withContext(Dispatchers.Default) {
+            val a = JSONArray(get("/faces?id=$assetId"))
+            var najw: FloatArray? = null; var pole = 0.0
+            for (i in 0 until a.length()) {
+                val f = a.getJSONObject(i)
+                if (f.optJSONObject("person")?.optString("id") != osobaId) continue
+                val w = f.optDouble("imageWidth"); val h = f.optDouble("imageHeight")
+                if (w.isNaN() || h.isNaN() || w <= 0 || h <= 0) continue
+                val x1 = f.optDouble("boundingBoxX1") / w; val y1 = f.optDouble("boundingBoxY1") / h
+                val x2 = f.optDouble("boundingBoxX2") / w; val y2 = f.optDouble("boundingBoxY2") / h
+                val pp = (x2 - x1) * (y2 - y1)
+                if (pp > pole) { pole = pp; najw = floatArrayOf(x1.toFloat(), y1.toFloat(), x2.toFloat(), y2.toFloat()) }
+            }
+            najw
+        }
+    }.onFailure { Log.w("Fotos", "faces $assetId: ${it.message}") }.getOrNull()
 
     /** Losowe zdjęcia z jednego miasta (Powroty: rozkład na lata). */
     suspend fun losoweZMiasta(miasto: String, n: Int): List<Asset> = withContext(Dispatchers.Default) {

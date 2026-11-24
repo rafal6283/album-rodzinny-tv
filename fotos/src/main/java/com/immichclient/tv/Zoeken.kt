@@ -43,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -420,8 +421,16 @@ private fun Suggesties(staat: ZoekStaat, nav: Nav, zoek: (String) -> Unit) {
 @Composable
 fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, actie: String = stringResource(R.string.actie_zoeken), wielkie: Boolean = false, sluit: () -> Unit, klaar: (String) -> Unit) {
     var tekst by remember { mutableStateOf(begin) }
+    /** pozycja kursora (0..długość); ◀ ▶ na klawiaturze przesuwają go po wpisanym tekście */
+    var kursor by remember { mutableIntStateOf(begin.length) }
+    /** 0 = małe litery, 1 = jedna wielka (⇧), 2 = same wielkie (⇧ dwa razy) */
+    var shift by remember { mutableIntStateOf(0) }
+    /** plansza ze znakami i cyframi (?123) zamiast liter */
+    var znaki by remember { mutableStateOf(false) }
     val eerste = remember { FocusRequester() }
-    fun zet(t: String) { tekst = t; live?.invoke(t); PisanieTelefonem.ustawTekst(t) }
+    fun zet(t: String, k: Int = t.length) { tekst = t; kursor = k.coerceIn(0, t.length); live?.invoke(t); PisanieTelefonem.ustawTekst(t) }
+    fun wstaw(x: String) { zet(tekst.take(kursor) + x + tekst.drop(kursor), kursor + x.length) }
+    fun usun() { if (kursor > 0) zet(tekst.take(kursor - 1) + tekst.drop(kursor), kursor - 1) }
     // pisanie z telefonu: kod QR do prostej strony z polem tekstowym (sieć lokalna, tylko gdy to okno jest otwarte)
     val klaarNu = androidx.compose.runtime.rememberUpdatedState(klaar)
     var adresTelefonu by remember { mutableStateOf<String?>(null) }
@@ -429,12 +438,15 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
         adresTelefonu = PisanieTelefonem.start(titel, begin) { t, gotowe -> zet(t); if (gotowe) klaarNu.value(t) }
         onDispose { PisanieTelefonem.stop() }
     }
-    // imiona i nazwy albumów: wielka litera na początku każdego słowa
-    fun litera(c: Char) = if (wielkie && (tekst.isEmpty() || tekst.endsWith(' '))) c.uppercaseChar() else c
+    // wielkie litery: ⇧, a przy imionach / nazwach albumów sama wielka litera na początku każdego słowa
+    val poczatekSlowa = kursor == 0 || tekst.getOrNull(kursor - 1) == ' '
+    val duze = shift > 0 || (wielkie && poczatekSlowa)
+    fun litera(c: Char) = if (duze && c.isLetter()) c.uppercaseChar() else c
+    fun pisz(c: Char) { wstaw(litera(c).toString()); if (shift == 1) shift = 0 }
     val ctxT = LocalContext.current
     val spraakT = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         val t = r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
-        if (r.resultCode == Activity.RESULT_OK && !t.isNullOrBlank()) zet(if (wielkie) t.split(' ').joinToString(" ") { w -> w.replaceFirstChar { it.titlecase(Taal.locale) } } else t)
+        if (r.resultCode == Activity.RESULT_OK && !t.isNullOrBlank()) wstaw(if (wielkie) t.split(' ').joinToString(" ") { w -> w.replaceFirstChar { it.titlecase(Taal.locale) } } else t)
     }
     val kanSpraakT = remember { ctxT.packageManager.queryIntentActivities(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), 0).isNotEmpty() }
     // litery narodowe języka aplikacji (polskie znaki w imionach: Łucja, Józef)
@@ -445,10 +457,16 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
             if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
             val n = e.nativeKeyEvent
             when {
-                n.keyCode == android.view.KeyEvent.KEYCODE_DEL -> { zet(tekst.dropLast(1)); true }
+                n.keyCode == android.view.KeyEvent.KEYCODE_DEL -> { usun(); true }
+                n.keyCode == android.view.KeyEvent.KEYCODE_FORWARD_DEL -> { if (kursor < tekst.length) zet(tekst.take(kursor) + tekst.drop(kursor + 1), kursor); true }
                 n.keyCode == android.view.KeyEvent.KEYCODE_SEARCH -> { klaar(tekst); true }
+                // ⏪ ⏩ i Home/End z pilota lub klawiatury: kursor
+                n.keyCode == android.view.KeyEvent.KEYCODE_MEDIA_REWIND -> { kursor = (kursor - 1).coerceAtLeast(0); true }
+                n.keyCode == android.view.KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> { kursor = (kursor + 1).coerceAtMost(tekst.length); true }
+                n.keyCode == android.view.KeyEvent.KEYCODE_MOVE_HOME -> { kursor = 0; true }
+                n.keyCode == android.view.KeyEvent.KEYCODE_MOVE_END -> { kursor = tekst.length; true }
                 n.unicodeChar > 0 && n.keyCode !in setOf(android.view.KeyEvent.KEYCODE_DPAD_CENTER, android.view.KeyEvent.KEYCODE_ENTER) -> {
-                    zet(tekst + n.unicodeChar.toChar()); true
+                    wstaw(n.unicodeChar.toChar().toString()); true
                 }
                 else -> false
             }
@@ -464,8 +482,9 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
             }
         }
-        Column(Modifier.align(Alignment.TopStart).padding(start = 40.dp, top = 56.dp).width(620.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.align(Alignment.TopStart).padding(start = 40.dp, top = 40.dp).width(640.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(titel, style = MaterialTheme.typography.headlineSmall)
+            // pole z tekstem i kursorem (długi tekst: okno wokół kursora)
             Row(
                 Modifier.fillMaxWidth().height(56.dp).background(Kleur.vlakHoog, RoundedCornerShape(28.dp))
                     .border(2.dp, Kleur.primair, RoundedCornerShape(28.dp)).padding(horizontal = 24.dp),
@@ -473,25 +492,40 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
             ) {
                 Icon(Icons.Filled.Search, null, tint = Kleur.zacht)
                 Spacer(Modifier.width(14.dp))
-                Text(tekst, style = MaterialTheme.typography.titleLarge, maxLines = 1)
+                val od = (kursor - 34).coerceAtLeast(0)
+                val przed = (if (od > 0) "…" else "") + tekst.substring(od, kursor)
+                val po = tekst.drop(kursor).let { if (it.length > 40 - (kursor - od)) it.take((40 - (kursor - od)).coerceAtLeast(4)) + "…" else it }
+                Text(przed, style = MaterialTheme.typography.titleLarge, maxLines = 1, softWrap = false)
                 Box(Modifier.width(2.dp).height(26.dp).background(Kleur.primair))
+                Text(po, style = MaterialTheme.typography.titleLarge, maxLines = 1, softWrap = false, color = Kleur.tekst)
             }
-            Spacer(Modifier.height(6.dp))
-            "abcdefghijklmnopqrstuvwxyz1234567890".chunked(10).forEachIndexed { ri, rij ->
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    rij.forEachIndexed { ci, c ->
-                        Toets(litera(c).toString(), Modifier.weight(1f).then(if (ri == 0 && ci == 0) Modifier.focusRequester(eerste) else Modifier)) { zet(tekst + litera(c)) }
+            Spacer(Modifier.height(4.dp))
+            @Composable
+            fun rzad(znakiRzedu: String, przed: (@Composable androidx.compose.foundation.layout.RowScope.() -> Unit)? = null, po: (@Composable androidx.compose.foundation.layout.RowScope.() -> Unit)? = null, pierwszy: Boolean = false) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    przed?.invoke(this)
+                    znakiRzedu.forEachIndexed { i, c ->
+                        Toets(litera(c).toString(), Modifier.weight(1f).then(if (pierwszy && i == 0) Modifier.focusRequester(eerste) else Modifier)) { pisz(c) }
                     }
-                    // laatste rij aanvullen tot 10, zodat alles netjes onder elkaar staat
-                    repeat(10 - rij.length) { Spacer(Modifier.weight(1f)) }
+                    po?.invoke(this)
                 }
             }
-            if (extra.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                extra.forEach { c -> Toets(litera(c).toString(), Modifier.weight(1f)) { zet(tekst + litera(c)) } }
-                Toets("-", Modifier.weight(1f)) { zet("$tekst-") }
-                repeat((9 - extra.length).coerceAtLeast(0)) { Spacer(Modifier.weight(1f)) }
+            if (!znaki) {
+                rzad("1234567890", pierwszy = true)
+                rzad("qwertyuiop")
+                rzad("asdfghjkl-")
+                rzad("zxcvbnm.,", przed = {
+                    Toets(if (shift == 2) "⇪" else "⇧", Modifier.weight(1f), hoofd = shift > 0) { shift = (shift + 1) % 3 }
+                })
+                if (extra.isNotEmpty()) rzad(extra, po = { repeat((10 - extra.length).coerceAtLeast(0)) { Spacer(Modifier.weight(1f)) } })
+            } else {
+                rzad("1234567890", pierwszy = true)
+                rzad("!?@#&*()-_")
+                rzad("+=/:;'\".,%")
+                rzad("\$€<>[]{}~^")
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Toets(if (znaki) "ABC" else "?123", Modifier.weight(1.4f), hoofd = znaki) { znaki = !znaki }
                 if (kanSpraakT) Toets("🎤", Modifier.weight(1f)) {
                     runCatching {
                         spraakT.launch(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
@@ -499,8 +533,14 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
                             .putExtra(RecognizerIntent.EXTRA_LANGUAGE, Taal.locale.toLanguageTag()))
                     }
                 }
-                Toets(stringResource(R.string.toets_spatie), Modifier.weight(3f)) { zet("$tekst ") }
-                Toets("⌫", Modifier.weight(1f)) { zet(tekst.dropLast(1)) }
+                Toets("◀", Modifier.weight(1f)) { kursor = (kursor - 1).coerceAtLeast(0) }
+                Toets(stringResource(R.string.toets_spatie), Modifier.weight(2.6f)) { wstaw(" ") }
+                Toets("▶", Modifier.weight(1f)) { kursor = (kursor + 1).coerceAtMost(tekst.length) }
+                Toets("⌫", Modifier.weight(1f)) { usun() }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Toets("⇤", Modifier.weight(1f)) { kursor = 0 }
+                Toets("⇥", Modifier.weight(1f)) { kursor = tekst.length }
                 Toets(stringResource(R.string.toets_wissen), Modifier.weight(2f)) { zet("") }
                 Toets(actie, Modifier.weight(4f), hoofd = true) { klaar(tekst) }
             }
@@ -512,7 +552,7 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
 @Composable
 private fun Toets(label: String, modifier: Modifier, hoofd: Boolean = false, onKlik: () -> Unit) {
     Surface(
-        onClick = onKlik, modifier = modifier.height(52.dp),
+        onClick = onKlik, modifier = modifier.height(46.dp),
         shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(10.dp)),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1.08f),
         colors = ClickableSurfaceDefaults.colors(

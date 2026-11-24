@@ -12,6 +12,8 @@ import android.util.Log
 import android.view.KeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -242,12 +244,16 @@ fun UpdateScherm(sluit: () -> Unit) {
     val bezig = Update.stand is Update.Stand.Downloaden || Update.stand is Update.Stand.Installeren
     BackHandler(enabled = !bezig) { Update.stand = Update.Stand.Rust; sluit() }
     LaunchedEffect(Update.stand::class) { delay(30); runCatching { eerste.requestFocus() } }
-    Venster(stringResource(R.string.update_titel, r.versie), stringResource(R.string.update_sub, Update.versie(ctx))) {
-        for ((kop, regel) in Update.kort(r.notities)) {
-            if (kop) Text(regel, style = MaterialTheme.typography.titleMedium, color = Kleur.primair, modifier = Modifier.padding(top = 6.dp))
-            else Text("•  $regel", style = MaterialTheme.typography.bodyLarge, maxLines = 2)
-        }
-        Spacer(Modifier.height(22.dp))
+    Venster(
+        stringResource(R.string.update_titel, r.versie), stringResource(R.string.update_sub, Update.versie(ctx)),
+        tresc = {
+            for ((kop, regel) in Update.kort(r.notities, max = 40)) {
+                if (kop) Text(regel, style = MaterialTheme.typography.titleMedium, color = Kleur.primair, modifier = Modifier.padding(top = 6.dp))
+                else Text("•  $regel", style = MaterialTheme.typography.bodyLarge)
+            }
+        },
+    ) {
+        // przyciski i stan zawsze na dole okna, niezależnie od długości opisu
         when (val s = Update.stand) {
             is Update.Stand.Downloaden -> Text(stringResource(R.string.update_downloaden, (s.deel * 100).toInt()), style = MaterialTheme.typography.titleMedium, color = Kleur.primair)
             Update.Stand.Installeren -> Text(stringResource(R.string.update_installeren), style = MaterialTheme.typography.titleMedium, color = Kleur.primair)
@@ -255,8 +261,7 @@ fun UpdateScherm(sluit: () -> Unit) {
             is Update.Stand.Fout -> Text(stringResource(R.string.update_fout, s.tekst), style = MaterialTheme.typography.bodyLarge, color = Color(0xFFFCA5A5))
             Update.Stand.Rust -> {}
         }
-        Spacer(Modifier.height(14.dp))
-        if (!bezig) Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        if (!bezig) Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.padding(top = 10.dp)) {
             if (Update.stand == Update.Stand.Toestemming) {
                 Knop(stringResource(R.string.update_toestemming_knop), null, Modifier.width(300.dp).focusRequester(eerste)) { Update.stand = Update.Stand.Rust; Update.openToestemming(ctx) }
             } else {
@@ -275,25 +280,35 @@ fun NieuwsScherm(sluit: () -> Unit) {
     val knop = remember { FocusRequester() }
     BackHandler { sluit() }
     LaunchedEffect(Unit) { delay(30); runCatching { knop.requestFocus() } }
-    Venster(stringResource(R.string.nieuw_titel, Update.versie(ctx)), null) {
-        for (regel in stringArrayResource(R.array.wat_nieuw)) Text("•  $regel", style = MaterialTheme.typography.bodyLarge, maxLines = 3)
-        Spacer(Modifier.height(24.dp))
+    Venster(
+        stringResource(R.string.nieuw_titel, Update.versie(ctx)), null,
+        tresc = { for (regel in stringArrayResource(R.array.wat_nieuw)) Text("•  $regel", style = MaterialTheme.typography.bodyLarge) },
+    ) {
         Knop(stringResource(R.string.actie_klaar), null, Modifier.width(160.dp).focusRequester(knop)) { sluit() }
     }
 }
 
+/**
+ * Okno aktualizacji / „Co nowego”: tytuł u góry, opis w części przewijanej (▲▼, także gdy fokus jest na przycisku),
+ * a przyciski zawsze widoczne na dole — długie notatki nie wypychają ich już poza ekran.
+ */
 @Composable
-private fun Venster(titel: String, sub: String?, inhoud: @Composable () -> Unit) {
+private fun Venster(titel: String, sub: String?, tresc: @Composable () -> Unit, przyciski: @Composable () -> Unit) {
+    val przewijanie = androidx.compose.foundation.rememberScrollState()
     Box(
         Modifier.fillMaxSize().background(Color(0xF20A0A0A)).focusVangen()
             .onPreviewKeyEvent { e -> e.type == KeyEventType.KeyDown && e.key.nativeKeyCode == KeyEvent.KEYCODE_MENU }
+            .toetsScroll(przewijanie)
             .padding(horizontal = 56.dp, vertical = 36.dp),
     ) {
-        Column(Modifier.widthIn(max = 900.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.widthIn(max = 900.dp).fillMaxHeight()) {
             Text(titel, style = MaterialTheme.typography.displaySmall)
             if (sub != null) Text(sub, style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht)
             Spacer(Modifier.height(14.dp))
-            inhoud()
+            Column(Modifier.weight(1f, fill = false).verticalScroll(przewijanie), verticalArrangement = Arrangement.spacedBy(6.dp)) { tresc() }
+            if (przewijanie.maxValue > 0) Text(stringResource(R.string.update_przewin), style = MaterialTheme.typography.labelMedium, color = Kleur.zacht, modifier = Modifier.padding(top = 6.dp))
+            Spacer(Modifier.height(16.dp))
+            przyciski()
         }
     }
 }
