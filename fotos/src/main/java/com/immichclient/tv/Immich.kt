@@ -17,6 +17,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
@@ -85,11 +86,12 @@ object Immich {
         kiesAccount(c, kijker)
     }
 
-    fun thumb(id: String) = "$api/assets/$id/thumbnail?size=thumbnail"
-    fun preview(id: String) = "$api/assets/$id/thumbnail?size=preview"
+    // zdjęcia z Synology Photos (id „syno:…”) prowadzą do Synology, reszta do Immich
+    fun thumb(id: String) = if (Synology.jestSyno(id)) Synology.miniatura(id, "sm") else "$api/assets/$id/thumbnail?size=thumbnail"
+    fun preview(id: String) = if (Synology.jestSyno(id)) Synology.miniatura(id, "xl") else "$api/assets/$id/thumbnail?size=preview"
     /** pełna rozdzielczość (konwersja JPEG z Immich ≥ 1.133); wystarcza uprawnienie asset.view */
-    fun pelny(id: String) = "$api/assets/$id/thumbnail?size=fullsize"
-    fun video(id: String) = "$api/assets/$id/video/playback"
+    fun pelny(id: String) = if (Synology.jestSyno(id)) Synology.miniatura(id, "xl") else "$api/assets/$id/thumbnail?size=fullsize"
+    fun video(id: String) = if (Synology.jestSyno(id)) Synology.film(id) else "$api/assets/$id/video/playback"
     fun gezicht(id: String) = "$api/people/$id/thumbnail"
 
     private suspend fun haal(req: Request): String = withContext(Dispatchers.IO) {
@@ -459,6 +461,115 @@ object Immich {
         return pagina(JSONObject(post("/search/metadata", body)))
     }
 
+    // ---- Twarze w kadrze (pokaz: przybliżanie w stronę ludzi) ----
+
+    private val srodki = object : LinkedHashMap<String, Pair<Float, Float>?>(64, 0.75f, true) {
+        override fun removeEldestEntry(e: MutableMap.MutableEntry<String, Pair<Float, Float>?>?) = size > 300
+    }
+
+    /** Środek twarzy na zdjęciu (0..1 w poziomie i pionie, średnia z rozpoznanych twarzy); null = brak twarzy. */
+    suspend fun srodekTwarzy(id: String): Pair<Float, Float>? {
+        if (Synology.jestSyno(id)) return null
+        synchronized(srodki) { if (srodki.containsKey(id)) return srodki[id] }
+        val wynik = runCatching {
+            withContext(Dispatchers.Default) {
+                val ludzie = JSONObject(get("/assets/$id")).optJSONArray("people") ?: return@withContext null
+                var sx = 0f; var sy = 0f; var n = 0
+                for (i in 0 until ludzie.length()) {
+                    val twarze = ludzie.getJSONObject(i).optJSONArray("faces") ?: continue
+                    for (j in 0 until twarze.length()) {
+                        val f = twarze.getJSONObject(j)
+                        val w = f.optDouble("imageWidth"); val h = f.optDouble("imageHeight")
+                        if (w.isNaN() || h.isNaN() || w <= 0 || h <= 0) continue
+                        sx += ((f.optDouble("boundingBoxX1") + f.optDouble("boundingBoxX2")) / 2 / w).toFloat()
+                        sy += ((f.optDouble("boundingBoxY1") + f.optDouble("boundingBoxY2")) / 2 / h).toFloat()
+                        n++
+                    }
+                }
+                if (n == 0) null else (sx / n).coerceIn(0f, 1f) to (sy / n).coerceIn(0f, 1f)
+            }
+        }.getOrNull()
+        synchronized(srodki) { srodki[id] = wynik }
+        return wynik
+    }
+
+    /** Losowe zdjęcia z osobami i miejscami (quiz rodzinny). */
+    suspend fun losoweZOsobami(n: Int): List<Asset> = withContext(Dispatchers.Default) {
+        val q = JSONObject().put("size", n).put("type", "IMAGE").put("visibility", "timeline").put("withExif", true).put("withPeople", true)
+        val a = JSONArray(post("/search/random", q))
+        List(a.length()) { asset(a.getJSONObject(it)) }
+    }
+
+    // ---- Tryb imprezy: wgrywanie zdjęć od gości (uprawnienie asset.upload) ----
+
+    /** Wgraj plik do Immich; zwraca id zasobu (także gdy taki plik już był). */
+    suspend fun wgraj(plik: java.io.File, nazwa: String): String = withContext(Dispatchers.IO) {
+        val teraz = java.time.Instant.now().toString()
+        val body = okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
+            .addFormDataPart("assetData", nazwa, plik.asRequestBody("image/jpeg".toMediaType()))
+            .addFormDataPart("deviceAssetId", "album-rodzinny-" + plik.name + "-" + plik.length())
+            .addFormDataPart("deviceId", "album-rodzinny-tv")
+            .addFormDataPart("fileCreatedAt", teraz).addFormDataPart("fileModifiedAt", teraz)
+            .build()
+        val r = haal(Request.Builder().url("$api/assets").post(body).build())
+        JSONObject(r).getString("id")
+    }
+
+    /** Dodaj do albumu o tej nazwie (utwórz go, jeśli go nie ma); zwraca id albumu. */
+    suspend fun doAlbumuONazwie(nazwa: String, ids: List<String>, znaneId: String?): String {
+        if (znaneId != null) { dodajDoAlbumu(znaneId, ids); return znaneId }
+        val istniejacy = albums().firstOrNull { it.naam == nazwa }
+        return if (istniejacy != null) { dodajDoAlbumu(istniejacy.id, ids); istniejacy.id } else nowyAlbum(nazwa, ids)
+    }
+
+    /** Ramka twarzy osoby [osobaId] na zdjęciu [assetId] (ułamki 0..1: x1, y1, x2, y2); null = brak. */
+    suspend fun twarzOsoby(assetId: String, osobaId: String): FloatArray? = runCatching {
+        withContext(Dispatchers.Default) {
+            val ludzie = JSONObject(get("/assets/$assetId")).optJSONArray("people") ?: return@withContext null
+            for (i in 0 until ludzie.length()) {
+                val p = ludzie.getJSONObject(i)
+                if (p.optString("id") != osobaId) continue
+                val twarze = p.optJSONArray("faces") ?: continue
+                var najw: FloatArray? = null; var pole = 0.0
+                for (j in 0 until twarze.length()) {
+                    val f = twarze.getJSONObject(j)
+                    val w = f.optDouble("imageWidth"); val h = f.optDouble("imageHeight")
+                    if (w.isNaN() || h.isNaN() || w <= 0 || h <= 0) continue
+                    val x1 = f.optDouble("boundingBoxX1") / w; val y1 = f.optDouble("boundingBoxY1") / h
+                    val x2 = f.optDouble("boundingBoxX2") / w; val y2 = f.optDouble("boundingBoxY2") / h
+                    val pp = (x2 - x1) * (y2 - y1)
+                    if (pp > pole) { pole = pp; najw = floatArrayOf(x1.toFloat(), y1.toFloat(), x2.toFloat(), y2.toFloat()) }
+                }
+                return@withContext najw
+            }
+            null
+        }
+    }.getOrNull()
+
+    /** Losowe zdjęcia z jednego miasta (Powroty: rozkład na lata). */
+    suspend fun losoweZMiasta(miasto: String, n: Int): List<Asset> = withContext(Dispatchers.Default) {
+        val q = JSONObject().put("size", n).put("type", "IMAGE").put("visibility", "timeline").put("withExif", true).put("city", miasto)
+        val a = JSONArray(post("/search/random", q))
+        List(a.length()) { asset(a.getJSONObject(it)) }
+    }
+
+    /** Podpowiedzi wyszukiwania z serwera (type = country / city …): nazwy dokładnie tak, jak zapisał je Immich. */
+    suspend fun sugestie(typ: String): List<String> = withContext(Dispatchers.Default) {
+        val a = JSONArray(get("/search/suggestions?type=$typ"))
+        List(a.length()) { a.optString(it) }.filter { it.isNotBlank() && it != "null" }
+    }
+
+    // ---- Rok w skrócie ----
+
+    /** Losowa próbka zdjęć i filmów z roku [rok] (z osobami i miejscami), do statystyk i pokazu. */
+    suspend fun probkaRoku(rok: Int, n: Int, ulubione: Boolean = false): List<Asset> = withContext(Dispatchers.Default) {
+        val q = JSONObject().put("size", n).put("visibility", "timeline").put("withExif", true).put("withPeople", true)
+            .put("takenAfter", "$rok-01-01T00:00:00.000Z").put("takenBefore", "$rok-12-31T23:59:59.999Z")
+        if (ulubione) q.put("isFavorite", true)
+        val a = JSONArray(post("/search/random", q))
+        List(a.length()) { asset(a.getJSONObject(it)) }
+    }
+
     // ---- Edycja: osoby i albumy (uprawnienia person.update / person.merge / album.create / album.update / albumAsset.*) ----
 
     /** Jedna osoba z datą urodzenia i informacją, czy jest ukryta. */
@@ -604,6 +715,10 @@ object Immich {
             lat = e?.optDouble("latitude")?.takeIf { !it.isNaN() },
             lon = e?.optDouble("longitude")?.takeIf { !it.isNaN() },
             live = o.optString("livePhotoVideoId").takeIf { it.isNotEmpty() && it != "null" },
+            osoby = o.optJSONArray("people")?.let { p ->
+                List(p.length()) { p.getJSONObject(it).let { x -> Persoon(x.optString("id"), x.optString("name"), x.optBoolean("isFavorite")) } }
+                    .filter { it.id.isNotBlank() }
+            }.orEmpty(),
         )
     }
 }

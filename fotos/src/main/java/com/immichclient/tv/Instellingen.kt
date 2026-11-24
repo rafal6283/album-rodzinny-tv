@@ -51,6 +51,8 @@ object Instellingen {
     // ---- Diashow ----
     /** Langzaam inzoomen tijdens de diashow. */
     var kenBurns by bool("ken_burns", true)
+    /** Ken Burns przybliża w stronę rozpoznanych twarzy (dane z Immich) */
+    var kenBurnsTwarze by bool("ken_burns_twarze", true)
     var diaSeconden by getal("dia_s", 6)
     val DIA_TIJDEN = listOf(3, 5, 6, 8, 10, 15, 20)
     var diaWillekeurig by bool("dia_willekeurig", false)
@@ -90,6 +92,18 @@ object Instellingen {
     var nieuwsteEerst by bool("nieuwste_eerst", true)
     var partners by bool("partners", true)
     var herinneringen by bool("herinneringen", true)
+    /** tryb dziecięcy tego profilu: ukryte albumy i osoby, bez edycji, Ustawienia za PIN-em rodzica */
+    var trybDzieciecy by bool("tryb_dzieciecy", false)
+    /** ukryte w trybie dziecięcym: id albumów i osób po przecinku */
+    var ukryteAlbumy by tekst("ukryte_albumy", "")
+    var ukryteOsoby by tekst("ukryte_osoby", "")
+    fun albumUkryty(id: String) = trybDzieciecy && id in ukryteAlbumy.split(',')
+    fun osobaUkryta(id: String) = trybDzieciecy && id in ukryteOsoby.split(',')
+    fun przelaczUkryty(lista: String, id: String): String {
+        val l = lista.split(',').filter { it.isNotBlank() }.toMutableList()
+        if (!l.remove(id)) l.add(id)
+        return l.joinToString(",")
+    }
     /** po uruchomieniu aplikacji pokaz zdjęć „Tego dnia” z poprzednich lat */
     var tegoDniaStart by bool("tego_dnia_start", false)
     var start by keuze("start", Sectie.FOTOS)

@@ -43,6 +43,9 @@ import java.security.MessageDigest
  * PIN profili domowników (4 cyfry): pytanie przy przełączaniu na profil i przy starcie aplikacji, gdy aktywny jest
  * profil z PIN-em. Profil główny (wspólny) nie ma PIN-u. Zapisany tylko skrót SHA-256 (z nazwą profilu), nie sam PIN.
  */
+/** „profil” PIN-u rodzica (tryb dziecięcy): blokuje Ustawienia w profilu dziecka */
+const val PIN_RODZICA = "__rodzic__"
+
 object Pin {
     private const val PREFS = "immich"
     private fun klucz(profil: String) = "pin_$profil"

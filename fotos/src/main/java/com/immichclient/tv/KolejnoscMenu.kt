@@ -57,7 +57,10 @@ import kotlinx.coroutines.launch
 fun Sectie.Companion.menu(): List<Sectie> {
     val zapis = Instellingen.sekcje.split(',').mapNotNull { n -> Sectie.entries.firstOrNull { it.name == n.trim() } }
         .filter { it != Sectie.INSTELLINGEN }.distinct()
-    return zapis + Sectie.KOLEJNOSC.filter { it != Sectie.INSTELLINGEN && it !in zapis } + Sectie.INSTELLINGEN
+    // Synology Photos w menu dopiero po połączeniu (Ustawienia → Synology Photos)
+    @Suppress("UNUSED_VARIABLE") val zmiana = Synology.stan // odczyt stanu: menu odświeża się po połączeniu
+    return (zapis + Sectie.KOLEJNOSC.filter { it != Sectie.INSTELLINGEN && it !in zapis })
+        .filter { it != Sectie.SYNOLOGY || Synology.skonfigurowane } + Sectie.INSTELLINGEN
 }
 
 @Composable

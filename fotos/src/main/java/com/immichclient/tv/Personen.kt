@@ -82,7 +82,7 @@ class PersonenStaat(start: List<Persoon>, scope: CoroutineScope? = null, laad: (
     fun zichtbaar(): List<Persoon> {
         val z = zonderAccenten(zoek.trim())
         // zmiany z telewizora: nowe imiona, ukryte i połączone osoby
-        val teraz = alle.filter { Edycja.widoczna(it) }.map { p -> Edycja.imiona[p.id]?.let { p.copy(naam = it) } ?: p }
+        val teraz = alle.filter { Edycja.widoczna(it) && !Instellingen.osobaUkryta(it.id) }.map { p -> Edycja.imiona[p.id]?.let { p.copy(naam = it) } ?: p }
         var l = when (kto) {
             KtoPokazac.WSZYSCY -> teraz
             KtoPokazac.Z_IMIENIEM -> teraz.filter { it.naam.isNotBlank() }
@@ -136,7 +136,7 @@ fun PersonenScherm(staat: PersonenStaat, nav: Nav) {
                         if (staat.metNaamloos) {
                             // „Kto to jest?”: nazywanie twarzy bez imienia jedna po drugiej
                             val bezImion = staat.alle.count { Edycja.widoczna(it) && Edycja.imie(it).isBlank() }
-                            if (bezImion > 0) Keuze(
+                            if (bezImion > 0 && !Instellingen.trybDzieciecy) Keuze(
                                 selected = false, onClick = { ktoOtwarte = true },
                                 leadingIcon = { Icon(Icons.Filled.Face, null, Modifier.width(18.dp)) },
                                 tekst = stringResource(R.string.kto_przycisk, Taal.getal(bezImion)),

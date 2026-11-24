@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
@@ -50,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -127,8 +129,12 @@ class ZoekStaat(scope: CoroutineScope) {
     var filtr by mutableStateOf(ZoekFiltr())
 
     init {
-        scope.launch { runCatching { Immich.personen() }.onSuccess { personen = it } }
+        scope.launch { runCatching { Immich.personen() }.onSuccess { personen = it.filter { p -> !Instellingen.osobaUkryta(p.id) } } }
         scope.launch { Immich.warmZoeken() }
+        scope.launch {
+            glosMiasta = runCatching { Immich.plaatsen().map { it.stad } }.getOrDefault(emptyList())
+            glosKraje = runCatching { Immich.sugestie("country").map { it to Landnaam.vertaal(it) } }.getOrDefault(emptyList())
+        }
     }
 
     /** Zoekopdracht zonder tekst, alleen het type (alle video's / alle foto's, op datum). */
@@ -158,8 +164,41 @@ class ZoekStaat(scope: CoroutineScope) {
         }
     }
 
+    /**
+     * Polecenie głosowe: „pokaż Olę w Turcji w 2025” → osoba Ola + kraj Turcja + rok 2025, a reszta słów (jeśli coś
+     * zostanie, np. „na plaży”) jako wyszukiwanie inteligentne. Odmiana polskich nazw: porównanie po rdzeniu
+     * („Olę”/„Ola”, „Turcji”/„Turcja”, „Krakowie”/„Kraków”).
+     */
+    fun polecenie(t: String, c: Context) {
+        val slowa = t.split(Regex("\\s+")).filter { it.isNotBlank() }
+        fun norm(s: String) = zonderAccenten(s).lowercase(Taal.locale).trim(',', '.', '!', '?')
+        fun pasuje(w: String, nazwa: String): Boolean {
+            val n = norm(nazwa); val x = norm(w)
+            if (n.length < 3 || x.length < 3) return x == n
+            return x.startsWith(n) || (x.length >= n.length - 1 && x.length <= n.length + 3 && x.startsWith(n.dropLast(1)))
+        }
+        val uzyte = HashSet<Int>()
+        var osoba: Persoon? = null; var miasto: String? = null; var kraj: String? = null; var rok: Int? = null
+        slowa.forEachIndexed { i, w ->
+            val x = norm(w)
+            x.toIntOrNull()?.takeIf { it in 1900..2100 }?.let { rok = it; uzyte += i; return@forEachIndexed }
+            if (osoba == null) personen.firstOrNull { p -> pasuje(w, p.naam.substringBefore(' ')) }?.let { osoba = it; uzyte += i; return@forEachIndexed }
+            if (miasto == null) glosMiasta.firstOrNull { pasuje(w, it) }?.let { miasto = it; uzyte += i; return@forEachIndexed }
+            if (kraj == null) glosKraje.firstOrNull { (en, lokalnie) -> pasuje(w, lokalnie) || pasuje(w, en) }?.let { kraj = it.first; uzyte += i; return@forEachIndexed }
+        }
+        val zbedne = setOf("pokaz", "pokaze", "zdjecia", "zdjec", "foto", "filmy", "z", "w", "we", "na", "do", "i", "oraz", "roku", "rok", "show", "photos", "of", "in", "from", "the", "me")
+        val reszta = slowa.filterIndexed { i, w -> i !in uzyte && norm(w) !in zbedne }.joinToString(" ")
+        filtr = ZoekFiltr(osoba = osoba, miasto = miasto, rok = rok, kraj = kraj)
+        tekst = reszta
+        zoek(c)
+    }
+
+    /** nazwy miast i krajów do poleceń głosowych (kraje: angielska nazwa z Immich → nazwa w języku aplikacji) */
+    private var glosMiasta: List<String> = emptyList()
+    private var glosKraje: List<Pair<String, String>> = emptyList()
+
     /** Opis filtrów do tytułu wyników („Ola · Antalya · 2025”). */
-    fun opisFiltra() = listOfNotNull(filtr.osoba?.naam, filtr.miasto, filtr.rok?.toString()).joinToString(" · ")
+    fun opisFiltra() = listOfNotNull(filtr.osoba?.naam, filtr.miasto, filtr.kraj?.let { Landnaam.vertaal(it) }, filtr.rok?.toString()).joinToString(" · ")
 }
 
 object Recent {
@@ -180,7 +219,7 @@ fun ZoekScherm(staat: ZoekStaat, nav: Nav) {
     val veld = remember { FocusRequester() }
     val spraak = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         val t = r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
-        if (r.resultCode == Activity.RESULT_OK && !t.isNullOrBlank()) { staat.tekst = t; staat.zoek(ctx) }
+        if (r.resultCode == Activity.RESULT_OK && !t.isNullOrBlank()) staat.polecenie(t, ctx)
     }
     val spraakPrompt = stringResource(R.string.spraak_prompt)
     val kanSpraak = remember {
@@ -262,9 +301,9 @@ fun ZoekScherm(staat: ZoekStaat, nav: Nav) {
                         Keuze(selected = staat.filtr.osoba != null, onClick = { filtrOkno = "osoba" },
                             leadingIcon = { Icon(Icons.Filled.Person, null, Modifier.width(18.dp)) },
                             tekst = staat.filtr.osoba?.naam ?: stringResource(R.string.filtr_osoba))
-                        Keuze(selected = staat.filtr.miasto != null, onClick = { filtrOkno = "miejsce" },
+                        Keuze(selected = staat.filtr.miasto != null || staat.filtr.kraj != null, onClick = { filtrOkno = "miejsce" },
                             leadingIcon = { Icon(Icons.Filled.Place, null, Modifier.width(18.dp)) },
-                            tekst = staat.filtr.miasto ?: stringResource(R.string.filtr_miejsce))
+                            tekst = staat.filtr.miasto ?: staat.filtr.kraj?.let { Landnaam.vertaal(it) } ?: stringResource(R.string.filtr_miejsce))
                         Keuze(selected = staat.filtr.rok != null, onClick = { filtrOkno = "rok" },
                             leadingIcon = { Icon(Icons.Filled.CalendarMonth, null, Modifier.width(18.dp)) },
                             tekst = staat.filtr.rok?.toString() ?: stringResource(R.string.filtr_rok))
@@ -314,7 +353,7 @@ private fun FiltrWybor(okno: String?, staat: ZoekStaat, sluit: () -> Unit, wybra
             KiesLijst(
                 stringResource(R.string.filtr_miejsce), miejsca?.let { listOf(KiesItem("", stringResource(R.string.filtr_dowolne), null, null)) + it },
                 staat.filtr.miasto.orEmpty(), sluit = sluit,
-            ) { id, _ -> staat.filtr = staat.filtr.copy(miasto = id.ifEmpty { null }); wybrano() }
+            ) { id, _ -> staat.filtr = staat.filtr.copy(miasto = id.ifEmpty { null }, kraj = null); wybrano() }
         }
         "rok" -> {
             val teraz = java.time.LocalDate.now().year
@@ -382,7 +421,14 @@ private fun Suggesties(staat: ZoekStaat, nav: Nav, zoek: (String) -> Unit) {
 fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, actie: String = stringResource(R.string.actie_zoeken), wielkie: Boolean = false, sluit: () -> Unit, klaar: (String) -> Unit) {
     var tekst by remember { mutableStateOf(begin) }
     val eerste = remember { FocusRequester() }
-    fun zet(t: String) { tekst = t; live?.invoke(t) }
+    fun zet(t: String) { tekst = t; live?.invoke(t); PisanieTelefonem.ustawTekst(t) }
+    // pisanie z telefonu: kod QR do prostej strony z polem tekstowym (sieć lokalna, tylko gdy to okno jest otwarte)
+    val klaarNu = androidx.compose.runtime.rememberUpdatedState(klaar)
+    var adresTelefonu by remember { mutableStateOf<String?>(null) }
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        adresTelefonu = PisanieTelefonem.start(titel, begin) { t, gotowe -> zet(t); if (gotowe) klaarNu.value(t) }
+        onDispose { PisanieTelefonem.stop() }
+    }
     // imiona i nazwy albumów: wielka litera na początku każdego słowa
     fun litera(c: Char) = if (wielkie && (tekst.isEmpty() || tekst.endsWith(' '))) c.uppercaseChar() else c
     val ctxT = LocalContext.current
@@ -409,7 +455,16 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
         },
         contentAlignment = Alignment.TopCenter,
     ) {
-        Column(Modifier.padding(top = 56.dp).width(700.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // kod QR „pisz z telefonu” po prawej stronie klawiatury
+        adresTelefonu?.let { adres ->
+            val qr = remember(adres) { Koppel.qr(adres).asImageBitmap() }
+            Column(Modifier.align(Alignment.TopEnd).padding(top = 56.dp, end = 24.dp).width(180.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                androidx.compose.foundation.Image(qr, null, Modifier.size(160.dp).background(Color.White, RoundedCornerShape(12.dp)).padding(8.dp))
+                Text(stringResource(R.string.pisz_telefon), style = MaterialTheme.typography.labelLarge, color = Kleur.zacht,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
+            }
+        }
+        Column(Modifier.align(Alignment.TopStart).padding(start = 40.dp, top = 56.dp).width(620.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(titel, style = MaterialTheme.typography.headlineSmall)
             Row(
                 Modifier.fillMaxWidth().height(56.dp).background(Kleur.vlakHoog, RoundedCornerShape(28.dp))
@@ -564,6 +619,13 @@ fun HerinneringenScherm(staat: HerinneringStaat, nav: Nav) {
                 listOfNotNull(stringResource(R.string.herinneringen_sub), wszystko.takeIf { it.isNotEmpty() }?.let { licznikMix(it) }).joinToString("  ·  "),
                 etykieta = stringResource(R.string.etyk_wspomnienia),
             ) {
+                // Rok w skrócie: w styczniu i lutym poprzedni rok, potem bieżący
+                val rokPodsumowania = java.time.LocalDate.now().let { if (it.monthValue <= 2) it.year - 1 else it.year }
+                Keuze(
+                    selected = false, onClick = { nav.open(Scherm.Rok(rokPodsumowania, nav.scope)) },
+                    leadingIcon = { androidx.tv.material3.Icon(androidx.compose.material.icons.Icons.Filled.Insights, null, Modifier.size(18.dp)) },
+                    tekst = stringResource(R.string.rok_tytul, rokPodsumowania),
+                )
                 if (wszystko.isNotEmpty()) Keuze(
                     selected = false, onClick = { nav.bekijk(LijstBron(wszystko), 0, tytulPokazu, true, null) },
                     leadingIcon = { androidx.tv.material3.Icon(androidx.compose.material.icons.Icons.Filled.PlayArrow, null, Modifier.size(18.dp)) },

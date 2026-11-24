@@ -76,6 +76,9 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     var pinCel by remember { mutableStateOf<String?>(null) }
     var pinUstaw by remember { mutableStateOf<String?>(null) }
     var pinRonde by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    var pinRodzica by remember { mutableStateOf(false) }
+    var synologyOkno by remember { mutableStateOf(false) }
+    var ukryteOkno by remember { mutableStateOf<String?>(null) }
     var controleren by remember { mutableStateOf(false) }
     // cachegrootte: schijf + geheugen, opnieuw gemeten na legen
     var cacheRonde by remember { mutableIntStateOf(0) }
@@ -158,6 +161,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         if (alles) item { Keuzes(stringResource(R.string.dia_beeld), stringResource(R.string.dia_beeld_uitleg), DiaBeeld.entries.map { stringResource(it.label) }, Instellingen.diaBeeld.ordinal) { Instellingen.diaBeeld = DiaBeeld.entries[it] } }
         // muzyka w tle pokazu (liczba wierszy wliczona w dreamItem)
         schakel(R.string.dia_opisy, R.string.dia_opisy_uitleg, uitAan, Instellingen.diaOpisy) { Instellingen.diaOpisy = it }
+        schakel(R.string.ken_burns_twarze, R.string.ken_burns_twarze_uitleg, uitAan, Instellingen.kenBurnsTwarze) { Instellingen.kenBurnsTwarze = it }
         schakel(R.string.muzyka, R.string.muzyka_uitleg, uitAan, Instellingen.muzyka) { Instellingen.muzyka = it }
         if (Instellingen.muzyka) item {
             Actie(stringResource(R.string.muzyka_adres), Instellingen.muzykaUrl.ifBlank { stringResource(R.string.muzyka_adres_uitleg) }) { muzykaInvoer = true }
@@ -311,7 +315,34 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         }
 
         // profile domowników: każdy ze swoim kontem Immich i ustawieniami
+        // Synology Photos: albumy z Synology jako osobna sekcja
+        groep(R.string.sectie_synology)
+        item {
+            @Suppress("UNUSED_VARIABLE") val zmiana = Synology.stan
+            if (Synology.skonfigurowane) Actie(stringResource(R.string.synology_rozlacz), stringResource(R.string.synology_polaczone, Synology.nazwaKonta, Synology.adres)) {
+                Synology.wyloguj(ctx)
+            } else Actie(stringResource(R.string.synology_polacz), stringResource(R.string.synology_uitleg)) { synologyOkno = true }
+        }
+
         groep(R.string.groep_profile)
+        // tryb dziecięcy tego profilu: ukryte albumy / osoby, bez edycji, Ustawienia za PIN-em rodzica
+        item {
+            Keuzes(stringResource(R.string.tryb_dzieciecy), stringResource(R.string.tryb_dzieciecy_uitleg), uitAan, if (Instellingen.trybDzieciecy) 1 else 0) {
+                if (it == 1 && !Pin.ma(ctx, PIN_RODZICA)) pinRodzica = true
+                else Instellingen.trybDzieciecy = it == 1
+            }
+        }
+        if (Instellingen.trybDzieciecy) {
+            item {
+                val n = Instellingen.ukryteAlbumy.split(',').count { it.isNotBlank() }
+                Actie(stringResource(R.string.ukryte_albumy), stringResource(R.string.ukryte_ile, n)) { ukryteOkno = "albumy" }
+            }
+            item {
+                val n = Instellingen.ukryteOsoby.split(',').count { it.isNotBlank() }
+                Actie(stringResource(R.string.ukryte_osoby), stringResource(R.string.ukryte_ile, n)) { ukryteOkno = "osoby" }
+            }
+            item { Actie(stringResource(R.string.pin_rodzica), stringResource(R.string.pin_rodzica_zmien)) { pinRodzica = true } }
+        }
         item {
             val nazwy = listOf<String?>(null) + Profile.lista(ctx)
             Keuzes(stringResource(R.string.profil), stringResource(R.string.profil_uitleg), nazwy.map { it ?: stringResource(R.string.profil_glowny) },
@@ -399,6 +430,18 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     if (muzykaInvoer) TekstInvoer(stringResource(R.string.muzyka_adres), Instellingen.muzykaUrl.ifBlank { "http://" }, actie = stringResource(R.string.actie_klaar), sluit = { muzykaInvoer = false }) {
         Instellingen.muzykaUrl = it.trim(); muzykaInvoer = false
     }
+    if (synologyOkno) SynologyLogowanie { synologyOkno = false }
+    if (pinRodzica) PinEkran(stringResource(R.string.pin_rodzica), stringResource(R.string.pin_rodzica_nowy), nowy = true, anuluj = { pinRodzica = false }) { pin ->
+        Pin.ustaw(ctx, PIN_RODZICA, pin); pinRodzica = false; Instellingen.trybDzieciecy = true; Edycja.komunikat = ctx.getString(R.string.zapisano); true
+    }
+    when (ukryteOkno) {
+        "albumy" -> KiesLijst(stringResource(R.string.ukryte_albumy), albumKeuzes(), Instellingen.ukryteAlbumy, sluit = { ukryteOkno = null }, meer = true) { id, _ ->
+            Instellingen.ukryteAlbumy = Instellingen.przelaczUkryty(Instellingen.ukryteAlbumy, id)
+        }
+        "osoby" -> KiesLijst(stringResource(R.string.ukryte_osoby), persoonKeuzes(), Instellingen.ukryteOsoby, sluit = { ukryteOkno = null }, meer = true) { id, _ ->
+            Instellingen.ukryteOsoby = Instellingen.przelaczUkryty(Instellingen.ukryteOsoby, id)
+        }
+    }
     pinCel?.let { cel ->
         PinEkran(stringResource(R.string.pin_tytul, cel), stringResource(R.string.pin_wpisz), anuluj = { pinCel = null }) { pin ->
             Pin.sprawdz(ctx, cel, pin).also { ok ->
@@ -427,7 +470,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
 }
 
 /** Item-index van de groepskop "Screensaver" in de lijst: kop + regel Basis/Alle + groep Diashow (1 + 3 of 6 regels). */
-private fun dreamItem(alles: Boolean) = 3 + (if (alles) 6 else 3) + 2 + (if (Instellingen.muzyka) 1 else 0)
+private fun dreamItem(alles: Boolean) = 3 + (if (alles) 6 else 3) + 3 + (if (Instellingen.muzyka) 1 else 0)
 /** Screensaver-groep in de instellingen tonen (sinds 2.2; false verbergt de groep weer, de DreamService blijft bestaan). */
 const val SCREENSAVER_AAN = true
 

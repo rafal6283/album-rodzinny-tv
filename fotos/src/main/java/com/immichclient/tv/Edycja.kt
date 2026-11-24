@@ -66,7 +66,7 @@ object Edycja {
     var komunikat by mutableStateOf<String?>(null)
 
     fun imie(p: Persoon) = imiona[p.id] ?: p.naam
-    fun widoczna(p: Persoon) = ukryte[p.id] != true && polaczone[p.id] != true
+    fun widoczna(p: Persoon) = ukryte[p.id] != true && polaczone[p.id] != true && !Instellingen.osobaUkryta(p.id)
 
     /** Komunikat błędu: brak uprawnienia (stary klucz) albo ogólny. */
     fun blad(e: Throwable): String {

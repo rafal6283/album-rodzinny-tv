@@ -27,6 +27,20 @@ object ThumbHash {
 
     fun inCache(hash: String): ImageBitmap? = cache.get(hash)
 
+    /** Średni kolor zdjęcia (składowa stała ThumbHash, bez dekodowania obrazka): 0xRRGGBB; null = zły skrót. */
+    fun sredniKolor(hash: String): Int? = runCatching {
+        val h = android.util.Base64.decode(hash, android.util.Base64.DEFAULT)
+        val naglowek = (h[0].toInt() and 0xFF) or ((h[1].toInt() and 0xFF) shl 8) or ((h[2].toInt() and 0xFF) shl 16)
+        val l = (naglowek and 63) / 63f
+        val p = ((naglowek shr 6) and 63) / 31.5f - 1f
+        val q = ((naglowek shr 12) and 63) / 31.5f - 1f
+        val b = l - 2f / 3f * p
+        val r = (3f * l - b + q) / 2f
+        val g = r - q
+        fun k(v: Float) = (255 * v.coerceIn(0f, 1f)).toInt()
+        (k(r) shl 16) or (k(g) shl 8) or k(b)
+    }.getOrNull()
+
     fun leeg() = cache.evictAll()
 
     private fun decodeer(h: ByteArray): ImageBitmap {

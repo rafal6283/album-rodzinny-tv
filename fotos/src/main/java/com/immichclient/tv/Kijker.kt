@@ -310,7 +310,12 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
             // de maand van een willekeurige foto is misschien nog niet geladen (op() start dat): even later nog eens
             for (poging in 0 until 3) {
                 val a = staat.bron.op(doel)
-                if (a != null) { if (!a.video) loader.enqueue(previewVerzoek(ctx, a.id)); break }
+                if (a != null) {
+                    if (!a.video) loader.enqueue(previewVerzoek(ctx, a.id))
+                    // twarze następnego zdjęcia z wyprzedzeniem: punkt przybliżenia gotowy od pierwszej klatki
+                    if (!a.video && Instellingen.kenBurns && Instellingen.kenBurnsTwarze) launch { Immich.srodekTwarzy(a.id) }
+                    break
+                }
                 delay(500)
             }
         }
@@ -571,8 +576,13 @@ private fun Beeld(a: Asset, staat: KijkerStaat, actief: Boolean, zicht: () -> Fl
         // Alleen op de diashow-schakelaar: de vertrekkende pagina houdt zijn zoom (anders springt hij terug tijdens de
         // crossfade), en na het stoppen glijdt de foto terug naar 1,0 in plaats van te springen.
         val zoom = remember { Animatable(1f) }
+        // twarze w kadrze: przybliżanie celuje w ludzi (środek rozpoznanych twarzy z Immich), wtedy trochę mocniej
+        val twarz = remember(a.id) { mutableStateOf<Pair<Float, Float>?>(null) }
+        LaunchedEffect(a.id, staat.diashow) {
+            if (staat.diashow && Instellingen.kenBurns && Instellingen.kenBurnsTwarze && !a.video) twarz.value = Immich.srodekTwarzy(a.id)
+        }
         LaunchedEffect(staat.diashow) {
-            if (staat.diashow && Instellingen.kenBurns) { if (actief) zoom.animateTo(1.06f, tween((Instellingen.diaMs + 1500).toInt(), easing = LinearEasing)) }
+            if (staat.diashow && Instellingen.kenBurns) { if (actief) zoom.animateTo(if (Instellingen.kenBurnsTwarze) 1.12f else 1.06f, tween((Instellingen.diaMs + 1500).toInt(), easing = LinearEasing)) }
             else if (zoom.value != 1f) zoom.animateTo(1f, tween(500, easing = FastOutSlowInEasing))
         }
         // powiększenie ręczne (tylko bieżące zdjęcie) płynnie animowane, razem z Ken Burns
@@ -582,6 +592,13 @@ private fun Beeld(a: Asset, staat: KijkerStaat, actief: Boolean, zicht: () -> Fl
         val mod = Modifier.fillMaxSize().graphicsLayer {
             scaleX = zoom.value * reczny; scaleY = zoom.value * reczny
             translationX = px; translationY = py
+            // punkt, do którego przybliża pokaz: twarze (zdjęcie wpasowane w ekran → przeliczenie na ułamek ekranu)
+            val t = twarz.value
+            if (t != null && reczny <= 1.01f && size.height > 0f) {
+                val s = size.width / size.height; val r = a.ratio.coerceIn(0.2f, 5f)
+                val dw = minOf(1f, r / s); val dh = minOf(1f, s / r)
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f + (t.first - 0.5f) * dw, 0.5f + (t.second - 0.5f) * dh)
+            }
         }
         // 1) thumbhash 2) thumbnail (al in de cache van het raster) 3) preview: er staat dus altijd meteen iets
         val hash = remember(a.thumbhash) { a.thumbhash?.let { ThumbHash.bitmap(it) } }
@@ -920,7 +937,7 @@ private fun OsobyRegel(osoby: List<Persoon>) {
 /** Akcje dolnego paska przeglądarki (▼), jak okrągłe przyciski w Immichin. */
 enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, ALBUM, Z_ALBUMU, MAPA }
 
-fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false): List<Akcja> = buildList {
+fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false): List<Akcja> = if (a != null && Synology.jestSyno(a.id)) listOf(Akcja.POKAZ) else buildList {
     add(Akcja.POKAZ)
     if (a != null) add(Akcja.ULUBIONE)
     add(Akcja.SZCZEGOLY)
@@ -928,8 +945,8 @@ fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false): List<Akcja> =
     if (a?.live != null) add(Akcja.LIVE)
     if (a != null) add(Akcja.UDOSTEPNIJ)
     if (Udostepnianie.koszyk.isNotEmpty()) add(Akcja.KOD_QR)
-    if (a != null) add(Akcja.ALBUM)
-    if (a != null && zAlbumu) add(Akcja.Z_ALBUMU)
+    if (a != null && !Instellingen.trybDzieciecy) add(Akcja.ALBUM)
+    if (a != null && zAlbumu && !Instellingen.trybDzieciecy) add(Akcja.Z_ALBUMU)
     if (zMapa && a?.lat != null) add(Akcja.MAPA)
 }
 
@@ -939,7 +956,7 @@ fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false): List<Akcja> =
  */
 @OptIn(UnstableApi::class)
 @Composable
-private fun MuzykaPokazu(grac: Boolean) {
+internal fun MuzykaPokazu(grac: Boolean) {
     val url = Instellingen.muzykaUrl.trim()
     if (!Instellingen.muzyka || url.isEmpty()) return
     val ctx = LocalContext.current

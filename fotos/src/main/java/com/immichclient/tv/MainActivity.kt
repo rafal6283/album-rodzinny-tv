@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.Celebration
+import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Photo
@@ -136,6 +138,16 @@ sealed class Scherm {
     class Mappen(boom: MappenBoom, knoop: MapKnoop?, scope: CoroutineScope) : Scherm() { val staat = MapStaat(boom, knoop, scope) }
     data object Instellingen : Scherm()
     data object Rocznice : Scherm()
+    data object Zabawa : Scherm()
+    class Quiz(scope: CoroutineScope) : Scherm() { val staat = QuizStaat(scope) }
+    data object Impreza : Scherm()
+    class Podroz(albumId: String, nazwa: String, scope: CoroutineScope) : Scherm() { val staat = PodrozStaat(albumId, nazwa, scope) }
+    class Rosniecie(osobaId: String, imie: String, scope: CoroutineScope) : Scherm() { val staat = RosniecieStaat(osobaId, imie, scope) }
+    class Powroty(scope: CoroutineScope) : Scherm() { val staat = PowrotyStaat(scope) }
+    @Suppress("UNUSED_PARAMETER") class Kolory(scope: CoroutineScope) : Scherm()
+    class Synology(scope: CoroutineScope) : Scherm() { val staat = SynologyStaat(scope) }
+    /** Rok w skrócie (ze Wspomnień) */
+    class Rok(rok: Int, scope: CoroutineScope) : Scherm() { val staat = RokStaat(scope, rok) }
     /** sekcja Filmy: kolejność, przejście do daty, losowo */
     class Filmy(scope: CoroutineScope) : Scherm() { val staat = FilmyStaat(scope) }
     class Lijst(val titel: String, val sub: String?, val perDag: Boolean, scope: CoroutineScope, laad: suspend (Int) -> Pagina) : Scherm() {
@@ -187,6 +199,10 @@ object Toetsen {
 enum class Sectie(@StringRes val label: Int, val icoon: ImageVector) {
     FOTOS(R.string.sectie_fotos, Icons.Filled.Photo),
     HERINNERINGEN(R.string.sectie_herinneringen, Icons.Filled.AutoAwesome),
+    /** albumy z Synology Photos (widoczne po połączeniu w Ustawieniach) */
+    SYNOLOGY(R.string.sectie_synology, Icons.Filled.Storage),
+    /** quiz, tryb imprezy, film z podróży, jak rosła…, powroty, szukaj po kolorze */
+    ZABAWA(R.string.sectie_zabawa, Icons.Filled.Celebration),
     /** urodziny i rocznice albumów: nadchodzące i niedawne */
     ROCZNICE(R.string.sectie_rocznice, Icons.Filled.Cake),
     ZOEKEN(R.string.sectie_zoeken, Icons.Filled.Search),
@@ -203,7 +219,7 @@ enum class Sectie(@StringRes val label: Int, val icoon: ImageVector) {
 
     companion object {
         /** Kolejność w bocznej szynie, jak w Immichin: szukaj, zdjęcia+wideo, wspomnienia, ulubione, albumy, ludzie, mapa… */
-        val KOLEJNOSC = listOf(ZOEKEN, FOTOS, FILMY, HERINNERINGEN, ROCZNICE, FAVORIETEN, ALBUMS, LUDZIE, VERKENNEN, KAART, MAPPEN, INSTELLINGEN)
+        val KOLEJNOSC = listOf(ZOEKEN, FOTOS, FILMY, HERINNERINGEN, ROCZNICE, ZABAWA, FAVORIETEN, ALBUMS, SYNOLOGY, LUDZIE, VERKENNEN, KAART, MAPPEN, INSTELLINGEN)
     }
 }
 
@@ -220,6 +236,7 @@ class MainActivity : ComponentActivity() {
         start = android.os.SystemClock.uptimeMillis()
         // een eigen launcher kan het profiel meegeven ("kijker"); per profiel kan dan een eigen Immich-account gelden
         Immich.kiesAccount(this, intent.getStringExtra("kijker"))
+        Synology.wczytaj(this)
         if (savedInstanceState == null) { WejscieKanal.z(intent); WejscieSzukaj.z(intent) }
         // Test-extra's alleen bij een verse start vanaf de shell (`am start`, referrer com.android.shell). Bij een herstart
         // van de taak (proces opgeruimd door geheugennood, daarna de tegel in de launcher) geeft Android het óórspronkelijke
@@ -368,6 +385,8 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             Sectie.FOTOS -> Scherm.Tijdlijn(naamApp, null, Filter(), Instellingen.nieuwsteEerst, true, scope)
             Sectie.HERINNERINGEN -> Scherm.Herinneringen(scope)
             Sectie.ROCZNICE -> Scherm.Rocznice
+            Sectie.ZABAWA -> Scherm.Zabawa
+            Sectie.SYNOLOGY -> Scherm.Synology(scope)
             Sectie.ZOEKEN -> Scherm.Zoeken(scope)
             Sectie.VERKENNEN -> Scherm.Verkennen(scope)
             Sectie.KAART -> Scherm.Kaart(scope)
@@ -571,7 +590,23 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         is Scherm.Lijst -> LijstScherm(scherm, nav)
                         is Scherm.Filmy -> FilmyScherm(scherm.staat, nav)
                         is Scherm.Rocznice -> RoczniceScherm(nav)
-                        is Scherm.Instellingen -> InstellingenScherm(opnieuwKoppelen = { instellen = true }, ontkoppeld = { sectie = Sectie.FOTOS }, toetsen = { toetsen = true })
+                        is Scherm.Zabawa -> ZabawaScherm(nav)
+                        is Scherm.Quiz -> QuizScherm(scherm.staat, nav)
+                        is Scherm.Impreza -> ImprezaScherm()
+                        is Scherm.Podroz -> PodrozScherm(scherm.staat)
+                        is Scherm.Rosniecie -> RosniecieScherm(scherm.staat)
+                        is Scherm.Powroty -> PowrotyScherm(scherm.staat, nav)
+                        is Scherm.Kolory -> KoloryScherm(nav)
+                        is Scherm.Synology -> SynologyScherm(scherm.staat, nav)
+                        is Scherm.Rok -> RokWSkrocieScherm(scherm.staat, nav)
+                        is Scherm.Instellingen -> {
+                            // tryb dziecięcy: Ustawienia tylko po PIN-ie rodzica (raz na wejście do sekcji)
+                            var odblokowane by remember { mutableStateOf(!Instellingen.trybDzieciecy || !Pin.ma(ctx, PIN_RODZICA)) }
+                            if (!odblokowane) PinEkran(stringResource(R.string.pin_rodzica), stringResource(R.string.pin_rodzica_wpisz), anuluj = { sectie = startSectie }) { pin ->
+                                Pin.sprawdz(ctx, PIN_RODZICA, pin).also { if (it) odblokowane = true }
+                            }
+                            else InstellingenScherm(opnieuwKoppelen = { instellen = true }, ontkoppeld = { sectie = Sectie.FOTOS }, toetsen = { toetsen = true })
+                        }
                     }
                 }
             }

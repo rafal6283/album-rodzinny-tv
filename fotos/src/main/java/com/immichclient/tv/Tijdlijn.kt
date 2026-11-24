@@ -1,6 +1,7 @@
 package com.immichclient.tv
 
 import androidx.compose.foundation.border
+import androidx.compose.material.icons.filled.ChildCare
 import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material.icons.filled.CompareArrows
 import androidx.compose.material.icons.filled.Edit
@@ -348,8 +349,16 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                                 leadingIcon = { Icon(Icons.Filled.CompareArrows, null, Modifier.width(18.dp)) },
                                 tekst = stringResource(R.string.porownanie),
                             )
+                            // „Jak rosła…”: twarz osoby przez lata
+                            staat.filter.persoonId?.let { id ->
+                                Keuze(
+                                    selected = false, onClick = { nav.open(Scherm.Rosniecie(id, scherm.titel, nav.scope)) },
+                                    leadingIcon = { Icon(Icons.Filled.ChildCare, null, Modifier.width(18.dp)) },
+                                    tekst = stringResource(R.string.rosla_przycisk),
+                                )
+                            }
                             // edycja: osoba (imię, data urodzenia, ukrycie, połączenie) albo nazwa albumu
-                            if (staat.filter.persoonId != null || staat.filter.albumId != null) Keuze(
+                            if ((staat.filter.persoonId != null || staat.filter.albumId != null) && !Instellingen.trybDzieciecy) Keuze(
                                 selected = false, onClick = { edycja = true }, modifier = Modifier.focusRequester(edycjaKnop),
                                 leadingIcon = { Icon(Icons.Filled.Edit, null, Modifier.width(18.dp)) },
                                 tekst = stringResource(if (staat.filter.persoonId != null) R.string.edytuj_osobe else R.string.album_zmien_nazwe),

@@ -71,7 +71,7 @@ class AlbumsStaat(scope: CoroutineScope) {
     }
 
     fun zichtbaar(): List<Album> {
-        val l = albums.filter { (!alleenGedeeld || it.gedeeld) && (zoek.isBlank() || zonderAccent(it.naam).contains(zonderAccent(zoek.trim()), ignoreCase = true)) && it.aantal > 0 }
+        val l = albums.filter { !Instellingen.albumUkryty(it.id) && (!alleenGedeeld || it.gedeeld) && (zoek.isBlank() || zonderAccent(it.naam).contains(zonderAccent(zoek.trim()), ignoreCase = true)) && it.aantal > 0 }
         return when (volgorde) {
             AlbumVolgorde.RECENT -> l.sortedByDescending { it.bijgewerkt }
             AlbumVolgorde.NIEUW -> l.sortedByDescending { it.tot }

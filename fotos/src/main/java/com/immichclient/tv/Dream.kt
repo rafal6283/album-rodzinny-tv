@@ -397,7 +397,9 @@ fun DreamScherm(staat: DreamStaat) {
                         Log.w("Fotos", "screensaver: ${e.message}")
                         val m = meldingVoor(e)
                         if (m != R.string.dream_geen_verbinding) wacht = 60_000L
-                        mislukt(m); null
+                        // ramka offline: zapamiętane zdjęcie z dysku zamiast komunikatu (chmurka w rogu mówi, że offline)
+                        DreamOffline.losowe(ctx, staat.huidig?.id)?.also { staat.storing = true }
+                            ?: run { mislukt(m); null }
                     },
                 )
             }
@@ -411,6 +413,14 @@ fun DreamScherm(staat: DreamStaat) {
                 val ok = withTimeoutOrNull(8_000) { runCatching { loader.execute(previewVerzoek(ctx, a.id)) is SuccessResult }.getOrDefault(false) } == true
                 if (!ok) {
                     Log.w("Fotos", "screensaver: preview ${a.id} niet geladen")
+                    // brak sieci: następnym razem zapamiętane zdjęcie z dysku
+                    val o = DreamOffline.losowe(ctx, staat.huidig?.id)
+                    val zDysku = o != null && withTimeoutOrNull(4_000) { runCatching { loader.execute(previewVerzoek(ctx, o.id)) is SuccessResult }.getOrDefault(false) } == true
+                    if (o != null && zDysku) {
+                        staat.melding = null; staat.storing = true; staat.huidig = o; staat.ronde++
+                        richting = withTimeoutOrNull(Instellingen.dreamSeconden * 1000L) { staat.wens.receive() } ?: 1
+                        continue
+                    }
                     mislukt(R.string.dream_geen_verbinding)
                     richting = withTimeoutOrNull(wacht) { staat.wens.receive() } ?: 1
                     continue
@@ -418,6 +428,7 @@ fun DreamScherm(staat: DreamStaat) {
                 staat.melding = null
                 staat.storing = false
                 staat.huidig = a
+                DreamOffline.zapamietaj(ctx, a)
                 // na de overgang: cache klein houden en de volgende alvast klaarzetten
                 launch { delay(1800); loader.memoryCache?.trimToSize(GEHEUGEN); voorraad.kijkVooruit(ctx) }
             }
@@ -645,5 +656,53 @@ class VoorbeeldActivity : ComponentActivity() {
                 ) { DreamScherm(staat) }
             }
         }
+    }
+}
+
+/**
+ * Ramka offline: wygaszacz zapamiętuje ostatnie ~300 pokazanych zdjęć (same dane, obrazy są w pamięci podręcznej na
+ * dysku, 400 MB). Gdy serwer albo internet nie odpowiada, pokazuje losowo te zapamiętane zamiast komunikatu o błędzie.
+ */
+object DreamOffline {
+    private const val MAX = 300
+    private val lista = ArrayList<Asset>()
+    private var wczytano = false
+
+    private fun plik(c: Context) = java.io.File(c.filesDir, "ramka_offline.json")
+
+    private fun wczytaj(c: Context) {
+        if (wczytano) return
+        wczytano = true
+        runCatching {
+            val a = org.json.JSONArray(plik(c).readText())
+            for (i in 0 until a.length()) a.getJSONObject(i).let { o ->
+                lista.add(Asset(
+                    id = o.getString("id"), ratio = o.optDouble("r", 1.0).toFloat(), video = false, thumbhash = o.optString("h").ifEmpty { null },
+                    datum = runCatching { java.time.LocalDateTime.parse(o.getString("d")) }.getOrElse { java.time.LocalDateTime.of(1970, 1, 1, 0, 0) },
+                    duur = null, stad = o.optString("s").ifEmpty { null }, land = o.optString("l").ifEmpty { null }, favoriet = false,
+                    lat = o.optDouble("la").takeIf { !it.isNaN() }, lon = o.optDouble("lo").takeIf { !it.isNaN() },
+                ))
+            }
+        }
+    }
+
+    @Synchronized fun zapamietaj(c: Context, a: Asset) {
+        if (a.video || a.id.startsWith("syno:")) return
+        wczytaj(c)
+        lista.removeAll { it.id == a.id }
+        lista.add(a)
+        while (lista.size > MAX) lista.removeAt(0)
+        runCatching {
+            val arr = org.json.JSONArray()
+            for (x in lista) arr.put(org.json.JSONObject().put("id", x.id).put("r", x.ratio.toDouble()).put("h", x.thumbhash ?: "").put("d", x.datum.toString())
+                .put("s", x.stad ?: "").put("l", x.land ?: "").apply { x.lat?.let { put("la", it) }; x.lon?.let { put("lo", it) } })
+            plik(c).writeText(arr.toString())
+        }
+    }
+
+    /** Losowe zapamiętane zdjęcie (inne niż [poza]); null = nic nie zapamiętano. */
+    @Synchronized fun losowe(c: Context, poza: String?): Asset? {
+        wczytaj(c)
+        return lista.filter { it.id != poza }.randomOrNull()
     }
 }

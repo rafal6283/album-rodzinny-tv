@@ -23,6 +23,8 @@ data class Asset(
     val lon: Double? = null,
     /** Live Photo: id krótkiego filmu dołączonego do zdjęcia (null = zwykłe zdjęcie) */
     val live: String? = null,
+    /** osoby na zdjęciu (tylko gdy serwer je podał, np. withPeople w wyszukiwaniu; Rok w skrócie) */
+    val osoby: List<Persoon> = emptyList(),
 )
 
 @Immutable data class Maand(val sleutel: String, val aantal: Int)
@@ -104,11 +106,12 @@ fun lokaleTijd(s: String, offsetUren: Double): LocalDateTime {
 
 /** Dodatkowe filtry wyszukiwania (osoba, miasto, rok); puste = bez filtra. */
 @Immutable
-data class ZoekFiltr(val osoba: Persoon? = null, val miasto: String? = null, val rok: Int? = null) {
-    val pusty get() = osoba == null && miasto == null && rok == null
+data class ZoekFiltr(val osoba: Persoon? = null, val miasto: String? = null, val rok: Int? = null, val kraj: String? = null) {
+    val pusty get() = osoba == null && miasto == null && rok == null && kraj == null
     fun dopisz(body: org.json.JSONObject) {
         osoba?.let { body.put("personIds", org.json.JSONArray(listOf(it.id))) }
         miasto?.let { body.put("city", it) }
+        kraj?.let { body.put("country", it) }
         rok?.let { body.put("takenAfter", "$it-01-01T00:00:00.000Z").put("takenBefore", "$it-12-31T23:59:59.999Z") }
     }
 }
