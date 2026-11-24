@@ -97,7 +97,7 @@ class SynologyStaat(private val scope: CoroutineScope) {
         private set
 
     private suspend fun sprawdz() {
-        problemMiniatur = albumy?.firstNotNullOfOrNull { it.okladka }?.let { Synology.sprawdzMiniature(it) }
+        problemMiniatur = albumy?.firstNotNullOfOrNull { it.okladka }?.let { Synology.dobierzWariant(Taal.ctx, it) }
     }
 
     fun wejdz(f: Synology.FolderSyno) { sciezka = sciezka + f; laduj() }
@@ -164,7 +164,7 @@ fun SynologyScherm(staat: SynologyStaat, nav: Nav) {
                 }
             }
         }
-        else items(staat.albumy.orEmpty(), key = { "a" + it.id + it.haslo.orEmpty() }) { a ->
+        else items(staat.albumy.orEmpty(), key = { "a" + it.id + it.haslo.orEmpty() + "/" + wersja }) { a ->
             Column {
                 Card(
                     onClick = { nav.open(Scherm.Lijst(a.nazwa, a.wlasciciel ?: "Synology Photos", true, nav.scope) { p -> Synology.elementy(a, p) }) },
