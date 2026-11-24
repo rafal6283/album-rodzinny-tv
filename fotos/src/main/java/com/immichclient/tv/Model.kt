@@ -23,6 +23,8 @@ data class Asset(
     val lon: Double? = null,
     /** Live Photo: id krótkiego filmu dołączonego do zdjęcia (null = zwykłe zdjęcie) */
     val live: String? = null,
+    /** osoby na zdjęciu (tylko gdy serwer je podał, np. withPeople w wyszukiwaniu; Rok w skrócie) */
+    val osoby: List<Persoon> = emptyList(),
 )
 
 @Immutable data class Maand(val sleutel: String, val aantal: Int)

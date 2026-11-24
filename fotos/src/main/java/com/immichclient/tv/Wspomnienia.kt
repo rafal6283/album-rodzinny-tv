@@ -245,7 +245,9 @@ object Kalendarz {
         }
         minione = (mUrodziny + mRocznice).sortedWith(compareBy({ -it.zaIle }, { it.osoba == null })).take(40)
         wszystkieUrodziny = urodziny.associateBy { it.osoba!!.id }
-        lista = (urodziny + rocznice).sortedWith(compareBy({ it.zaIle }, { it.osoba == null })).take(40)
+        fun dozwolone(w: Wpis) = w.osoba?.let { !Instellingen.osobaUkryta(it.id) } ?: w.album?.let { !Instellingen.albumUkryty(it.id) } ?: true
+        minione = minione.filter(::dozwolone)
+        lista = (urodziny + rocznice).filter(::dozwolone).sortedWith(compareBy({ it.zaIle }, { it.osoba == null })).take(40)
         pobrano = dzis
     }
 }

@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
@@ -50,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -127,7 +129,7 @@ class ZoekStaat(scope: CoroutineScope) {
     var filtr by mutableStateOf(ZoekFiltr())
 
     init {
-        scope.launch { runCatching { Immich.personen() }.onSuccess { personen = it } }
+        scope.launch { runCatching { Immich.personen() }.onSuccess { personen = it.filter { p -> !Instellingen.osobaUkryta(p.id) } } }
         scope.launch { Immich.warmZoeken() }
     }
 
@@ -382,7 +384,14 @@ private fun Suggesties(staat: ZoekStaat, nav: Nav, zoek: (String) -> Unit) {
 fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, actie: String = stringResource(R.string.actie_zoeken), wielkie: Boolean = false, sluit: () -> Unit, klaar: (String) -> Unit) {
     var tekst by remember { mutableStateOf(begin) }
     val eerste = remember { FocusRequester() }
-    fun zet(t: String) { tekst = t; live?.invoke(t) }
+    fun zet(t: String) { tekst = t; live?.invoke(t); PisanieTelefonem.ustawTekst(t) }
+    // pisanie z telefonu: kod QR do prostej strony z polem tekstowym (sieć lokalna, tylko gdy to okno jest otwarte)
+    val klaarNu = androidx.compose.runtime.rememberUpdatedState(klaar)
+    var adresTelefonu by remember { mutableStateOf<String?>(null) }
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        adresTelefonu = PisanieTelefonem.start(titel, begin) { t, gotowe -> zet(t); if (gotowe) klaarNu.value(t) }
+        onDispose { PisanieTelefonem.stop() }
+    }
     // imiona i nazwy albumów: wielka litera na początku każdego słowa
     fun litera(c: Char) = if (wielkie && (tekst.isEmpty() || tekst.endsWith(' '))) c.uppercaseChar() else c
     val ctxT = LocalContext.current
@@ -409,7 +418,16 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
         },
         contentAlignment = Alignment.TopCenter,
     ) {
-        Column(Modifier.padding(top = 56.dp).width(700.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // kod QR „pisz z telefonu” po prawej stronie klawiatury
+        adresTelefonu?.let { adres ->
+            val qr = remember(adres) { Koppel.qr(adres).asImageBitmap() }
+            Column(Modifier.align(Alignment.TopEnd).padding(top = 56.dp, end = 24.dp).width(180.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                androidx.compose.foundation.Image(qr, null, Modifier.size(160.dp).background(Color.White, RoundedCornerShape(12.dp)).padding(8.dp))
+                Text(stringResource(R.string.pisz_telefon), style = MaterialTheme.typography.labelLarge, color = Kleur.zacht,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
+            }
+        }
+        Column(Modifier.align(Alignment.TopStart).padding(start = 40.dp, top = 56.dp).width(620.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(titel, style = MaterialTheme.typography.headlineSmall)
             Row(
                 Modifier.fillMaxWidth().height(56.dp).background(Kleur.vlakHoog, RoundedCornerShape(28.dp))
@@ -564,6 +582,13 @@ fun HerinneringenScherm(staat: HerinneringStaat, nav: Nav) {
                 listOfNotNull(stringResource(R.string.herinneringen_sub), wszystko.takeIf { it.isNotEmpty() }?.let { licznikMix(it) }).joinToString("  ·  "),
                 etykieta = stringResource(R.string.etyk_wspomnienia),
             ) {
+                // Rok w skrócie: w styczniu i lutym poprzedni rok, potem bieżący
+                val rokPodsumowania = java.time.LocalDate.now().let { if (it.monthValue <= 2) it.year - 1 else it.year }
+                Keuze(
+                    selected = false, onClick = { nav.open(Scherm.Rok(rokPodsumowania, nav.scope)) },
+                    leadingIcon = { androidx.tv.material3.Icon(androidx.compose.material.icons.Icons.Filled.Insights, null, Modifier.size(18.dp)) },
+                    tekst = stringResource(R.string.rok_tytul, rokPodsumowania),
+                )
                 if (wszystko.isNotEmpty()) Keuze(
                     selected = false, onClick = { nav.bekijk(LijstBron(wszystko), 0, tytulPokazu, true, null) },
                     leadingIcon = { androidx.tv.material3.Icon(androidx.compose.material.icons.Icons.Filled.PlayArrow, null, Modifier.size(18.dp)) },

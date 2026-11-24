@@ -94,7 +94,8 @@ object Kanaly {
             Rodzaj.NAJNOWSZE to runCatching { Immich.najnowsze(20) }.getOrElse { Log.w(TAG, "najnowsze", it); null },
             Rodzaj.LOSOWE to runCatching { Immich.willekeurig(20) }.getOrElse { Log.w(TAG, "losowe", it); null },
             Rodzaj.WSPOMNIENIA to runCatching {
-                Immich.herinneringen(java.time.LocalDate.now()).sortedBy { it.jaar }.flatMap { it.assets }.take(30)
+                // dzisiejsze urodziny na początku kanału „Tego dnia”: kafelek z ostatnim zdjęciem osoby z okolic urodzin
+                urodzinyDzis().map { it.first } + Immich.herinneringen(java.time.LocalDate.now()).sortedBy { it.jaar }.flatMap { it.assets }.take(30)
             }.getOrElse { Log.w(TAG, "wspomnienia", it); null },
         )
         // kanał albumu: tylko gdy album jest wybrany; inaczej usuwamy go z ekranu głównego
@@ -119,6 +120,28 @@ object Kanaly {
             }
         }
         Log.i(TAG, "kanały odświeżone")
+    }
+
+    /** tytuły kafelków urodzinowych („🎂 Dziś urodziny: Ola · 8 lat”) wg id zdjęcia */
+    private val tytulyUrodzin = HashMap<String, String>()
+
+    /** Osoby z urodzinami dziś: zdjęcie (z okolic urodzin w poprzednich latach albo najnowsze) + tytuł kafelka. */
+    private suspend fun urodzinyDzis(): List<Pair<Asset, String>> {
+        tytulyUrodzin.clear()
+        val dzis = java.time.LocalDate.now()
+        val osoby = runCatching { Immich.osobyZUrodzinami() }.getOrDefault(emptyList())
+            .filter { p -> p.urodziny?.let { it.monthValue == dzis.monthValue && it.dayOfMonth == dzis.dayOfMonth } == true }
+        return osoby.mapNotNull { p ->
+            val ur = p.urodziny ?: return@mapNotNull null
+            val zdjecie = (1..5).firstNotNullOfOrNull { lat ->
+                val d = dzis.minusYears(lat.toLong())
+                runCatching { Immich.osobaWDniach(p.id, d.minusDays(3), d.plusDays(3), 20) }.getOrDefault(emptyList()).firstOrNull { !it.video }
+            } ?: runCatching { Immich.osobaWOkresie(p.id, null, null, 1).firstOrNull() }.getOrNull() ?: return@mapNotNull null
+            val lata = dzis.year - ur.year
+            val tytul = Taal.ctx.getString(R.string.kanal_urodziny, p.naam) + if (lata > 0) " · " + Taal.ctx.resources.getQuantityString(R.plurals.lat, lata, lata) else ""
+            tytulyUrodzin[zdjecie.id] = tytul
+            zdjecie to tytul
+        }
     }
 
     /** Id kanału w systemie; tworzy go, jeśli go nie ma (albo użytkownik go usunął). */
@@ -173,7 +196,7 @@ object Kanaly {
                 .setData(Uri.parse("immichtv://kanal/${r.klucz}/${a.id}"))
                 .putExtra(EXTRA_KANAL, r.klucz).putExtra(EXTRA_ZASOB, a.id)
                 .toUri(Intent.URI_INTENT_SCHEME)
-            val tytul = listOfNotNull(a.stad, a.land).joinToString(", ").ifEmpty { nazwa }
+            val tytul = tytulyUrodzin[a.id] ?: listOfNotNull(a.stad, a.land).joinToString(", ").ifEmpty { nazwa }
             val program = PreviewProgram.Builder()
                 .setChannelId(kanal)
                 .setType(if (a.video) TvContractCompat.PreviewPrograms.TYPE_CLIP else TvContractCompat.PreviewPrograms.TYPE_EVENT)

@@ -349,7 +349,7 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                                 tekst = stringResource(R.string.porownanie),
                             )
                             // edycja: osoba (imię, data urodzenia, ukrycie, połączenie) albo nazwa albumu
-                            if (staat.filter.persoonId != null || staat.filter.albumId != null) Keuze(
+                            if ((staat.filter.persoonId != null || staat.filter.albumId != null) && !Instellingen.trybDzieciecy) Keuze(
                                 selected = false, onClick = { edycja = true }, modifier = Modifier.focusRequester(edycjaKnop),
                                 leadingIcon = { Icon(Icons.Filled.Edit, null, Modifier.width(18.dp)) },
                                 tekst = stringResource(if (staat.filter.persoonId != null) R.string.edytuj_osobe else R.string.album_zmien_nazwe),

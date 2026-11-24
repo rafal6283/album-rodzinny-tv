@@ -85,11 +85,12 @@ object Immich {
         kiesAccount(c, kijker)
     }
 
-    fun thumb(id: String) = "$api/assets/$id/thumbnail?size=thumbnail"
-    fun preview(id: String) = "$api/assets/$id/thumbnail?size=preview"
+    // zdjęcia z Synology Photos (id „syno:…”) prowadzą do Synology, reszta do Immich
+    fun thumb(id: String) = if (Synology.jestSyno(id)) Synology.miniatura(id, "sm") else "$api/assets/$id/thumbnail?size=thumbnail"
+    fun preview(id: String) = if (Synology.jestSyno(id)) Synology.miniatura(id, "xl") else "$api/assets/$id/thumbnail?size=preview"
     /** pełna rozdzielczość (konwersja JPEG z Immich ≥ 1.133); wystarcza uprawnienie asset.view */
-    fun pelny(id: String) = "$api/assets/$id/thumbnail?size=fullsize"
-    fun video(id: String) = "$api/assets/$id/video/playback"
+    fun pelny(id: String) = if (Synology.jestSyno(id)) Synology.miniatura(id, "xl") else "$api/assets/$id/thumbnail?size=fullsize"
+    fun video(id: String) = if (Synology.jestSyno(id)) Synology.film(id) else "$api/assets/$id/video/playback"
     fun gezicht(id: String) = "$api/people/$id/thumbnail"
 
     private suspend fun haal(req: Request): String = withContext(Dispatchers.IO) {
@@ -459,6 +460,49 @@ object Immich {
         return pagina(JSONObject(post("/search/metadata", body)))
     }
 
+    // ---- Twarze w kadrze (pokaz: przybliżanie w stronę ludzi) ----
+
+    private val srodki = object : LinkedHashMap<String, Pair<Float, Float>?>(64, 0.75f, true) {
+        override fun removeEldestEntry(e: MutableMap.MutableEntry<String, Pair<Float, Float>?>?) = size > 300
+    }
+
+    /** Środek twarzy na zdjęciu (0..1 w poziomie i pionie, średnia z rozpoznanych twarzy); null = brak twarzy. */
+    suspend fun srodekTwarzy(id: String): Pair<Float, Float>? {
+        if (Synology.jestSyno(id)) return null
+        synchronized(srodki) { if (srodki.containsKey(id)) return srodki[id] }
+        val wynik = runCatching {
+            withContext(Dispatchers.Default) {
+                val ludzie = JSONObject(get("/assets/$id")).optJSONArray("people") ?: return@withContext null
+                var sx = 0f; var sy = 0f; var n = 0
+                for (i in 0 until ludzie.length()) {
+                    val twarze = ludzie.getJSONObject(i).optJSONArray("faces") ?: continue
+                    for (j in 0 until twarze.length()) {
+                        val f = twarze.getJSONObject(j)
+                        val w = f.optDouble("imageWidth"); val h = f.optDouble("imageHeight")
+                        if (w.isNaN() || h.isNaN() || w <= 0 || h <= 0) continue
+                        sx += ((f.optDouble("boundingBoxX1") + f.optDouble("boundingBoxX2")) / 2 / w).toFloat()
+                        sy += ((f.optDouble("boundingBoxY1") + f.optDouble("boundingBoxY2")) / 2 / h).toFloat()
+                        n++
+                    }
+                }
+                if (n == 0) null else (sx / n).coerceIn(0f, 1f) to (sy / n).coerceIn(0f, 1f)
+            }
+        }.getOrNull()
+        synchronized(srodki) { srodki[id] = wynik }
+        return wynik
+    }
+
+    // ---- Rok w skrócie ----
+
+    /** Losowa próbka zdjęć i filmów z roku [rok] (z osobami i miejscami), do statystyk i pokazu. */
+    suspend fun probkaRoku(rok: Int, n: Int, ulubione: Boolean = false): List<Asset> = withContext(Dispatchers.Default) {
+        val q = JSONObject().put("size", n).put("visibility", "timeline").put("withExif", true).put("withPeople", true)
+            .put("takenAfter", "$rok-01-01T00:00:00.000Z").put("takenBefore", "$rok-12-31T23:59:59.999Z")
+        if (ulubione) q.put("isFavorite", true)
+        val a = JSONArray(post("/search/random", q))
+        List(a.length()) { asset(a.getJSONObject(it)) }
+    }
+
     // ---- Edycja: osoby i albumy (uprawnienia person.update / person.merge / album.create / album.update / albumAsset.*) ----
 
     /** Jedna osoba z datą urodzenia i informacją, czy jest ukryta. */
@@ -604,6 +648,10 @@ object Immich {
             lat = e?.optDouble("latitude")?.takeIf { !it.isNaN() },
             lon = e?.optDouble("longitude")?.takeIf { !it.isNaN() },
             live = o.optString("livePhotoVideoId").takeIf { it.isNotEmpty() && it != "null" },
+            osoby = o.optJSONArray("people")?.let { p ->
+                List(p.length()) { p.getJSONObject(it).let { x -> Persoon(x.optString("id"), x.optString("name"), x.optBoolean("isFavorite")) } }
+                    .filter { it.id.isNotBlank() }
+            }.orEmpty(),
         )
     }
 }
