@@ -17,6 +17,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
@@ -490,6 +491,72 @@ object Immich {
         }.getOrNull()
         synchronized(srodki) { srodki[id] = wynik }
         return wynik
+    }
+
+    /** Losowe zdjęcia z osobami i miejscami (quiz rodzinny). */
+    suspend fun losoweZOsobami(n: Int): List<Asset> = withContext(Dispatchers.Default) {
+        val q = JSONObject().put("size", n).put("type", "IMAGE").put("visibility", "timeline").put("withExif", true).put("withPeople", true)
+        val a = JSONArray(post("/search/random", q))
+        List(a.length()) { asset(a.getJSONObject(it)) }
+    }
+
+    // ---- Tryb imprezy: wgrywanie zdjęć od gości (uprawnienie asset.upload) ----
+
+    /** Wgraj plik do Immich; zwraca id zasobu (także gdy taki plik już był). */
+    suspend fun wgraj(plik: java.io.File, nazwa: String): String = withContext(Dispatchers.IO) {
+        val teraz = java.time.Instant.now().toString()
+        val body = okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
+            .addFormDataPart("assetData", nazwa, plik.asRequestBody("image/jpeg".toMediaType()))
+            .addFormDataPart("deviceAssetId", "album-rodzinny-" + plik.name + "-" + plik.length())
+            .addFormDataPart("deviceId", "album-rodzinny-tv")
+            .addFormDataPart("fileCreatedAt", teraz).addFormDataPart("fileModifiedAt", teraz)
+            .build()
+        val r = haal(Request.Builder().url("$api/assets").post(body).build())
+        JSONObject(r).getString("id")
+    }
+
+    /** Dodaj do albumu o tej nazwie (utwórz go, jeśli go nie ma); zwraca id albumu. */
+    suspend fun doAlbumuONazwie(nazwa: String, ids: List<String>, znaneId: String?): String {
+        if (znaneId != null) { dodajDoAlbumu(znaneId, ids); return znaneId }
+        val istniejacy = albums().firstOrNull { it.naam == nazwa }
+        return if (istniejacy != null) { dodajDoAlbumu(istniejacy.id, ids); istniejacy.id } else nowyAlbum(nazwa, ids)
+    }
+
+    /** Ramka twarzy osoby [osobaId] na zdjęciu [assetId] (ułamki 0..1: x1, y1, x2, y2); null = brak. */
+    suspend fun twarzOsoby(assetId: String, osobaId: String): FloatArray? = runCatching {
+        withContext(Dispatchers.Default) {
+            val ludzie = JSONObject(get("/assets/$assetId")).optJSONArray("people") ?: return@withContext null
+            for (i in 0 until ludzie.length()) {
+                val p = ludzie.getJSONObject(i)
+                if (p.optString("id") != osobaId) continue
+                val twarze = p.optJSONArray("faces") ?: continue
+                var najw: FloatArray? = null; var pole = 0.0
+                for (j in 0 until twarze.length()) {
+                    val f = twarze.getJSONObject(j)
+                    val w = f.optDouble("imageWidth"); val h = f.optDouble("imageHeight")
+                    if (w.isNaN() || h.isNaN() || w <= 0 || h <= 0) continue
+                    val x1 = f.optDouble("boundingBoxX1") / w; val y1 = f.optDouble("boundingBoxY1") / h
+                    val x2 = f.optDouble("boundingBoxX2") / w; val y2 = f.optDouble("boundingBoxY2") / h
+                    val pp = (x2 - x1) * (y2 - y1)
+                    if (pp > pole) { pole = pp; najw = floatArrayOf(x1.toFloat(), y1.toFloat(), x2.toFloat(), y2.toFloat()) }
+                }
+                return@withContext najw
+            }
+            null
+        }
+    }.getOrNull()
+
+    /** Losowe zdjęcia z jednego miasta (Powroty: rozkład na lata). */
+    suspend fun losoweZMiasta(miasto: String, n: Int): List<Asset> = withContext(Dispatchers.Default) {
+        val q = JSONObject().put("size", n).put("type", "IMAGE").put("visibility", "timeline").put("withExif", true).put("city", miasto)
+        val a = JSONArray(post("/search/random", q))
+        List(a.length()) { asset(a.getJSONObject(it)) }
+    }
+
+    /** Podpowiedzi wyszukiwania z serwera (type = country / city …): nazwy dokładnie tak, jak zapisał je Immich. */
+    suspend fun sugestie(typ: String): List<String> = withContext(Dispatchers.Default) {
+        val a = JSONArray(get("/search/suggestions?type=$typ"))
+        List(a.length()) { a.optString(it) }.filter { it.isNotBlank() && it != "null" }
     }
 
     // ---- Rok w skrócie ----

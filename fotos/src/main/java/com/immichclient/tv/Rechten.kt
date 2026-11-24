@@ -74,6 +74,7 @@ object Rechten {
         Recht("album.update", R.string.recht_album_update),
         Recht("albumAsset.create", R.string.recht_album_asset_create),
         Recht("albumAsset.delete", R.string.recht_album_asset_delete),
+        Recht("asset.upload", R.string.recht_asset_upload),
     )
 
     /** null = nog niet gecontroleerd (of niet te bepalen); anders de ontbrekende rechten */

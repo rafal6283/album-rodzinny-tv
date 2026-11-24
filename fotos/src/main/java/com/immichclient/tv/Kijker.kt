@@ -956,7 +956,7 @@ fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false): List<Akcja> =
  */
 @OptIn(UnstableApi::class)
 @Composable
-private fun MuzykaPokazu(grac: Boolean) {
+internal fun MuzykaPokazu(grac: Boolean) {
     val url = Instellingen.muzykaUrl.trim()
     if (!Instellingen.muzyka || url.isEmpty()) return
     val ctx = LocalContext.current

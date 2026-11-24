@@ -42,6 +42,7 @@ Fork aplikacji [TV Client for Immich](https://github.com/neforce/android-tv-immi
 - **Pisanie z telefonu**: kod QR przy każdym polu tekstowym, tekst z klawiatury telefonu trafia od razu na telewizor (sieć lokalna).
 - **Tryb dziecięcy**: ukryte albumy i osoby, bez edycji, Ustawienia za PIN-em rodzica.
 - **Rok w skrócie**, **pokaz z twarzą w kadrze**, **ramka offline** i **kafelek urodzin** na ekranie głównym Android TV.
+- **Zabawa**: quiz rodzinny, tryb imprezy (zdjęcia od gości przez QR), film z podróży na mapie, „Jak rosła…” (twarz przez lata), powroty do miejsc i szukanie po kolorze; w Szukaj polecenia głosowe („pokaż Olę w Turcji w 2025”).
 - **Kolejność menu**: Ustawienia → Wygląd → Kolejność menu; OK chwyta sekcję, ▲▼ ją przesuwają (Ustawienia zostają na dole).
 - **Mapa w stylu Immichin**: nagłówek „Miejsca, w których byliście” z podsumowaniem (elementy · miejsca · kraje) i karta
   wybranej grupy po prawej: zdjęcie, rodzaj (kontynent / region / kraj / miejsce), kraj i liczba miejsc, liczba
