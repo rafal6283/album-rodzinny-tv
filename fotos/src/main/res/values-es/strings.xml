@@ -929,4 +929,5 @@
     <string name="synology_konto_wylaczone">"Cuenta desactivada o sin acceso a Synology Photos (la cuenta de invitado integrada suele estar desactivada)"</string>
     <string name="synology_zablokowany">"La dirección de la TV está bloqueada en DSM tras inicios de sesión fallidos (Panel de control → Seguridad → Cuenta)"</string>
     <string name="update_przewin">"▲▼ desplazar el texto"</string>
+    <string name="rosla_diagnoza">"Fotos de la persona: %1$d · con cara detectada: %2$d"</string>
 </resources>
