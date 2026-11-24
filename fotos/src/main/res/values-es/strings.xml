@@ -855,4 +855,8 @@
     <string name="ken_burns_twarze">"Acercar a las caras"</string>
     <string name="ken_burns_twarze_uitleg">"El zoom lento de la presentación apunta a las caras reconocidas"</string>
     <string name="kanal_urodziny">"🎂 Cumpleaños hoy: %1$s"</string>
+    <string name="synology_moje">"Mis álbumes"</string>
+    <string name="synology_udostepnione">"Compartidos conmigo"</string>
+    <string name="synology_wspolna">"Espacio compartido"</string>
+    <string name="synology_zdjecia_folderu">"Fotos de esta carpeta"</string>
 </resources>

@@ -106,40 +106,87 @@ object Synology {
         wywolaj(blok())
     }
 
-    class AlbumSyno(val id: Int, val nazwa: String, val ile: Int, val okladka: String?, val od: java.time.LocalDate?)
+    /** Album Synology; [haslo] = passphrase albumu udostępnionego mi (wtedy elementy i miniatury idą przez nie). */
+    class AlbumSyno(val id: Int, val nazwa: String, val ile: Int, val okladka: String?, val od: java.time.LocalDate?, val haslo: String? = null, val wlasciciel: String? = null)
 
     /** Albumy z Synology Photos (przestrzeń osobista), od najnowszych. */
-    suspend fun albumy(): List<AlbumSyno> = withContext(Dispatchers.Default) {
+    suspend fun albumy(): List<AlbumSyno> = listaAlbumow("SYNO.Foto.Browse.Album", "list", 2, udostepnione = false)
+
+    /** Albumy udostępnione mi przez innych użytkowników (zakładka „Udostępnione mi” w Synology Photos). */
+    suspend fun albumyUdostepnione(): List<AlbumSyno> = listaAlbumow("SYNO.Foto.Sharing.Misc", "list_shared_with_me_album", 2, udostepnione = true)
+
+    private suspend fun listaAlbumow(api: String, metoda: String, wersja: Int, udostepnione: Boolean): List<AlbumSyno> = withContext(Dispatchers.Default) {
         val wynik = ArrayList<AlbumSyno>()
         var offset = 0
         while (true) {
-            val d = zSesja { url("SYNO.Foto.Browse.Album", "list", 2, "offset" to "$offset", "limit" to "200", "additional" to "[\"thumbnail\"]") }
+            val d = zSesja { url(api, metoda, wersja, "offset" to "$offset", "limit" to "200", "additional" to "[\"thumbnail\",\"sharing_info\"]") }
             val l = d.optJSONArray("list") ?: break
             for (i in 0 until l.length()) l.getJSONObject(i).let { o ->
+                val haslo = if (udostepnione) o.optString("passphrase").ifBlank { null } else null
                 val t = o.optJSONObject("additional")?.optJSONObject("thumbnail")
-                val okladka = t?.let { id("photo", it.optInt("unit_id"), it.optString("cache_key")) }
+                val okladka = t?.let { id("photo", it.optInt("unit_id"), it.optString("cache_key"), haslo?.let { h -> "P$h" }.orEmpty()) }
                 val od = o.optLong("start_time").takeIf { it > 0 }?.let { LocalDateTime.ofEpochSecond(it, 0, ZoneOffset.UTC).toLocalDate() }
-                wynik.add(AlbumSyno(o.optInt("id"), o.optString("name"), o.optInt("item_count"), okladka, od))
+                val wl = o.optJSONObject("additional")?.optJSONObject("sharing_info")?.optJSONObject("owner")?.optString("name")?.ifBlank { null }
+                wynik.add(AlbumSyno(o.optInt("id"), o.optString("name"), o.optInt("item_count"), okladka, od, haslo, wl))
             }
             if (l.length() < 200) break
             offset += 200
         }
+        Log.i(TAG, "albumy ($metoda): ${wynik.size}")
         wynik.sortedByDescending { it.od }
     }
 
-    /** Zdjęcia i filmy albumu, strona po 100 (strona od 1), od najstarszych jak w Synology Photos. */
-    suspend fun elementy(albumId: Int, strona: Int): Pagina = withContext(Dispatchers.Default) {
+    /** Folder przestrzeni współdzielonej. */
+    class FolderSyno(val id: Int, val nazwa: String)
+
+    /** Główny folder przestrzeni współdzielonej (Team Space). */
+    suspend fun folderGlowny(): FolderSyno = withContext(Dispatchers.Default) {
+        val f = zSesja { url("SYNO.FotoTeam.Browse.Folder", "get", 1) }.optJSONObject("folder") ?: throw IOException("Synology: brak przestrzeni współdzielonej")
+        FolderSyno(f.optInt("id"), f.optString("name").substringAfterLast('/').ifBlank { "/" })
+    }
+
+    /** Podfoldery folderu przestrzeni współdzielonej, po nazwie. */
+    suspend fun podfoldery(id: Int): List<FolderSyno> = withContext(Dispatchers.Default) {
+        val wynik = ArrayList<FolderSyno>()
+        var offset = 0
+        while (true) {
+            val l = zSesja { url("SYNO.FotoTeam.Browse.Folder", "list", 1, "id" to "$id", "offset" to "$offset", "limit" to "500", "sort_by" to "filename", "sort_direction" to "asc") }
+                .optJSONArray("list") ?: break
+            for (i in 0 until l.length()) l.getJSONObject(i).let { o -> wynik.add(FolderSyno(o.optInt("id"), o.optString("name").substringAfterLast('/'))) }
+            if (l.length() < 500) break
+            offset += 500
+        }
+        wynik
+    }
+
+    /** Zdjęcia i filmy bezpośrednio w folderze przestrzeni współdzielonej, strona po 100. */
+    suspend fun elementyFolderu(folderId: Int, strona: Int): Pagina = withContext(Dispatchers.Default) {
         val d = zSesja {
-            url("SYNO.Foto.Browse.Item", "list", 1, "album_id" to "$albumId", "offset" to "${(strona - 1) * 100}", "limit" to "100",
-                "sort_by" to "takentime", "sort_direction" to "asc",
-                "additional" to "[\"thumbnail\",\"resolution\",\"orientation\",\"gps\",\"address\"]")
+            url("SYNO.FotoTeam.Browse.Item", "list", 1, "folder_id" to "$folderId", "offset" to "${(strona - 1) * 100}", "limit" to "100",
+                "sort_by" to "takentime", "sort_direction" to "asc", "additional" to DODATKI)
         }
         val l = d.optJSONArray("list")
-        val lista = if (l == null) emptyList() else List(l.length()) { i -> element(l.getJSONObject(i)) }.filterNotNull()
+        val lista = if (l == null) emptyList() else List(l.length()) { i -> element(l.getJSONObject(i), "T") }.filterNotNull()
         Pagina(lista, if ((l?.length() ?: 0) >= 100) strona + 1 else null)
     }
 
-    private fun element(o: JSONObject): Asset? {
+    private const val DODATKI = "[\"thumbnail\",\"resolution\",\"orientation\",\"gps\",\"address\"]"
+
+    /** Zdjęcia i filmy albumu, strona po 100 (strona od 1), od najstarszych jak w Synology Photos. */
+    suspend fun elementy(album: AlbumSyno, strona: Int): Pagina = withContext(Dispatchers.Default) {
+        val d = zSesja {
+            val p = mutableListOf("offset" to "${(strona - 1) * 100}", "limit" to "100", "sort_by" to "takentime", "sort_direction" to "asc", "additional" to DODATKI)
+            // album udostępniony mi: elementy przez passphrase, nie przez id
+            if (album.haslo != null) p += "passphrase" to album.haslo else p += "album_id" to "${album.id}"
+            url("SYNO.Foto.Browse.Item", "list", 1, *p.toTypedArray())
+        }
+        val l = d.optJSONArray("list")
+        val dodatek = album.haslo?.let { "P$it" }.orEmpty()
+        val lista = if (l == null) emptyList() else List(l.length()) { i -> element(l.getJSONObject(i), dodatek) }.filterNotNull()
+        Pagina(lista, if ((l?.length() ?: 0) >= 100) strona + 1 else null)
+    }
+
+    private fun element(o: JSONObject, dodatek: String): Asset? {
         val dod = o.optJSONObject("additional") ?: return null
         val t = dod.optJSONObject("thumbnail") ?: return null
         val typ = o.optString("type")
@@ -150,7 +197,7 @@ object Synology {
         val adr = dod.optJSONObject("address")
         val gps = dod.optJSONObject("gps")
         return Asset(
-            id = id(if (wideo) "video" else "photo", t.optInt("unit_id", o.optInt("id")), t.optString("cache_key")),
+            id = id(if (wideo) "video" else "photo", t.optInt("unit_id", o.optInt("id")), t.optString("cache_key"), dodatek),
             ratio = if (w > 0 && h > 0) w.toFloat() / h else 1.5f,
             video = wideo, thumbhash = null,
             datum = LocalDateTime.ofEpochSecond(o.optLong("time"), 0, ZoneOffset.UTC),
@@ -163,20 +210,27 @@ object Synology {
         )
     }
 
-    private fun id(typ: String, unit: Int, cacheKey: String) = "syno:$typ:$unit:$cacheKey"
+    /** „syno:<typ>:<unit_id>:<cache_key>:<dodatek>”; dodatek: "" = przestrzeń osobista, "T" = współdzielona, "P<passphrase>" = album udostępniony mi */
+    private fun id(typ: String, unit: Int, cacheKey: String, dodatek: String = "") = "syno:$typ:$unit:$cacheKey:$dodatek"
 
     fun jestSyno(id: String) = id.startsWith("syno:")
 
     /** Adres miniatury: rozmiar sm (siatka), m, xl (przeglądarka, pełny ekran). */
     fun miniatura(id: String, rozmiar: String): String {
         val c = id.split(':')
-        val unit = c.getOrNull(2).orEmpty(); val klucz = c.getOrNull(3).orEmpty()
-        return url("SYNO.Foto.Thumbnail", "get", 2, "mode" to "download", "id" to unit, "type" to "unit", "size" to rozmiar, "cache_key" to klucz).toString()
+        val unit = c.getOrNull(2).orEmpty(); val klucz = c.getOrNull(3).orEmpty(); val dod = c.getOrNull(4).orEmpty()
+        val p = mutableListOf("mode" to "download", "id" to unit, "type" to "unit", "size" to rozmiar, "cache_key" to klucz)
+        if (dod.startsWith("P")) p += "passphrase" to dod.drop(1)
+        val api = if (dod == "T") "SYNO.FotoTeam.Thumbnail" else "SYNO.Foto.Thumbnail"
+        return url(api, "get", if (dod == "T") 1 else 2, *p.toTypedArray()).toString()
     }
 
     /** Adres filmu (pobranie oryginału, odtwarzacz czyta go strumieniowo). */
     fun film(id: String): String {
-        val unit = id.split(':').getOrNull(2).orEmpty()
-        return url("SYNO.Foto.Download", "download", 2, "unit_id" to "[$unit]", "force_download" to "false").toString()
+        val c = id.split(':')
+        val unit = c.getOrNull(2).orEmpty(); val dod = c.getOrNull(4).orEmpty()
+        val p = mutableListOf("unit_id" to "[$unit]", "force_download" to "false")
+        if (dod.startsWith("P")) p += "passphrase" to dod.drop(1)
+        return url(if (dod == "T") "SYNO.FotoTeam.Download" else "SYNO.Foto.Download", "download", 2, *p.toTypedArray()).toString()
     }
 }

@@ -896,4 +896,8 @@
     <string name="ken_burns_twarze">"Przybliżanie w stronę twarzy"</string>
     <string name="ken_burns_twarze_uitleg">"Powolne przybliżanie w pokazie celuje w rozpoznane twarze"</string>
     <string name="kanal_urodziny">"🎂 Dziś urodziny: %1$s"</string>
+    <string name="synology_moje">"Moje albumy"</string>
+    <string name="synology_udostepnione">"Udostępnione mi"</string>
+    <string name="synology_wspolna">"Przestrzeń współdzielona"</string>
+    <string name="synology_zdjecia_folderu">"Zdjęcia w tym folderze"</string>
 </resources>

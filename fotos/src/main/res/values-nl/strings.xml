@@ -848,4 +848,8 @@
     <string name="ken_burns_twarze">"Inzoomen op gezichten"</string>
     <string name="ken_burns_twarze_uitleg">"Het langzame inzoomen in de diashow richt zich op herkende gezichten"</string>
     <string name="kanal_urodziny">"🎂 Vandaag jarig: %1$s"</string>
+    <string name="synology_moje">"Mijn albums"</string>
+    <string name="synology_udostepnione">"Met mij gedeeld"</string>
+    <string name="synology_wspolna">"Gedeelde ruimte"</string>
+    <string name="synology_zdjecia_folderu">"Foto's in deze map"</string>
 </resources>

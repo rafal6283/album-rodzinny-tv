@@ -855,4 +855,8 @@
     <string name="ken_burns_twarze">"Zoom vers les visages"</string>
     <string name="ken_burns_twarze_uitleg">"Le lent zoom du diaporama vise les visages reconnus"</string>
     <string name="kanal_urodziny">"🎂 Anniversaire aujourd’hui : %1$s"</string>
+    <string name="synology_moje">"Mes albums"</string>
+    <string name="synology_udostepnione">"Partagés avec moi"</string>
+    <string name="synology_wspolna">"Espace partagé"</string>
+    <string name="synology_zdjecia_folderu">"Photos de ce dossier"</string>
 </resources>

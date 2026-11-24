@@ -848,4 +848,8 @@
     <string name="ken_burns_twarze">"Auf Gesichter zoomen"</string>
     <string name="ken_burns_twarze_uitleg">"Der langsame Zoom der Diashow zielt auf erkannte Gesichter"</string>
     <string name="kanal_urodziny">"🎂 Heute Geburtstag: %1$s"</string>
+    <string name="synology_moje">"Meine Alben"</string>
+    <string name="synology_udostepnione">"Mit mir geteilt"</string>
+    <string name="synology_wspolna">"Geteilter Bereich"</string>
+    <string name="synology_zdjecia_folderu">"Fotos in diesem Ordner"</string>
 </resources>

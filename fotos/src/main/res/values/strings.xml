@@ -870,4 +870,8 @@
     <string name="ken_burns_twarze">"Zoom towards faces"</string>
     <string name="ken_burns_twarze_uitleg">"The slow slideshow zoom aims at recognised faces"</string>
     <string name="kanal_urodziny">"🎂 Birthday today: %1$s"</string>
+    <string name="synology_moje">"My albums"</string>
+    <string name="synology_udostepnione">"Shared with me"</string>
+    <string name="synology_wspolna">"Shared Space"</string>
+    <string name="synology_zdjecia_folderu">"Photos in this folder"</string>
 </resources>
