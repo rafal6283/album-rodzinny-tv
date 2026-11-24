@@ -921,4 +921,5 @@
     <string name="synology_port">"Das NAS lehnt HTTP auf dem HTTPS-Port ab. http://…:5000 oder https://…:5001 verwenden"</string>
     <string name="synology_konto_wylaczone">"Konto deaktiviert oder ohne Zugriff auf Synology Photos (das integrierte Gastkonto ist meist deaktiviert)"</string>
     <string name="synology_zablokowany">"Die Adresse des Fernsehers ist in DSM nach Fehlanmeldungen gesperrt (Systemsteuerung → Sicherheit → Konto)"</string>
+    <string name="update_przewin">"▲▼ Text blättern"</string>
 </resources>

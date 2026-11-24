@@ -928,4 +928,5 @@
     <string name="synology_port">"El NAS rechazó HTTP en su puerto HTTPS. Usa http://…:5000 o https://…:5001"</string>
     <string name="synology_konto_wylaczone">"Cuenta desactivada o sin acceso a Synology Photos (la cuenta de invitado integrada suele estar desactivada)"</string>
     <string name="synology_zablokowany">"La dirección de la TV está bloqueada en DSM tras inicios de sesión fallidos (Panel de control → Seguridad → Cuenta)"</string>
+    <string name="update_przewin">"▲▼ desplazar el texto"</string>
 </resources>
