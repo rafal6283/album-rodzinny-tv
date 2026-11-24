@@ -266,7 +266,22 @@ object Synology {
         val p = mutableListOf("mode" to "download", "id" to unit, "type" to "unit", "size" to rozmiar, "cache_key" to klucz)
         if (dod.startsWith("P")) p += "passphrase" to dod.drop(1)
         val api = if (dod == "T") "SYNO.FotoTeam.Thumbnail" else "SYNO.Foto.Thumbnail"
-        return url(api, "get", if (dod == "T") 1 else 2, *p.toTypedArray()).toString()
+        // wersja 1: jedyna, którą SYNO.Foto.Thumbnail obsługuje na każdym DSM 7 (z wersją 2 NAS zwracał błąd zamiast obrazka)
+        return url(api, "get", 1, *p.toTypedArray()).toString()
+    }
+
+    /**
+     * Sprawdzenie miniatury (gdy siatka zostaje pusta): pobiera jedną i zwraca null = obrazek dotarł, albo opis
+     * odpowiedzi NAS (kod HTTP, typ, początek treści) — trafia też do Diagnostyki.
+     */
+    suspend fun sprawdzMiniature(id: String): String? = withContext(Dispatchers.IO) {
+        runCatching {
+            polaczenia.newCall(Request.Builder().url(miniatura(id, "sm")).build()).execute().use { r ->
+                val typ = r.header("Content-Type").orEmpty()
+                if (r.isSuccessful && typ.startsWith("image")) null
+                else "HTTP ${r.code} $typ ${r.body?.string().orEmpty().take(160)}"
+            }
+        }.getOrElse { it.message ?: it.toString() }?.also { Diagnose.noteer("synology miniatura", IOException(it)) }
     }
 
     /** Adres filmu (pobranie oryginału, odtwarzacz czyta go strumieniowo). */

@@ -930,4 +930,5 @@
     <string name="synology_zablokowany">"La dirección de la TV está bloqueada en DSM tras inicios de sesión fallidos (Panel de control → Seguridad → Cuenta)"</string>
     <string name="update_przewin">"▲▼ desplazar el texto"</string>
     <string name="rosla_diagnoza">"Fotos de la persona: %1$d · con cara detectada: %2$d"</string>
+    <string name="synology_miniatury_blad">"Las miniaturas no cargan — respuesta del NAS: %1$s"</string>
 </resources>

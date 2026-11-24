@@ -923,4 +923,5 @@
     <string name="synology_zablokowany">"Die Adresse des Fernsehers ist in DSM nach Fehlanmeldungen gesperrt (Systemsteuerung → Sicherheit → Konto)"</string>
     <string name="update_przewin">"▲▼ Text blättern"</string>
     <string name="rosla_diagnoza">"Fotos der Person: %1$d · mit erkanntem Gesicht: %2$d"</string>
+    <string name="synology_miniatury_blad">"Miniaturen laden nicht — Antwort des NAS: %1$s"</string>
 </resources>
