@@ -508,9 +508,13 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             if (wisselSleutel == laatsteSleutel.value) return@LaunchedEffect
             wisselt.value = true
             val popupDicht = laatsteSleutel.value.third && !popup && laatsteSleutel.value.first == scherm
+            val kijkerByl = laatsteSleutel.value.second && kijker == null && laatsteSleutel.value.first == scherm
             laatsteSleutel.value = wisselSleutel
             // de laag zelf kan de focus al teruggezet hebben (bijv. op de regel die hem opende); alleen als niets in de inhoud focus heeft
             if (popupDicht) { kotlinx.coroutines.delay(48); if (!inhoudHeeftFocus.value) runCatching { inhoudFocus.requestFocus() } }
+            // przeglądarka zamknięta (Wstecz z filmu albo zdjęcia): fokus wraca na siatkę (zdjęcie, na którym skończyłeś),
+            // a gdyby jeszcze go tam nie było — na treść ekranu, nigdy do bocznego menu
+            if (kijkerByl) { kotlinx.coroutines.delay(400); if (!inhoudHeeftFocus.value) runCatching { inhoudFocus.requestFocus() } }
             kotlinx.coroutines.delay(800)
             wisselt.value = false
         }
