@@ -405,7 +405,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
     val zSzukania = WejscieSzukaj.zapytanie
     androidx.compose.runtime.LaunchedEffect(zSzukania) {
         val q = zSzukania ?: return@LaunchedEffect
-        kijker = null; stapel.clear(); sectie = Sectie.ZOEKEN
+        kijker = null; stapel.clear(); ZabawaPamiec.wybor = null; sectie = Sectie.ZOEKEN
         (wortel(Sectie.ZOEKEN) as Scherm.Zoeken).staat.let { z -> z.tekst = q; z.zoek(appCtx) }
         WejscieSzukaj.zapytanie = null
     }
@@ -418,7 +418,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         if (wynik != null && wynik.second.isNotEmpty()) {
             val (tytul, lista) = wynik
             val i = lista.indexOfFirst { it.id == id }.coerceAtLeast(0)
-            kijker = null; stapel.clear()
+            kijker = null; stapel.clear(); ZabawaPamiec.wybor = null
             nav.bekijk(LijstBron(lista), i, tytul, id == null, null)
         }
         WejscieKanal.zadanie = null
@@ -554,7 +554,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                                 // przechwycić fokusu — inaczej menu na chwilę się rozwija i lista „skacze”
                                 .focusProperties { canFocus = !ladeDicht },
                             onClick = {
-                                stapel.clear(); sectie = s
+                                stapel.clear(); ZabawaPamiec.wybor = null; sectie = s
                                 lade.setValue(DrawerValue.Closed)
                             },
                             leadingContent = { Icon(s.icoon, null) },
@@ -634,7 +634,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                     // wywołane wciśnięciem OK: puszczenie tego samego OK nie może trafić w boczne menu (fokus na chwilę
                     // ląduje na pierwszej pozycji, Szukaj, zanim mapa go przejmie) ani w mapę (OK = przybliż)
                     Toetsen.okGeslikt = true
-                    kijker = null; stapel.clear(); sectie = Sectie.KAART
+                    kijker = null; stapel.clear(); ZabawaPamiec.wybor = null; sectie = Sectie.KAART
                     (wortel(Sectie.KAART) as Scherm.Kaart).staat.toon(a)
                 },
             ) { laatste ->
@@ -645,8 +645,10 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                     val zamykany = kijker
                     scope.launch { kotlinx.coroutines.delay(120); if (kijker === zamykany) { kijker = null; naTerug?.invoke() } }
                 } else {
-                    kijker = null
-                    naTerug?.invoke()
+                    // ekrany z kafelkami (Wspomnienia, Rocznice…): najpierw fokus na kafelek, z którego otwarto przeglądarkę
+                    PamiecFokusu.przywroc()
+                    val zamykany = kijker
+                    scope.launch { kotlinx.coroutines.delay(120); if (kijker === zamykany) { kijker = null; naTerug?.invoke() } }
                 }
             }
         }

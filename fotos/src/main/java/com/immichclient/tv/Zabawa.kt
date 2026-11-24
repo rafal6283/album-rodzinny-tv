@@ -56,7 +56,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ZabawaScherm(nav: Nav) {
     val pierwszy = remember { FocusRequester() }
-    var wybor by remember { mutableStateOf<String?>(null) }
+    var wybor by remember { mutableStateOf(ZabawaPamiec.wybor.also { ZabawaPamiec.wybor = null }) }
     class Pozycja(val klucz: String, val ikona: ImageVector, val tytul: Int, val opis: Int, val kolor: Color)
     val pozycje = listOf(
         Pozycja("quiz", Icons.Filled.Quiz, R.string.quiz_tytul, R.string.quiz_opis, Color(0xFF5B2A4A)),
@@ -98,13 +98,14 @@ fun ZabawaScherm(nav: Nav) {
             }
         }
     }
-    PamiecEkranu("zabawa")
+    // powrót do listy wyboru: kafelki Zabawy nie zabierają jej fokusu
+    if (wybor == null) PamiecEkranu("zabawa")
     when (wybor) {
         "podroz" -> KiesLijst(stringResource(R.string.podroz_wybierz), albumKeuzes(), "", sluit = { wybor = null }) { id, naam ->
-            wybor = null; nav.open(Scherm.Podroz(id, naam, nav.scope))
+            ZabawaPamiec.wybor = wybor; wybor = null; nav.open(Scherm.Podroz(id, naam, nav.scope))
         }
         "rosla" -> KiesLijst(stringResource(R.string.rosla_wybierz), persoonKeuzes(), "", sluit = { wybor = null }) { id, naam ->
-            wybor = null; nav.open(Scherm.Rosniecie(id, naam, nav.scope))
+            ZabawaPamiec.wybor = wybor; wybor = null; nav.open(Scherm.Rosniecie(id, naam, nav.scope))
         }
     }
 }
@@ -222,3 +223,6 @@ fun QuizScherm(staat: QuizStaat, nav: Nav) {
 }
 
 private fun stringResource0Quiz() = Taal.s(R.string.quiz_tytul)
+
+/** Wybór osoby / albumu otwarty przed wejściem do „Jak rosła” / „Podróży”: po Wstecz wracamy do tej listy, nie do Zabawy. */
+object ZabawaPamiec { var wybor: String? = null }
