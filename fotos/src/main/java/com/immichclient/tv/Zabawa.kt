@@ -84,7 +84,7 @@ fun ZabawaScherm(nav: Nav) {
                         else -> wybor = p.klucz // podróż: wybór albumu; jak rosła: wybór osoby
                     }
                 },
-                modifier = (if (p.klucz == "quiz") Modifier.focusRequester(pierwszy) else Modifier).fillMaxWidth().height(150.dp),
+                modifier = Modifier.pamiecFokusu("zabawa", p.klucz, pierwszy = p.klucz == "quiz").fillMaxWidth().height(150.dp),
                 shape = CardDefaults.shape(RoundedCornerShape(20.dp)),
                 scale = CardDefaults.scale(focusedScale = 1.05f),
             ) {
@@ -98,7 +98,7 @@ fun ZabawaScherm(nav: Nav) {
             }
         }
     }
-    LaunchedEffect(Unit) { delay(60); runCatching { pierwszy.requestFocus() } }
+    PamiecEkranu("zabawa")
     when (wybor) {
         "podroz" -> KiesLijst(stringResource(R.string.podroz_wybierz), albumKeuzes(), "", sluit = { wybor = null }) { id, naam ->
             wybor = null; nav.open(Scherm.Podroz(id, naam, nav.scope))

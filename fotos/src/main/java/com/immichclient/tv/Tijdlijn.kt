@@ -697,12 +697,12 @@ fun licznikMix(assets: List<Asset>): String {
  * OK = pokaz slajdów ze zdjęciami ORAZ filmami tego wspomnienia (filmy grają w pokazie, zob. Instellingen.diaVideos).
  */
 @Composable
-fun HerinneringKaart(h: Herinnering, nav: Nav, breedte: Float = 200f, hoogte: Float = 112f) {
+fun HerinneringKaart(h: Herinnering, nav: Nav, breedte: Float = 200f, hoogte: Float = 112f, modifier: Modifier = Modifier) {
     // okładka: najlepiej zdjęcie (miniatura filmu bywa czarna), środkowe z listy
     val omslag = h.assets.filter { !it.video }.let { f -> f.getOrNull(f.size / 2) } ?: h.assets[h.assets.size / 2]
     Card(
         onClick = { nav.bekijk(LijstBron(h.assets), 0, h.tytul ?: jarenGeleden(h.jarenGeleden), true, null) },
-        modifier = Modifier.width(breedte.dp).height(hoogte.dp),
+        modifier = modifier.width(breedte.dp).height(hoogte.dp),
         shape = CardDefaults.shape(RoundedCornerShape(18.dp)),
         scale = CardDefaults.scale(focusedScale = 1.06f),
         border = CardDefaults.border(focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, Color.White), shape = RoundedCornerShape(18.dp))),

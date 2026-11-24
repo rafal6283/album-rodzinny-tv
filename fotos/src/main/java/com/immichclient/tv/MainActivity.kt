@@ -515,6 +515,10 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             // przeglądarka zamknięta (Wstecz z filmu albo zdjęcia): fokus wraca na siatkę (zdjęcie, na którym skończyłeś),
             // a gdyby jeszcze go tam nie było — na treść ekranu, nigdy do bocznego menu
             if (kijkerByl) { kotlinx.coroutines.delay(150); if (!inhoudHeeftFocus.value) runCatching { inhoudFocus.requestFocus() } }
+            // nowy ekran (sekcja, podstrona, powrót z podstrony): gdyby sam nie przejął fokusu, trafia on na treść, nie do menu
+            if (!popupDicht && !kijkerByl && !wisselSleutel.second && !popup) {
+                kotlinx.coroutines.delay(600); if (!inhoudHeeftFocus.value && !ladeFocusNu.value) runCatching { inhoudFocus.requestFocus() }
+            }
             kotlinx.coroutines.delay(800)
             wisselt.value = false
         }
