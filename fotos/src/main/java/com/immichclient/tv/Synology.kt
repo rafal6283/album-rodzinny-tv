@@ -50,6 +50,7 @@ object Synology {
         adres = p.getString("adres", "").orEmpty(); konto = p.getString("konto", "").orEmpty()
         haslo = p.getString("haslo", "").orEmpty(); sid = p.getString("sid", "").orEmpty()
         wariant = p.getInt("wariant_miniatur", 0)
+        okladkiTeam = p.getBoolean("okladki_team", false)
         stan++
     }
 
@@ -169,7 +170,7 @@ object Synology {
             for (i in 0 until l.length()) l.getJSONObject(i).let { o ->
                 val haslo = if (udostepnione) o.optString("passphrase").ifBlank { null } else null
                 val t = o.optJSONObject("additional")?.optJSONObject("thumbnail")
-                val okladka = t?.let { id("photo", it.optInt("unit_id"), it.optString("cache_key"), haslo?.let { h -> "P$h" }.orEmpty()) }
+                val okladka = t?.let { id("photo", it.optInt("unit_id"), it.optString("cache_key"), haslo?.let { h -> "P$h" } ?: "A") }
                 val od = o.optLong("start_time").takeIf { it > 0 }?.let { LocalDateTime.ofEpochSecond(it, 0, ZoneOffset.UTC).toLocalDate() }
                 val wl = o.optJSONObject("additional")?.optJSONObject("sharing_info")?.optJSONObject("owner")?.optString("name")?.ifBlank { null }
                 wynik.add(AlbumSyno(o.optInt("id"), o.optString("name"), o.optInt("item_count"), okladka, od, haslo, wl))
@@ -215,6 +216,9 @@ object Synology {
         Pagina(lista, if ((l?.length() ?: 0) >= 100) strona + 1 else null)
     }
 
+    /** diagnostyka: pierwszy element ostatnio otwartego albumu (właściciel, dane miniatury) */
+    @Volatile var surowyElement: String? = null
+
     private const val DODATKI = "[\"thumbnail\",\"resolution\",\"orientation\",\"gps\",\"address\"]"
 
     /** Zdjęcia i filmy albumu, strona po 100 (strona od 1), od najstarszych jak w Synology Photos. */
@@ -226,13 +230,16 @@ object Synology {
             url("SYNO.Foto.Browse.Item", "list", 1, *p.toTypedArray())
         }
         val l = d.optJSONArray("list")
+        if (strona == 1) surowyElement = l?.optJSONObject(0)?.let { o -> "owner_user_id=${o.opt("owner_user_id")} thumbnail=${o.optJSONObject("additional")?.optJSONObject("thumbnail")}" }
         val dodatek = album.haslo?.let { "P$it" }.orEmpty()
         val lista = if (l == null) emptyList() else List(l.length()) { i -> element(l.getJSONObject(i), dodatek) }.filterNotNull()
         Pagina(lista, if ((l?.length() ?: 0) >= 100) strona + 1 else null)
     }
 
-    private fun element(o: JSONObject, dodatek: String): Asset? {
+    private fun element(o: JSONObject, dodatekAlbumu: String): Asset? {
         val dod = o.optJSONObject("additional") ?: return null
+        // zdjęcie z przestrzeni współdzielonej (właściciel 0) w albumie osobistym: miniatury i pobieranie przez SYNO.FotoTeam.*
+        val dodatek = if (dodatekAlbumu.isEmpty() && o.optInt("owner_user_id", -1) == 0) "T" else dodatekAlbumu
         val t = dod.optJSONObject("thumbnail") ?: return null
         val typ = o.optString("type")
         val wideo = typ == "video"
@@ -268,14 +275,17 @@ object Synology {
     private const val WARIANTY = 5
 
     /** Adres miniatury: rozmiar sm (siatka), m, xl (przeglądarka, pełny ekran). */
-    fun miniatura(id: String, rozmiar: String): String = miniaturaW(wariant, id, rozmiar)
+    /** okładki albumów (przestrzeń nieznana, „A”): z przestrzeni współdzielonej — ustalane w [dobierzWariant] */
+    @Volatile private var okladkiTeam = false
 
-    private fun miniaturaW(w: Int, id: String, rozmiar: String): String {
+    fun miniatura(id: String, rozmiar: String): String = miniaturaW(wariant, id, rozmiar, okladkiTeam)
+
+    private fun miniaturaW(w: Int, id: String, rozmiar: String, teamOkladki: Boolean): String {
         val c = id.split(':')
         val klucz = c.getOrNull(3).orEmpty(); val dod = c.getOrNull(4).orEmpty()
         // id miniatury = początek cache_key („12345_1690000000” → 12345), jak w aplikacji Synology; unit_id z okładki albumu bywa pusty (0)
         val unit = klucz.substringBefore('_').takeIf { it.isNotEmpty() && it.all(Char::isDigit) } ?: c.getOrNull(2).orEmpty()
-        val team = dod == "T"
+        val team = dod == "T" || (dod == "A" && teamOkladki)
         val haslo = dod.takeIf { it.startsWith("P") }?.drop(1)
         fun q(x: String) = "\"$x\""
         val api = if (team) "SYNO.FotoTeam.Thumbnail" else "SYNO.Foto.Thumbnail"
@@ -311,24 +321,26 @@ object Synology {
      */
     suspend fun dobierzWariant(c: Context, probaId: String): String? = withContext(Dispatchers.IO) {
         val wyniki = ArrayList<String>()
-        for (w in listOf(wariant) + (0 until WARIANTY).filter { it != wariant }) {
+        val proby = (listOf(wariant) + (0 until WARIANTY).filter { it != wariant })
+            .flatMap { w -> if (probaId.endsWith(":A")) listOf(w to okladkiTeam, w to !okladkiTeam) else listOf(w to false) }
+        for ((w, team) in proby) {
             val opis = runCatching {
-                polaczenia.newCall(Request.Builder().url(miniaturaW(w, probaId, "sm")).build()).execute().use { r ->
+                polaczenia.newCall(Request.Builder().url(miniaturaW(w, probaId, "sm", team)).build()).execute().use { r ->
                     val typ = r.header("Content-Type").orEmpty()
                     if (r.isSuccessful && typ.startsWith("image")) null
-                    else "${r.code} ${typ.substringBefore(';')} ${r.body?.string().orEmpty().replace(Regex("\\s+"), " ").take(60)}"
+                    else "${r.code} ${typ.substringBefore(';')} " + r.body?.string().orEmpty().replace(Regex("\\s+"), " ").let { b -> if (b.startsWith("<")) "" else b.take(60) }
                 }
             }.getOrElse { it.message ?: it.toString() }
             if (opis == null) {
-                if (w != wariant) {
-                    wariant = w
-                    c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt("wariant_miniatur", w).apply()
+                if (w != wariant || team != okladkiTeam) {
+                    wariant = w; okladkiTeam = team
+                    c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt("wariant_miniatur", w).putBoolean("okladki_team", team).apply()
                     stan++ // siatki przerysowują się z nowymi adresami
                 }
-                Log.i(TAG, "miniatury: wariant $w")
+                Log.i(TAG, "miniatury: wariant $w team=$team")
                 return@withContext null
             }
-            wyniki += "w$w: $opis"
+            wyniki += "w$w${if (team) "T" else ""}: $opis"
         }
         wyniki.joinToString("  |  ").also { Diagnose.noteer("synology miniatury", IOException(it)) }
     }

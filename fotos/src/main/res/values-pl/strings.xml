@@ -974,4 +974,5 @@
     <string name="update_przewin">"▲▼ przewiń opis"</string>
     <string name="rosla_diagnoza">"Zdjęć osoby: %1$d · z odczytaną twarzą: %2$d"</string>
     <string name="synology_miniatury_blad">"Miniatury się nie wczytują — odpowiedź NAS: %1$s"</string>
+    <string name="synology_zdjecie">zdjęcie</string>
 </resources>

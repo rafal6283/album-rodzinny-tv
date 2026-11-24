@@ -931,4 +931,5 @@
     <string name="update_przewin">"▲▼ desplazar el texto"</string>
     <string name="rosla_diagnoza">"Fotos de la persona: %1$d · con cara detectada: %2$d"</string>
     <string name="synology_miniatury_blad">"Las miniaturas no cargan — respuesta del NAS: %1$s"</string>
+    <string name="synology_zdjecie">foto</string>
 </resources>

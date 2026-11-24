@@ -438,19 +438,6 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
     }
 
     // Terug: toetsenoverzicht dicht → sub-scherm sluiten → naar het startscherm → in Foto's naar boven → app uit (terug naar de launcher)
-    BackHandler(enabled = kijker == null) {
-        val t = (scherm as? Scherm.Tijdlijn)?.staat?.raster?.lijst
-        when {
-            toetsen -> toetsen = false
-            stapel.isNotEmpty() -> stapel.removeAt(stapel.lastIndex)
-            sectie != startSectie -> sectie = startSectie
-            t != null && t.firstVisibleItemIndex > 0 -> scope.launch {
-                t.scrollToItem(0)
-                (scherm as Scherm.Tijdlijn).staat.let { s -> s.maanden.firstOrNull()?.let { m -> s.geladen[m.sleutel]?.firstOrNull()?.let { s.raster.focusDoel = it.id } } }
-            }
-            else -> finish()
-        }
-    }
 
     val ladeFocus = remember { androidx.compose.ui.focus.FocusRequester() }
     /** inhoud (rechts van de lade): na het sluiten van een popup de focus hierheen, anders pakt Android de lade */
@@ -458,6 +445,22 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
     val inhoudHeeftFocus = remember { androidx.compose.runtime.mutableStateOf(false) }
     // menu openen = focus op het lade-item van de huidige sectie (de lade van tv-material opent op focus)
     fun openLade() { toetsen = false; runCatching { ladeFocus.requestFocus() }.onFailure { Log.w("Fotos", "lade", it) } }
+    // Wstecz w sekcji (na jej głównym ekranie) otwiera boczne menu na tej sekcji — nie przeskakuje do „Album Rodzinny”;
+    // dopiero Wstecz w menu: do sekcji startowej, a z niej wyjście z aplikacji
+    val ladeMaFocus = remember { androidx.compose.runtime.mutableStateOf(false) }
+    BackHandler(enabled = kijker == null) {
+        val t = (scherm as? Scherm.Tijdlijn)?.staat?.raster?.lijst
+        when {
+            toetsen -> toetsen = false
+            stapel.isNotEmpty() -> stapel.removeAt(stapel.lastIndex)
+            ladeMaFocus.value -> if (sectie != startSectie) sectie = startSectie else finish()
+            sectie == startSectie && t != null && t.firstVisibleItemIndex > 0 -> scope.launch {
+                t.scrollToItem(0)
+                (scherm as Scherm.Tijdlijn).staat.let { s -> s.maanden.firstOrNull()?.let { m -> s.geladen[m.sleutel]?.firstOrNull()?.let { s.raster.focusDoel = it.id } } }
+            }
+            else -> openLade()
+        }
+    }
     val langeTerug = Toetsen.langeTerug
     androidx.compose.runtime.LaunchedEffect(langeTerug) { if (langeTerug > 0 && kijker == null) openLade() }
     Box(
@@ -484,7 +487,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             Log.i("Fotos", "lade: focus naar huidige sectie ($ok)")
         }
         val ladeBinnen = remember { androidx.compose.runtime.mutableStateOf(false) }
-        val ladeFocusNu = remember { androidx.compose.runtime.mutableStateOf(false) }
+        val ladeFocusNu = ladeMaFocus
         // Omleiden alleen bij het BINNENGAAN. Bij een focusverplaatsing binnen de lade kan hasFocus kort false->true
         // knipperen; daarom telt "buiten" pas na 300 ms zonder focus (anders sprong ▼ steeds terug naar de huidige sectie).
         androidx.compose.runtime.LaunchedEffect(ladeFocusNu.value) {
