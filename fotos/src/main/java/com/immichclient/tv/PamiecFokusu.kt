@@ -31,6 +31,9 @@ object PamiecFokusu {
     fun przywroc() { aktywny?.let { wejscie(it) }; licznik.intValue++ }
     fun ostatni(ekran: String): String? = ostatni[ekran]
 
+    /** Przenieś fokus na konkretny kafelek ekranu (np. po zmianie listy: pierwszy podfolder, folder, z którego wyszliśmy). */
+    fun ustaw(ekran: String, klucz: String) { ostatni[ekran] = klucz; wejscie(ekran); licznik.intValue++ }
+
     /** Ekran właśnie się pojawił: przez chwilę kafelek [ostatni] (albo pierwszy) może przejąć fokus. */
     fun wejscie(ekran: String) { doPrzywrocenia[ekran] = System.currentTimeMillis() + 1500 }
 

@@ -85,7 +85,11 @@ class SynologyStaat(private val scope: CoroutineScope) {
                     SynoZakladka.UDOSTEPNIONE -> { albumy = null; albumy = Synology.albumyUdostepnione(); sprawdz() }
                     SynoZakladka.WSPOLNA -> {
                         if (sciezka.isEmpty()) sciezka = listOf(Synology.folderGlowny())
-                        foldery = null; foldery = Synology.podfoldery(sciezka.last().id)
+                        foldery = null
+                        val nowe = Synology.podfoldery(sciezka.last().id)
+                        // po wejściu do folderu fokus na pierwszy podfolder; po wyjściu wyżej — na folder, z którego wyszliśmy
+                        doFokusu = (wrocDo ?: nowe.firstOrNull()?.id)?.let { "f$it" }; wrocDo = null
+                        foldery = nowe
                     }
                 }
             }.onFailure { fout = it.message; Log.w("Fotos", "synology $z", it) }
@@ -100,16 +104,21 @@ class SynologyStaat(private val scope: CoroutineScope) {
         val okl = albumy?.firstNotNullOfOrNull { it.okladka }?.let { Synology.dobierzWariant(Taal.ctx, it) } ?: run { problemMiniatur = null; return }
         // okładka nie działa: próba na zdjęciu z pierwszego albumu (inna przestrzeń / inny identyfikator)
         val album = albumy?.firstOrNull { it.ile > 0 }
-        val el = album?.let { runCatching { Synology.elementy(it, 1).lista.firstOrNull() }.getOrNull() }
+        val el = album?.let { runCatching { Synology.elementy(it, 1).assets.firstOrNull() }.getOrNull() }
         val zdj = el?.let { Synology.dobierzWariant(Taal.ctx, it.id) }
         problemMiniatur = if (el != null && zdj == null) null
         else "$okl  ‖  ${Taal.s(R.string.synology_zdjecie)}: ${zdj ?: "-"}  ‖  ${Synology.surowyElement ?: ""}"
     }
 
+    /** kafelek do sfokusowania po wczytaniu folderów */
+    var doFokusu by mutableStateOf<String?>(null)
+    private var wrocDo: Int? = null
+
     fun wejdz(f: Synology.FolderSyno) { sciezka = sciezka + f; laduj() }
     /** Wstecz w przestrzeni współdzielonej: folder wyżej; false = już w folderze głównym. */
     fun wyzej(): Boolean {
         if (zakladka != SynoZakladka.WSPOLNA || sciezka.size <= 1) return false
+        wrocDo = sciezka.last().id
         sciezka = sciezka.dropLast(1); laduj(); return true
     }
 }
@@ -117,10 +126,15 @@ class SynologyStaat(private val scope: CoroutineScope) {
 @Composable
 fun SynologyScherm(staat: SynologyStaat, nav: Nav) {
     val pierwszy = remember { FocusRequester() }
+    // na czas wczytywania innego folderu fokus czeka na przycisku „Zdjęcia w tym folderze” (kafelki znikają, a bez
+    // tego Android oddawał fokus bocznemu menu)
+    val folderKnop = remember { FocusRequester() }
+    fun przytrzymaj() { runCatching { folderKnop.requestFocus() } }
+    LaunchedEffect(staat.foldery) { staat.doFokusu?.let { PamiecFokusu.ustaw("synology", it); staat.doFokusu = null } }
     var logowanie by remember { mutableStateOf(false) }
     val wersja = Synology.stan
     LaunchedEffect(wersja) { if (Synology.skonfigurowane && staat.albumy == null && staat.foldery == null) staat.laduj() }
-    BackHandler(enabled = staat.zakladka == SynoZakladka.WSPOLNA && staat.sciezka.size > 1) { staat.wyzej() }
+    BackHandler(enabled = staat.zakladka == SynoZakladka.WSPOLNA && staat.sciezka.size > 1) { przytrzymaj(); staat.wyzej() }
     val wspolna = staat.zakladka == SynoZakladka.WSPOLNA
     LazyVerticalGrid(
         columns = GridCells.Fixed(4),
@@ -146,7 +160,7 @@ fun SynologyScherm(staat: SynologyStaat, nav: Nav) {
                         // zdjęcia z bieżącego folderu przestrzeni współdzielonej
                         val f = staat.sciezka.last()
                         Keuze(selected = false, onClick = { nav.open(Scherm.Lijst(f.nazwa, stringResource0(R.string.synology_wspolna), true, nav.scope) { p -> Synology.elementyFolderu(f.id, p) }) },
-                            tekst = stringResource(R.string.synology_zdjecia_folderu))
+                            modifier = Modifier.focusRequester(folderKnop), tekst = stringResource(R.string.synology_zdjecia_folderu))
                     }
                 }
                 staat.problemMiniatur?.let { Text(stringResource(R.string.synology_miniatury_blad, it), style = MaterialTheme.typography.bodySmall, color = Color(0xFFFCA5A5), maxLines = 6) }
@@ -159,7 +173,7 @@ fun SynologyScherm(staat: SynologyStaat, nav: Nav) {
         }
         if (wspolna) items(staat.foldery.orEmpty(), key = { "f" + it.id }) { f ->
             Card(
-                onClick = { staat.wejdz(f) },
+                onClick = { przytrzymaj(); staat.wejdz(f) },
                 modifier = Modifier.pamiecFokusu("synology", "f" + f.id).fillMaxWidth().aspectRatio(2.2f),
                 shape = CardDefaults.shape(RoundedCornerShape(16.dp)),
                 scale = CardDefaults.scale(focusedScale = 1.06f),
