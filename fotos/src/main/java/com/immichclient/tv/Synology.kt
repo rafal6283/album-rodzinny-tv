@@ -272,7 +272,9 @@ object Synology {
 
     private fun miniaturaW(w: Int, id: String, rozmiar: String): String {
         val c = id.split(':')
-        val unit = c.getOrNull(2).orEmpty(); val klucz = c.getOrNull(3).orEmpty(); val dod = c.getOrNull(4).orEmpty()
+        val klucz = c.getOrNull(3).orEmpty(); val dod = c.getOrNull(4).orEmpty()
+        // id miniatury = początek cache_key („12345_1690000000” → 12345), jak w aplikacji Synology; unit_id z okładki albumu bywa pusty (0)
+        val unit = klucz.substringBefore('_').takeIf { it.isNotEmpty() && it.all(Char::isDigit) } ?: c.getOrNull(2).orEmpty()
         val team = dod == "T"
         val haslo = dod.takeIf { it.startsWith("P") }?.drop(1)
         fun q(x: String) = "\"$x\""
@@ -280,7 +282,8 @@ object Synology {
         return when (w) {
             // entry.cgi, wartości zwykłe, wersja 1 / 2
             0, 1 -> {
-                val p = mutableListOf("mode" to "download", "id" to unit, "type" to "unit", "size" to rozmiar, "cache_key" to klucz)
+                val p = mutableListOf("id" to unit, "type" to "unit", "size" to rozmiar, "cache_key" to klucz)
+                if (w == 0) p += "mode" to "download"
                 haslo?.let { p += "passphrase" to it }
                 url(api, "get", w + 1, *p.toTypedArray()).toString()
             }

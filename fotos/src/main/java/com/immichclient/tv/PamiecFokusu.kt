@@ -2,6 +2,7 @@ package com.immichclient.tv
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -19,7 +20,15 @@ object PamiecFokusu {
     /** ekran → do kiedy (ms) przywrócić fokus; potem wjazd kafelka w kadr (przewijanie) już go nie „kradnie” */
     private val doPrzywrocenia = HashMap<String, Long>()
 
-    fun zapamietaj(ekran: String, klucz: String) { ostatni[ekran] = klucz }
+    /** ekran, na którym ostatnio coś wybrano */
+    private var aktywny: String? = null
+    /** zwiększany przy zamknięciu przeglądarki: kafelki sprawdzają wtedy, czy to do nich ma wrócić fokus */
+    val licznik = mutableIntStateOf(0)
+
+    fun zapamietaj(ekran: String, klucz: String) { ostatni[ekran] = klucz; aktywny = ekran }
+
+    /** Przeglądarka się zamyka (ekran pod nią cały czas był): oddaj fokus ostatniemu kafelkowi. */
+    fun przywroc() { aktywny?.let { wejscie(it) }; licznik.intValue++ }
     fun ostatni(ekran: String): String? = ostatni[ekran]
 
     /** Ekran właśnie się pojawił: przez chwilę kafelek [ostatni] (albo pierwszy) może przejąć fokus. */
@@ -48,7 +57,7 @@ fun PamiecEkranu(ekran: String) {
 @Composable
 fun Modifier.pamiecFokusu(ekran: String, klucz: String, pierwszy: Boolean = false): Modifier {
     val fr = remember { FocusRequester() }
-    LaunchedEffect(ekran, klucz) {
+    LaunchedEffect(ekran, klucz, PamiecFokusu.licznik.intValue) {
         delay(40)
         if (PamiecFokusu.wezPrzywrocenie(ekran, klucz, pierwszy)) {
             repeat(5) { if (runCatching { fr.requestFocus() }.isSuccess) return@LaunchedEffect; delay(30) }
