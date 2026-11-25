@@ -296,6 +296,8 @@ object Kanaly {
 /** Okresowe odświeżanie kanałów (JobScheduler, co ~3 h). */
 class KanalyJob : JobService() {
     override fun onStartJob(p: JobParameters): Boolean {
+        // przy okazji: Tailscale w tle (gdyby się rozłączył), także dla innych aplikacji, np. Plex
+        if (Zdalnie.tailscaleStart(applicationContext)) Zdalnie.polacz(applicationContext)
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             runCatching { Kanaly.odswiez(applicationContext) }.onFailure { Log.w("Kanaly", "job", it) }
             jobFinished(p, false)
