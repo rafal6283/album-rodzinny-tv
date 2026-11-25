@@ -983,7 +983,7 @@
     <string name="tailscale_otworz_uitleg">"Log in or check the connection in the Tailscale app"</string>
     <string name="tailscale_zawsze">"Tailscale always on — how?"</string>
     <string name="tailscale_zawsze_uitleg">"The app asks Tailscale to connect in the background by itself; this makes it start right when the TV turns on"</string>
-    <string name="tailscale_instrukcja">"If the TV settings have a VPN menu: Network & Internet → VPN → ⚙ next to Tailscale → Always-on VPN (without blocking connections without VPN).\nIf not — once, from a computer (USB/network debugging enabled on the TV):\nadb connect TV-IP\nadb shell settings put secure always_on_vpn_app com.tailscale.ipn\nadb shell settings put secure always_on_vpn_lockdown 0\nTailscale then starts by itself when the TV turns on; the internet keeps working normally when your server is off."</string>
+    <string name="tailscale_instrukcja">"If the TV settings have a VPN menu: Network &amp; Internet → VPN → ⚙ next to Tailscale → Always-on VPN (without blocking connections without VPN).\nIf not — once, from a computer (USB/network debugging enabled on the TV):\nadb connect TV-IP\nadb shell settings put secure always_on_vpn_app com.tailscale.ipn\nadb shell settings put secure always_on_vpn_lockdown 0\nTailscale then starts by itself when the TV turns on; the internet keeps working normally when your server is off."</string>
     <string name="html_zdalny">"Remote address (optional)"</string>
     <string name="html_zdalny_hint">"E.g. the server’s Tailscale address (100.x.y.z:2283). The TV uses it when the home address does not respond — e.g. at the grandparents’."</string>
     <string name="koppel_przez_tailscale">"Or remotely, via Tailscale (from your own phone):"</string>
