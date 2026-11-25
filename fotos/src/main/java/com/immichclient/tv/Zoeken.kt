@@ -1,5 +1,6 @@
 package com.immichclient.tv
 
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.PlayArrow
 import android.app.Activity
 import android.content.Context
