@@ -374,6 +374,8 @@ fun DreamScherm(staat: DreamStaat) {
     // de lus: foto kiezen → preview laden → tonen → wachten op de tijd of een toets
     LaunchedEffect(Unit) {
         if (Immich.sleutel.isBlank() || Immich.server.isBlank() || staat.testFout == "koppeling") { staat.melding = R.string.dream_niet_gekoppeld; return@LaunchedEffect }
+        // adres domowy albo zdalny (Tailscale); gdy serwer śpi, dalej zadziała pokaz zapamiętanych zdjęć (offline)
+        if (staat.testFout == null) runCatching { Zdalnie.wybierz(ctx) }
         val loader = SingletonImageLoader.get(ctx)
         suspend fun nieuw(): Asset? = when (staat.testFout) {
             "leeg" -> null

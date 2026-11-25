@@ -943,4 +943,26 @@
     <string name="urodziny_start">"Geburtstags-Diashow beim Start"</string>
     <string name="urodziny_start_uitleg">"Am Geburtstag einer Person zeigt der erste Start des Tages ihre Fotos"</string>
     <string name="kanal_dzien">"Foto des Tages"</string>
+    <string name="serwer_spi_tytul">"Der Fotoserver schläft"</string>
+    <string name="serwer_spi_opis">"Der Server antwortet nicht — wahrscheinlich ist er aus (z. B. läuft er nur abends)."</string>
+    <string name="serwer_spi_tailscale">"Der Server antwortet nicht. Er ist vielleicht aus (z. B. nur abends an) oder Tailscale auf diesem TV ist noch nicht verbunden."</string>
+    <string name="tailscale_brak">"Tailscale ist auf diesem TV nicht installiert — installiere es über Google Play."</string>
+    <string name="serwer_sprobuj">"Jetzt versuchen"</string>
+    <string name="tailscale_otworz">"Tailscale öffnen"</string>
+    <string name="serwer_kontynuuj">"Trotzdem fortfahren"</string>
+    <string name="serwer_spi_auto">"Ich versuche es jede Minute erneut und starte von selbst, sobald der Server wach ist."</string>
+    <string name="groep_zdalnie">"Fernzugriff (Tailscale)"</string>
+    <string name="zdalnie_teraz">"Verbunden über"</string>
+    <string name="zdalnie_przez_zdalny">"Fernadresse · %1$s"</string>
+    <string name="zdalnie_przez_dom">"Heimadresse · %1$s"</string>
+    <string name="zdalnie_adres_immich">"Immich-Fernadresse"</string>
+    <string name="zdalnie_adres_synology">"Synology-Fernadresse"</string>
+    <string name="zdalnie_brak_adresu">"Nicht gesetzt — z. B. die Tailscale-Adresse (100.x.y.z oder name.ts.net); genutzt, wenn die Heimadresse nicht antwortet"</string>
+    <string name="tailscale_otworz_uitleg">"In der Tailscale-App anmelden oder die Verbindung prüfen"</string>
+    <string name="tailscale_zawsze">"Tailscale immer an — wie?"</string>
+    <string name="tailscale_zawsze_uitleg">"Die App bittet Tailscale selbst, im Hintergrund zu verbinden; so startet es direkt beim Einschalten des TV"</string>
+    <string name="tailscale_instrukcja">"Wenn die TV-Einstellungen ein VPN-Menü haben: Netzwerk & Internet → VPN → ⚙ bei Tailscale → Durchgehend aktives VPN (ohne Verbindungen ohne VPN zu blockieren).\nSonst — einmalig von einem Computer (USB-/Netzwerk-Debugging auf dem TV aktiv):\nadb connect TV-IP\nadb shell settings put secure always_on_vpn_app com.tailscale.ipn\nadb shell settings put secure always_on_vpn_lockdown 0\nTailscale startet dann von selbst beim Einschalten; das Internet funktioniert normal, auch wenn dein Server aus ist."</string>
+    <string name="html_zdalny">"Fernadresse (optional)"</string>
+    <string name="html_zdalny_hint">"Z. B. die Tailscale-Adresse des Servers (100.x.y.z:2283). Der TV nutzt sie, wenn die Heimadresse nicht antwortet — z. B. bei den Großeltern."</string>
+    <string name="koppel_przez_tailscale">"Oder aus der Ferne über Tailscale (vom eigenen Handy):"</string>
 </resources>

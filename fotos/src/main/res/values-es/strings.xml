@@ -950,4 +950,26 @@
     <string name="urodziny_start">"Presentación de cumpleaños al iniciar"</string>
     <string name="urodziny_start_uitleg">"En el cumpleaños de alguien, el primer inicio del día muestra sus fotos"</string>
     <string name="kanal_dzien">"Foto del día"</string>
+    <string name="serwer_spi_tytul">"El servidor de fotos está dormido"</string>
+    <string name="serwer_spi_opis">"El servidor no responde — probablemente está apagado (p. ej., solo funciona por la tarde)."</string>
+    <string name="serwer_spi_tailscale">"El servidor no responde. Puede estar apagado (p. ej., solo por la tarde) o Tailscale aún no se ha conectado en este televisor."</string>
+    <string name="tailscale_brak">"Tailscale no está instalado en este televisor — instálalo desde Google Play."</string>
+    <string name="serwer_sprobuj">"Intentar ahora"</string>
+    <string name="tailscale_otworz">"Abrir Tailscale"</string>
+    <string name="serwer_kontynuuj">"Continuar de todos modos"</string>
+    <string name="serwer_spi_auto">"Lo intentaré cada minuto y arrancaré sola cuando el servidor despierte."</string>
+    <string name="groep_zdalnie">"Acceso remoto (Tailscale)"</string>
+    <string name="zdalnie_teraz">"Conectado vía"</string>
+    <string name="zdalnie_przez_zdalny">"dirección remota · %1$s"</string>
+    <string name="zdalnie_przez_dom">"dirección de casa · %1$s"</string>
+    <string name="zdalnie_adres_immich">"Dirección remota de Immich"</string>
+    <string name="zdalnie_adres_synology">"Dirección remota de Synology"</string>
+    <string name="zdalnie_brak_adresu">"Sin definir — p. ej. la dirección de Tailscale (100.x.y.z o nombre.ts.net); se usa si la de casa no responde"</string>
+    <string name="tailscale_otworz_uitleg">"Inicia sesión o revisa la conexión en la app Tailscale"</string>
+    <string name="tailscale_zawsze">"Tailscale siempre activo — ¿cómo?"</string>
+    <string name="tailscale_zawsze_uitleg">"La app pide a Tailscale que se conecte en segundo plano; así se inicia nada más encender el televisor"</string>
+    <string name="tailscale_instrukcja">"Si los ajustes del televisor tienen un menú VPN: Red e Internet → VPN → ⚙ junto a Tailscale → VPN siempre activada (sin bloquear conexiones sin VPN).\nSi no — una vez desde un ordenador (depuración USB/de red activada en el televisor):\nadb connect IP-del-televisor\nadb shell settings put secure always_on_vpn_app com.tailscale.ipn\nadb shell settings put secure always_on_vpn_lockdown 0\nTailscale se iniciará solo al encender el televisor; Internet funciona con normalidad aunque tu servidor esté apagado."</string>
+    <string name="html_zdalny">"Dirección remota (opcional)"</string>
+    <string name="html_zdalny_hint">"P. ej. la dirección de Tailscale del servidor (100.x.y.z:2283). El televisor la usa si la de casa no responde — p. ej. en casa de los abuelos."</string>
+    <string name="koppel_przez_tailscale">"O a distancia, vía Tailscale (desde tu propio teléfono):"</string>
 </resources>

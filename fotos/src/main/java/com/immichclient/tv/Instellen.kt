@@ -139,6 +139,12 @@ fun InstelScherm(test: Boolean, terug: (() -> Unit)?, klaar: () -> Unit, finish:
             Spacer(Modifier.height(14.dp))
             Text(stringResource(R.string.typ_adres), style = MaterialTheme.typography.bodySmall)
             Text(url ?: "–", style = MaterialTheme.typography.titleMedium.copy(fontFamily = FontFamily.Monospace, fontSize = 17.sp, letterSpacing = 0.5.sp), color = Kleur.primair, modifier = Modifier.padding(top = 4.dp))
+            // ten sam formularz przez Tailscale: telewizor u rodziny można skonfigurować z własnego telefonu, na odległość
+            androidx.compose.runtime.LaunchedEffect(Unit) { while (true) { Koppel.odswiezTailscale(); kotlinx.coroutines.delay(3000) } }
+            Koppel.urlTailscale?.let { ts ->
+                Text(stringResource(R.string.koppel_przez_tailscale), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 10.dp))
+                Text(ts, style = MaterialTheme.typography.titleSmall.copy(fontFamily = FontFamily.Monospace, letterSpacing = 0.5.sp), color = Kleur.primair, modifier = Modifier.padding(top = 2.dp))
+            }
         }
     }
 }

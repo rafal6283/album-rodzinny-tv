@@ -71,6 +71,22 @@ object Koppel {
     /** Adres voor de QR-code, null zolang er geen netwerk is of de poort niet lukt. */
     var url by mutableStateOf<String?>(null)
         private set
+    /** ten sam formularz przez Tailscale (http://100.x.y.z:port/kod), gdy Tailscale na telewizorze działa */
+    var urlTailscale by mutableStateOf<String?>(null)
+        private set
+
+    /** Adres telewizora w sieci Tailscale (interfejs tun, 100.64–127.x). */
+    fun ipTailscale(): String? = runCatching {
+        NetworkInterface.getNetworkInterfaces().toList().filter { it.isUp && !it.isLoopback }
+            .flatMap { it.inetAddresses.toList() }.filterIsInstance<Inet4Address>()
+            .firstOrNull { a -> val b = a.address; (b[0].toInt() and 0xFF) == 100 && ((b[1].toInt() and 0xFF) and 0xC0) == 64 }?.hostAddress
+    }.getOrNull()
+
+    /** Odśwież adres przez Tailscale (Tailscale mógł się połączyć dopiero po otwarciu ekranu). */
+    fun odswiezTailscale() {
+        val p = server?.localPort ?: return
+        urlTailscale = ipTailscale()?.let { "http://$it:$p/$code" }
+    }
 
     private val main = Handler(Looper.getMainLooper())
     private var server: ServerSocket? = null
@@ -91,6 +107,7 @@ object Koppel {
         url = null
         code = nieuweCode()
         val ip = eigenIp()
+        urlTailscale = null
         val ss = POORTEN.firstNotNullOfOrNull { p -> runCatching { ServerSocket(p) }.getOrNull() }
         if (ip == null || ss == null) {
             Log.w(TAG, "koppelen: geen netwerk ($ip) of geen vrije poort")
@@ -100,6 +117,8 @@ object Koppel {
         }
         server = ss
         url = "http://$ip:${ss.localPort}/$code"
+        Zdalnie.polacz(c)
+        odswiezTailscale()
         Log.i(TAG, "koppelen: wacht op $url")
         thread(name = "Koppel", isDaemon = true) {
             while (true) {
@@ -121,7 +140,10 @@ object Koppel {
         s.soTimeout = 10_000
         // alleen het eigen netwerk (de code beschermt al; dit is een extra slot)
         val adres = s.inetAddress
-        if (!(adres.isSiteLocalAddress || adres.isLinkLocalAddress || adres.isLoopbackAddress)) { antwoord(s.getOutputStream(), 403, "text/plain", Taal.s(R.string.geen_toegang)); return }
+        // + sieć Tailscale (100.64.0.0/10): telewizor u rodziny można skonfigurować z własnego telefonu przez Tailscale
+        val b = adres.address
+        val tailscale = b.size == 4 && (b[0].toInt() and 0xFF) == 100 && ((b[1].toInt() and 0xFF) and 0xC0) == 64
+        if (!(adres.isSiteLocalAddress || adres.isLinkLocalAddress || adres.isLoopbackAddress || tailscale)) { antwoord(s.getOutputStream(), 403, "text/plain", Taal.s(R.string.geen_toegang)); return }
         val invoer = s.getInputStream().buffered()
         val uit = s.getOutputStream()
         val eerste = leesRegel(invoer) ?: return
@@ -210,20 +232,28 @@ object Koppel {
         val sleutelIn = json.optString("sleutel").trim()
         val email = json.optString("email").trim()
         val ww = json.optString("wachtwoord")
+        val zdalnyIn = json.optString("zdalny").trim().takeIf { it.isNotEmpty() }?.let { normaliseer(it) }
         if (serverIn.isEmpty()) return fout(Tekst(R.string.fout_vul_adres), res)
         val basis = normaliseer(serverIn)
         return try {
-            val waarschuwing = controleerServer(basis)
+            // adres domowy; poza domem (konfiguracja telewizora u rodziny) — adres zdalny, np. Tailscale
+            if (zdalnyIn != null && Zdalnie.jestTailscale(zdalnyIn)) Zdalnie.polacz(c)
+            var werkend = basis
+            val waarschuwing = try { controleerServer(basis) } catch (e: KoppelFout) {
+                if (zdalnyIn == null) throw e
+                werkend = zdalnyIn
+                controleerServer(zdalnyIn)
+            }
             val (sleutel, naam) = if (sleutelIn.isNotEmpty()) {
                 zetStand(Stand.Bezig(Tekst(R.string.bezig_sleutel_rechten)))
-                sleutelIn to controleerRechten(basis, sleutelIn, res)
+                sleutelIn to controleerRechten(werkend, sleutelIn, res)
             } else {
                 if (email.isEmpty() || ww.isEmpty()) throw KoppelFout(Tekst(R.string.fout_vul_email))
-                maakSleutel(basis, email, ww)
+                maakSleutel(werkend, email, ww)
             }
             // „Dodaj profil”: klucz trafia do profilu domownika i ten profil staje się aktywny
             val profil = Profile.docelowy
-            Immich.zetSleutel(c, sleutel, profil, basis)
+            Immich.zetSleutel(c, sleutel, profil, basis, zdalnyIn.orEmpty())
             if (profil != null) Profile.ustawAktywny(c, profil)
             main.post { Profile.docelowy = null; Immich.kiesAccount(c, profil) }
             Log.i(TAG, "koppelen: gelukt met $basis" + if (test) " (test)" else "")
@@ -379,7 +409,8 @@ object Koppel {
             .replace("%WW_HINT%", t(R.string.html_wachtwoord_hint)).replace("%KOPPELEN%", t(R.string.html_koppelen))
             .replace("%SLEUTEL_KOP%", t(R.string.html_sleutel_kop)).replace("%SLEUTEL%", t(R.string.html_sleutel))
             .replace("%SLEUTEL_HINT_VOOR%", t(R.string.html_sleutel_hint_voor)).replace("%SLEUTEL_PAD%", t(R.string.html_sleutel_pad)).replace("%SLEUTEL_HINT_NA%", t(R.string.html_sleutel_hint_na))
-            .replace("%KOPPELEN_SLEUTEL%", t(R.string.html_koppelen_sleutel)).replace("%VOET%", t(R.string.html_voet))
+            .replace("%KOPPELEN_SLEUTEL%", t(R.string.html_koppelen_sleutel))
+            .replace("%ZDALNY_HINT%", t(R.string.html_zdalny_hint)).replace("%ZDALNY%", t(R.string.html_zdalny)).replace("%VOET%", t(R.string.html_voet))
             .replace("%RECHTEN%", RECHTEN.joinToString("") { "<li>$it</li>" })
             .replace("%JS%", js.toString())
     }
@@ -431,6 +462,9 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
 <label for="server">%ADRES%</label>
 <input id="server" name="server" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="%ADRES_VB%" required>
 <p class="hint">%ADRES_HINT%</p>
+<label for="zd1">%ZDALNY%</label>
+<input id="zd1" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="http://100.x.y.z:2283">
+<p class="hint">%ZDALNY_HINT%</p>
 <label for="email">%EMAIL%</label>
 <input id="email" name="email" type="email" autocomplete="username" autocapitalize="none" required>
 <label for="ww">%WW%</label>
@@ -442,6 +476,8 @@ code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
 <form id="f2">
 <label for="server2">%ADRES%</label>
 <input id="server2" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="%ADRES_VB_KORT%" required>
+<label for="zd2">%ZDALNY%</label>
+<input id="zd2" inputmode="url" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="http://100.x.y.z:2283">
 <label for="sl">%SLEUTEL%</label>
 <input id="sl" autocapitalize="none" autocorrect="off" spellcheck="false" required>
 <p class="hint">%SLEUTEL_HINT_VOOR% <b>%SLEUTEL_PAD%</b> %SLEUTEL_HINT_NA%</p>
@@ -463,8 +499,8 @@ function stuur(body,knoppen){
   .then(function(){for(var i=0;i<knoppen.length;i++)knoppen[i].disabled=false;});
 }
 var kn=document.querySelectorAll('button');
-document.getElementById('f1').addEventListener('submit',function(e){e.preventDefault();stuur({server:document.getElementById('server').value,email:document.getElementById('email').value,wachtwoord:document.getElementById('ww').value},kn);});
-document.getElementById('f2').addEventListener('submit',function(e){e.preventDefault();stuur({server:document.getElementById('server2').value,sleutel:document.getElementById('sl').value},kn);});
+document.getElementById('f1').addEventListener('submit',function(e){e.preventDefault();stuur({server:document.getElementById('server').value,zdalny:document.getElementById('zd1').value,email:document.getElementById('email').value,wachtwoord:document.getElementById('ww').value},kn);});
+document.getElementById('f2').addEventListener('submit',function(e){e.preventDefault();stuur({server:document.getElementById('server2').value,zdalny:document.getElementById('zd2').value,sleutel:document.getElementById('sl').value},kn);});
 </script>
 </body></html>
 """

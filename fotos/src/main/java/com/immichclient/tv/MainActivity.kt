@@ -346,6 +346,25 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         ) { pin -> Pin.sprawdz(ctxPin, profil, pin).also { if (it) zablokowane = false } }
         return
     }
+    // serwer: adres domowy albo zdalny (Tailscale, włączany w tle); gdy żaden nie odpowiada — ekran „serwer śpi”
+    val ctxZ = androidx.compose.ui.platform.LocalContext.current
+    var sprawdzono by remember { mutableStateOf(Zdalnie.stan == Zdalnie.Stan.OK) }
+    androidx.compose.runtime.LaunchedEffect(Unit) { if (!sprawdzono) { Zdalnie.wybierz(ctxZ); sprawdzono = true } }
+    // po wybudzeniu telewizora: sprawdzić znowu (w domu → adres domowy, poza domem → Tailscale); inny adres = przebudowa
+    val cykl = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    androidx.compose.runtime.DisposableEffect(cykl) {
+        var pierwszy = true
+        val obs = androidx.lifecycle.LifecycleEventObserver { _, e ->
+            if (e != androidx.lifecycle.Lifecycle.Event.ON_RESUME) return@LifecycleEventObserver
+            if (pierwszy) { pierwszy = false; return@LifecycleEventObserver }
+            val przed = Immich.server
+            CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch { if (Zdalnie.wybierz(ctxZ) && Immich.server != przed) herstart() }
+        }
+        cykl.addObserver(obs)
+        onDispose { cykl.removeObserver(obs) }
+    }
+    if (!sprawdzono) { Box(Modifier.fillMaxSize().background(Kleur.achtergrond), contentAlignment = androidx.compose.ui.Alignment.Center) { Laadpil(true) }; return }
+    if (Zdalnie.stan == Zdalnie.Stan.SPI) { SerwerSpiEkran(); return }
     // Eén scope voor alle schermstaten, met een CoroutineExceptionHandler: een onverwachte fout in een coroutine (de
     // meeste zijn al met runCatching afgedekt) sluit dan niet de hele app, maar komt in de diagnose terecht.
     val scope = remember {

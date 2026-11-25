@@ -71,6 +71,9 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     val scope = rememberCoroutineScope()
     var groetInvoer by remember { mutableStateOf(false) }
     var muzykaInvoer by remember { mutableStateOf(false) }
+    /** edycja adresu zdalnego: "immich" / "synology" / null */
+    var zdalnyInvoer by remember { mutableStateOf<String?>(null) }
+    var instrukcjaTailscale by remember { mutableStateOf(false) }
     var profilInvoer by remember { mutableStateOf(false) }
     /** profil, na który przełączamy (wymaga PIN-u) / dla którego ustawiamy PIN */
     var pinCel by remember { mutableStateOf<String?>(null) }
@@ -390,6 +393,28 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
             Actie(stringResource(R.string.rechten_titel), stand) { Rechten.open = true; scope.launch { Rechten.controleer() } }
         }
         item { Actie(stringResource(R.string.opnieuw_koppelen), stringResource(R.string.opnieuw_koppelen_uitleg)) { opnieuwKoppelen() } }
+
+        // dostęp zdalny: drugi adres (Tailscale), automatyczne łączenie Tailscale w tle
+        groep(R.string.groep_zdalnie)
+        item {
+            Info(stringResource(R.string.zdalnie_teraz), if (Zdalnie.zdalnie) stringResource(R.string.zdalnie_przez_zdalny, Immich.server) else stringResource(R.string.zdalnie_przez_dom, Immich.server))
+        }
+        item {
+            Actie(stringResource(R.string.zdalnie_adres_immich), Immich.serverZdalny.ifBlank { stringResource(R.string.zdalnie_brak_adresu) }) { zdalnyInvoer = "immich" }
+        }
+        if (Synology.skonfigurowane) item {
+            Actie(stringResource(R.string.zdalnie_adres_synology), Synology.adresZdalny.ifBlank { stringResource(R.string.zdalnie_brak_adresu) }) { zdalnyInvoer = "synology" }
+        }
+        if (Zdalnie.tailscaleZainstalowany(ctx)) item {
+            Actie(stringResource(R.string.tailscale_otworz), stringResource(R.string.tailscale_otworz_uitleg)) { Zdalnie.otworz(ctx) }
+        }
+        item {
+            Actie(stringResource(R.string.tailscale_zawsze), stringResource(R.string.tailscale_zawsze_uitleg)) { instrukcjaTailscale = !instrukcjaTailscale }
+        }
+        if (instrukcjaTailscale) item {
+            Text(stringResource(R.string.tailscale_instrukcja), style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht,
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp))
+        }
         item {
             Actie(stringResource(if (bevestig) R.string.zeker_weten else R.string.ontkoppelen), stringResource(if (bevestig) R.string.zeker_weten_uitleg else R.string.ontkoppelen_uitleg)) {
                 if (!bevestig) bevestig = true else { Immich.ontkoppel(ctx, Immich.kijker); ontkoppeld() }
@@ -427,6 +452,14 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     }
     if (persoonKiezer) KiesLijst(stringResource(R.string.dream_personen), persoonKeuzes(), Instellingen.dreamPersoon, sluit = { persoonKiezer = false }, meer = true) { id, naam ->
         Instellingen.wisselDreamPersoon(id, naam)
+    }
+    when (zdalnyInvoer) {
+        "immich" -> TekstInvoer(stringResource(R.string.zdalnie_adres_immich), Immich.serverZdalny.ifBlank { "http://100." }, actie = stringResource(R.string.actie_klaar), sluit = { zdalnyInvoer = null }) {
+            Immich.zetZdalny(ctx, it.takeIf { a -> a.trim().length > 12 }.orEmpty()); zdalnyInvoer = null
+        }
+        "synology" -> TekstInvoer(stringResource(R.string.zdalnie_adres_synology), Synology.adresZdalny.ifBlank { "https://100." }, actie = stringResource(R.string.actie_klaar), sluit = { zdalnyInvoer = null }) {
+            Synology.zetZdalny(ctx, it.takeIf { a -> a.trim().length > 13 }.orEmpty()); zdalnyInvoer = null
+        }
     }
     if (muzykaInvoer) TekstInvoer(stringResource(R.string.muzyka_adres), Instellingen.muzykaUrl.ifBlank { "http://" }, actie = stringResource(R.string.actie_klaar), sluit = { muzykaInvoer = false }) {
         Instellingen.muzykaUrl = it.trim(); muzykaInvoer = false
