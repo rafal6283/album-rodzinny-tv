@@ -565,7 +565,10 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                                 // przechwycić fokusu — inaczej menu na chwilę się rozwija i lista „skacze”
                                 .focusProperties { canFocus = !ladeDicht },
                             onClick = {
-                                stapel.clear(); ZabawaPamiec.wybor = null; sectie = s
+                                stapel.clear(); ZabawaPamiec.wybor = null
+                                // Foldery: lista folderów z Immich wczytywana od nowa przy każdym wejściu (np. po usunięciu zdjęć)
+                                if (s == Sectie.MAPPEN) wortels.remove(s)
+                                sectie = s
                                 lade.setValue(DrawerValue.Closed)
                             },
                             leadingContent = { Icon(s.icoon, null) },
