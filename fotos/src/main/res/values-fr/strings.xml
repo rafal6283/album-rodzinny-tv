@@ -932,4 +932,22 @@
     <string name="rosla_diagnoza">"Photos de la personne : %1$d · avec visage : %2$d"</string>
     <string name="synology_miniatury_blad">"Les miniatures ne se chargent pas — réponse du NAS : %1$s"</string>
     <string name="synology_zdjecie">photo</string>
+    <string name="pokaz_losowo">"Diaporama aléatoire"</string>
+    <string name="quiz_ile_lat">"Quel âge avait %1$s sur cette photo ?"</string>
+    <string name="podobni_tytul">"Qui se ressemble le plus ?"</string>
+    <string name="podobni_opis">"Un enfant à côté de ses parents et grands-parents au même âge"</string>
+    <string name="podobni_wybierz">"Les photos de qui ?"</string>
+    <string name="podobni_hint">"OK — manche suivante"</string>
+    <string name="podobni_brak_daty">"Cette personne n\'a pas de date de naissance dans Immich. Ajoutez-la dans Modifier la personne."</string>
+    <string name="podobni_brak_starszych">"Aucune personne plus âgée avec date de naissance (au moins 14 ans de plus). Ajoutez celles des parents et grands-parents."</string>
+    <string name="podobni_brak_zdjec">"Aucune photo des autres au même âge."</string>
+    <string name="kadr_tytul">"Même endroit"</string>
+    <string name="kadr_opis">"Deux photos du même endroit, à des années d\'écart"</string>
+    <string name="kadr_hint">"Avant et maintenant au même endroit · OK — paire suivante"</string>
+    <string name="kadr_brak">"Aucun lieu avec des photos d\'années différentes (les photos doivent avoir une position GPS)."</string>
+    <string name="rok_osoby_tytul">"%1$s en %2$d"</string>
+    <string name="rok_osoby_przycisk">"Son année"</string>
+    <string name="urodziny_start">"Diaporama d\'anniversaire au démarrage"</string>
+    <string name="urodziny_start_uitleg">"Le jour d\'un anniversaire, le premier lancement du jour affiche ses photos"</string>
+    <string name="kanal_dzien">"Photo du jour"</string>
 </resources>

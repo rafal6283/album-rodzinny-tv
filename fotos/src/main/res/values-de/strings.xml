@@ -925,4 +925,22 @@
     <string name="rosla_diagnoza">"Fotos der Person: %1$d · mit erkanntem Gesicht: %2$d"</string>
     <string name="synology_miniatury_blad">"Miniaturen laden nicht — Antwort des NAS: %1$s"</string>
     <string name="synology_zdjecie">Foto</string>
+    <string name="pokaz_losowo">"Zufällige Diashow"</string>
+    <string name="quiz_ile_lat">"Wie alt war %1$s auf diesem Foto?"</string>
+    <string name="podobni_tytul">"Wer sieht ähnlicher aus?"</string>
+    <string name="podobni_opis">"Ein Kind neben Eltern und Großeltern im gleichen Alter"</string>
+    <string name="podobni_wybierz">"Wessen Fotos?"</string>
+    <string name="podobni_hint">"OK — nächste Runde"</string>
+    <string name="podobni_brak_daty">"Diese Person hat in Immich kein Geburtsdatum. Füge es unter „Person bearbeiten“ hinzu."</string>
+    <string name="podobni_brak_starszych">"Keine älteren Personen mit Geburtsdatum (mindestens 14 Jahre älter). Füge Geburtsdaten von Eltern und Großeltern hinzu."</string>
+    <string name="podobni_brak_zdjec">"Keine Fotos der anderen im gleichen Alter gefunden."</string>
+    <string name="kadr_tytul">"Gleicher Ort"</string>
+    <string name="kadr_opis">"Zwei Fotos vom selben Ort, Jahre auseinander"</string>
+    <string name="kadr_hint">"Damals und heute am selben Ort · OK — nächstes Paar"</string>
+    <string name="kadr_brak">"Keine Orte mit Fotos aus verschiedenen Jahren gefunden (Fotos brauchen einen GPS-Standort)."</string>
+    <string name="rok_osoby_tytul">"%1$s im Jahr %2$d"</string>
+    <string name="rok_osoby_przycisk">"Jahr der Person"</string>
+    <string name="urodziny_start">"Geburtstags-Diashow beim Start"</string>
+    <string name="urodziny_start_uitleg">"Am Geburtstag einer Person zeigt der erste Start des Tages ihre Fotos"</string>
+    <string name="kanal_dzien">"Foto des Tages"</string>
 </resources>

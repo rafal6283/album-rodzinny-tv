@@ -47,7 +47,8 @@ import java.time.YearMonth
  * Rok w skrócie: ile zdjęć w każdym miesiącu, najczęstsze miejsca i osoby (z losowej próbki ~500 zdjęć roku) oraz
  * pokaz najlepszych ujęć (najpierw ulubione z tego roku, potem losowe).
  */
-class RokStaat(val scope: CoroutineScope, rok: Int) {
+/** [osobaId] = rok jednej osoby („Ola w 2026”): liczby, miejsca, osoby obok niej i pokaz tylko z jej zdjęć. */
+class RokStaat(val scope: CoroutineScope, rok: Int, val osobaId: String? = null, val imie: String? = null) {
     var rok by mutableStateOf(rok)
         private set
     var miesiace by mutableStateOf<IntArray?>(null)
@@ -71,14 +72,14 @@ class RokStaat(val scope: CoroutineScope, rok: Int) {
         scope.launch {
             runCatching {
                 val m = IntArray(12)
-                Immich.maanden(Filter(), true).forEach { b -> val ym = runCatching { YearMonth.parse(b.sleutel.take(7)) }.getOrNull(); if (ym?.year == r) m[ym.monthValue - 1] += b.aantal }
+                Immich.maanden(Filter(persoonId = osobaId), true).forEach { b -> val ym = runCatching { YearMonth.parse(b.sleutel.take(7)) }.getOrNull(); if (ym?.year == r) m[ym.monthValue - 1] += b.aantal }
                 miesiace = m
             }.onFailure { Log.w("Fotos", "rok: miesiące", it) }
-            val probka = runCatching { Immich.probkaRoku(r, 500) }.getOrDefault(emptyList())
+            val probka = runCatching { Immich.probkaRoku(r, 500, osobaId = osobaId) }.getOrDefault(emptyList())
             miejsca = probka.mapNotNull { it.stad }.groupingBy { it }.eachCount().entries.sortedByDescending { it.value }.take(10).map { it.key to it.value }
-            osoby = probka.flatMap { a -> a.osoby.filter { it.naam.isNotBlank() && !Instellingen.osobaUkryta(it.id) } }
+            osoby = probka.flatMap { a -> a.osoby.filter { it.naam.isNotBlank() && !Instellingen.osobaUkryta(it.id) && it.id != osobaId } }
                 .groupBy { it.id }.values.map { it.first() to it.size }.sortedByDescending { it.second }.take(10)
-            val ulubione = runCatching { Immich.probkaRoku(r, 60, ulubione = true) }.getOrDefault(emptyList())
+            val ulubione = runCatching { Immich.probkaRoku(r, 60, ulubione = true, osobaId = osobaId) }.getOrDefault(emptyList())
             // pokaz: ulubione + reszta próbki, chronologicznie, najwyżej 120
             najlepsze = (ulubione + probka.filter { a -> ulubione.none { it.id == a.id } }.take(120 - ulubione.size)).sortedBy { it.datum }
             laduje = false
@@ -97,12 +98,13 @@ fun RokWSkrocieScherm(staat: RokStaat, nav: Nav) {
         modifier = Modifier.fillMaxSize(),
     ) {
         item {
+            val tytul = staat.imie?.let { stringResource(R.string.rok_osoby_tytul, it, staat.rok) } ?: stringResource(R.string.rok_tytul, staat.rok)
             SchermKop(
-                stringResource(R.string.rok_tytul, staat.rok),
+                tytul,
                 if (staat.miesiace == null) stringResource(R.string.laden) else pluralStringResource(R.plurals.items, suma, suma),
                 etykieta = stringResource(R.string.etyk_wspomnienia),
             ) {
-                val tytulPokazu = stringResource(R.string.rok_tytul, staat.rok)
+                val tytulPokazu = tytul
                 Keuze(
                     selected = false, modifier = Modifier.focusRequester(pierwszy),
                     onClick = { if (staat.najlepsze.isNotEmpty()) nav.bekijk(LijstBron(staat.najlepsze), 0, tytulPokazu, true, null) },
@@ -139,7 +141,7 @@ fun RokWSkrocieScherm(staat: RokStaat, nav: Nav) {
                     items(staat.miejsca, key = { it.first }) { (m, n) ->
                         Keuze(
                             selected = false,
-                            onClick = { nav.open(Scherm.Lijst(m, staat.rok.toString(), true, nav.scope) { p -> Immich.zoekTekst(null, "", p, null, ZoekFiltr(miasto = m, rok = staat.rok)) }) },
+                            onClick = { nav.open(Scherm.Lijst(m, staat.rok.toString(), true, nav.scope) { p -> Immich.zoekTekst(null, "", p, null, ZoekFiltr(miasto = m, rok = staat.rok, osoba = staat.osobaId?.let { Persoon(it, staat.imie.orEmpty(), false) })) }) },
                             leadingIcon = { Icon(Icons.Filled.Place, null, Modifier.width(18.dp)) }, tekst = "$m · ${Taal.getal(n)}",
                         )
                     }

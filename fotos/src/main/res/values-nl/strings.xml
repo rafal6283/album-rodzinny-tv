@@ -925,4 +925,22 @@
     <string name="rosla_diagnoza">"Foto's van de persoon: %1$d · met gezicht: %2$d"</string>
     <string name="synology_miniatury_blad">"Miniaturen laden niet — antwoord van de NAS: %1$s"</string>
     <string name="synology_zdjecie">foto</string>
+    <string name="pokaz_losowo">"Willekeurige diashow"</string>
+    <string name="quiz_ile_lat">"Hoe oud was %1$s op deze foto?"</string>
+    <string name="podobni_tytul">"Wie lijkt het meest?"</string>
+    <string name="podobni_opis">"Een kind naast ouders en grootouders op dezelfde leeftijd"</string>
+    <string name="podobni_wybierz">"Wiens foto\'s?"</string>
+    <string name="podobni_hint">"OK — volgende ronde"</string>
+    <string name="podobni_brak_daty">"Deze persoon heeft geen geboortedatum in Immich. Voeg die toe via Persoon bewerken."</string>
+    <string name="podobni_brak_starszych">"Geen oudere personen met geboortedatum (minstens 14 jaar ouder). Voeg geboortedata van ouders en grootouders toe."</string>
+    <string name="podobni_brak_zdjec">"Geen foto\'s van de anderen op dezelfde leeftijd gevonden."</string>
+    <string name="kadr_tytul">"Zelfde plek"</string>
+    <string name="kadr_opis">"Twee foto\'s van dezelfde plek, jaren uit elkaar"</string>
+    <string name="kadr_hint">"Toen en nu op dezelfde plek · OK — volgend paar"</string>
+    <string name="kadr_brak">"Geen plekken met foto\'s uit verschillende jaren gevonden (foto\'s hebben een GPS-locatie nodig)."</string>
+    <string name="rok_osoby_tytul">"%1$s in %2$d"</string>
+    <string name="rok_osoby_przycisk">"Jaar van persoon"</string>
+    <string name="urodziny_start">"Verjaardagsdiashow bij start"</string>
+    <string name="urodziny_start_uitleg">"Op iemands verjaardag speelt de eerste start van de dag diens foto\'s af"</string>
+    <string name="kanal_dzien">"Foto van de dag"</string>
 </resources>

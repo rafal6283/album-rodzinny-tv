@@ -106,6 +106,8 @@ object Instellingen {
     }
     /** po uruchomieniu aplikacji pokaz zdjęć „Tego dnia” z poprzednich lat */
     var tegoDniaStart by bool("tego_dnia_start", false)
+    /** pokaz zdjęć solenizanta przy pierwszym uruchomieniu w dniu urodzin */
+    var urodzinyStart by bool("urodziny_start", true)
     var start by keuze("start", Sectie.FOTOS)
     /** kolejność sekcji w bocznym menu: nazwy po przecinku (pusty = domyślna, zob. Sectie.menu()); per urządzenie */
     var sekcje by tekst("sekcje", "", perApparaat = true)

@@ -447,6 +447,19 @@ object Immich {
         List(a.length()) { asset(a.getJSONObject(it)) }
     }
 
+    /**
+     * Losowe zdjęcia osoby z okresu (wyszukiwanie losowe Immich, nie pierwsze N od początku okresu): podstawa losowości
+     * w „Jak rosła”, „Kiedyś i dziś” i urodzinach.
+     */
+    suspend fun osobaLosowo(osobaId: String, od: LocalDate?, doDnia: LocalDate?, n: Int, tylkoZdjecia: Boolean = true): List<Asset> = withContext(Dispatchers.Default) {
+        val body = JSONObject().put("size", n).put("withExif", true).put("personIds", JSONArray(listOf(osobaId)))
+        if (tylkoZdjecia) body.put("type", "IMAGE")
+        od?.let { body.put("takenAfter", "${it}T00:00:00.000Z") }
+        doDnia?.let { body.put("takenBefore", "${it}T23:59:59.999Z") }
+        val a = JSONArray(post("/search/random", body))
+        List(a.length()) { asset(a.getJSONObject(it)) }
+    }
+
     /** Pierwsza strona twarzy bez imienia (ekran „Kto to jest?”), w kolejności Immich (najczęstsze najpierw). */
     suspend fun osobyBezImienia(): List<Persoon> = wszystkieOsoby().filter { it.naam.isBlank() }
 
@@ -581,10 +594,11 @@ object Immich {
     // ---- Rok w skrócie ----
 
     /** Losowa próbka zdjęć i filmów z roku [rok] (z osobami i miejscami), do statystyk i pokazu. */
-    suspend fun probkaRoku(rok: Int, n: Int, ulubione: Boolean = false): List<Asset> = withContext(Dispatchers.Default) {
+    suspend fun probkaRoku(rok: Int, n: Int, ulubione: Boolean = false, osobaId: String? = null): List<Asset> = withContext(Dispatchers.Default) {
         val q = JSONObject().put("size", n).put("visibility", "timeline").put("withExif", true).put("withPeople", true)
             .put("takenAfter", "$rok-01-01T00:00:00.000Z").put("takenBefore", "$rok-12-31T23:59:59.999Z")
         if (ulubione) q.put("isFavorite", true)
+        osobaId?.let { q.put("personIds", JSONArray(listOf(it))) }
         val a = JSONArray(post("/search/random", q))
         List(a.length()) { asset(a.getJSONObject(it)) }
     }

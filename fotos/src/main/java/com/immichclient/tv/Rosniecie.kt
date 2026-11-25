@@ -55,7 +55,7 @@ import kotlin.math.roundToInt
 class Klatka(val zdjecie: Asset, val twarz: FloatArray?)
 
 /**
- * „Jak rosła Ola”: zdjęcia osoby z każdego roku (do 3 na rok, rozłożone w roku), wykadrowane tak, że twarz jest zawsze
+ * „Jak rosła Ola”: zdjęcia osoby z każdego roku (do 3 na rok, losowo z różnych miesięcy, najpierw jeszcze niepokazane), wykadrowane tak, że twarz jest zawsze
  * w środku ekranu i tej samej wielkości; podpis = wiek (gdy w Immich jest data urodzenia) albo rok. Klatki dochodzą
  * w trakcie wczytywania, animacja startuje od razu.
  */
@@ -82,18 +82,26 @@ class RosniecieStaat(val osobaId: String, val imie: String, scope: CoroutineScop
                 .onFailure { blad = it.message; android.util.Log.w("Fotos", "jak rosła", it) }.getOrNull()
             val odRoku = maxOf(najstarsze?.datum?.year ?: LocalDate.now().year, urodziny?.year ?: 0)
             for (r in odRoku..LocalDate.now().year) {
-                val zRoku = runCatching { Immich.osobaWOkresie(osobaId, LocalDate.of(r, 1, 1), LocalDate.of(r, 12, 31), 60, rosnaco = true) }
+                // losowa próbka z całego roku (nie pierwsze zdjęcia od stycznia), za każdym razem inna
+                val zRoku = runCatching { Immich.osobaLosowo(osobaId, LocalDate.of(r, 1, 1), LocalDate.of(r, 12, 31), 40) }
+                    .recoverCatching { Immich.osobaWOkresie(osobaId, LocalDate.of(r, 1, 1), LocalDate.of(r, 12, 31), 60, rosnaco = true) }
                     .onFailure { blad = it.message }.getOrDefault(emptyList())
                 if (zRoku.isEmpty()) continue
                 zdjec += zRoku.size
-                // kilka zdjęć z roku: wybieramy te z największą twarzą (najwyżej 3)
-                val kandydaci = listOf(0, zRoku.size / 4, zRoku.size / 2, 3 * zRoku.size / 4, zRoku.size - 1).distinct().map { zRoku[it] }
+                // kandydaci: po jednym z różnych miesięcy (najpierw jeszcze niepokazane), do 7 na rok
+                val kandydaci = zRoku.groupBy { it.datum.monthValue }.values
+                    .map { m -> Pokazane.wybierz(m, 1) { it.id }.first() }
+                    .let { Pokazane.wybierz(it, 7) { a -> a.id } }
                 val zTwarza = kandydaci.map { it to Immich.twarzOsoby(it.id, osobaId) }
-                val dobre = zTwarza.filter { (_, t) -> t != null && t[3] - t[1] >= 0.03f }.sortedByDescending { (_, t) -> t!![3] - t[1] }.take(3).sortedBy { it.first.datum }
                 twarzy += zTwarza.count { it.second != null }
-                if (dobre.isNotEmpty()) dobre.forEach { (a, t) -> klatki.add(Klatka(a, t)) }
-                // twarzy nie da się odczytać (np. serwer ich nie podaje): zdjęcie i tak trafia do animacji, bez wyrównania
-                else klatki.add(Klatka(zRoku[zRoku.size / 2], null))
+                // dobre = twarz wyraźna; z nich losowo do 3 (różne miesiące), w kolejności dat
+                val dobre = Pokazane.wybierz(zTwarza.filter { (_, t) -> t != null && t[3] - t[1] >= 0.03f }, 3) { it.first.id }
+                    .sortedBy { it.first.datum }
+                val wybrane = if (dobre.isNotEmpty()) dobre.map { (a, t) -> Klatka(a, t) }
+                    // twarzy nie da się odczytać (np. serwer ich nie podaje): losowe zdjęcie i tak trafia do animacji, bez wyrównania
+                    else listOf(Klatka(Pokazane.wybierz(zRoku, 1) { it.id }.first(), null))
+                klatki.addAll(wybrane)
+                Pokazane.zapamietaj(wybrane.map { it.zdjecie.id })
             }
             gotowe = true
         }

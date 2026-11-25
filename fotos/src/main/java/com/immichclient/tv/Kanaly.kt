@@ -50,6 +50,8 @@ object Kanaly {
         NAJNOWSZE("najnowsze", R.string.kanal_najnowsze),
         LOSOWE("losowe", R.string.kanal_losowe),
         WSPOMNIENIA("wspomnienia", R.string.kanal_wspomnienia),
+        /** jedno zdjęcie na dzień (najchętniej z ulubionych), zmienia się o północy */
+        DZIEN("dzien", R.string.kanal_dzien),
         /** wybrany album (przycisk „Na ekran główny” w albumie); nazwa kanału = nazwa albumu */
         ALBUM("album", R.string.kanal_album),
     }
@@ -97,6 +99,7 @@ object Kanaly {
                 // dzisiejsze urodziny na początku kanału „Tego dnia”: kafelek z ostatnim zdjęciem osoby z okolic urodzin
                 urodzinyDzis().map { it.first } + Immich.herinneringen(java.time.LocalDate.now()).sortedBy { it.jaar }.flatMap { it.assets }.take(30)
             }.getOrElse { Log.w(TAG, "wspomnienia", it); null },
+            Rodzaj.DZIEN to runCatching { zdjecieDnia(c) }.getOrElse { Log.w(TAG, "zdjęcie dnia", it); null },
         )
         // kanał albumu: tylko gdy album jest wybrany; inaczej usuwamy go z ekranu głównego
         val album = Instellingen.kanalAlbum
@@ -120,6 +123,24 @@ object Kanaly {
             }
         }
         Log.i(TAG, "kanały odświeżone")
+    }
+
+    /** Zdjęcie dnia: wybierane raz dziennie (ulubione, a gdy ich brak — losowe; najpierw jeszcze niepokazane). */
+    private suspend fun zdjecieDnia(c: Context): List<Asset> {
+        val p = prefs(c)
+        val dzis = java.time.LocalDate.now().toString()
+        val zapisane = p.getString("dzien_id", null)
+        val a = if (p.getString("dzien_data", "") == dzis && zapisane != null) runCatching { Immich.asset(zapisane) }.getOrNull() else null
+        val wybrane = a ?: run {
+            val kandydaci = runCatching { Immich.losowe(40, ulubione = true) }.getOrDefault(emptyList()).filter { !it.video }
+                .ifEmpty { Immich.willekeurig(40).filter { !it.video } }
+            Pokazane.wybierz(kandydaci, 1) { it.id }.firstOrNull()?.also {
+                p.edit().putString("dzien_data", dzis).putString("dzien_id", it.id).apply()
+                Pokazane.zapamietaj(listOf(it.id))
+            }
+        } ?: return emptyList()
+        tytulyUrodzin[wybrane.id] = c.getString(R.string.kanal_dzien) + (listOfNotNull(wybrane.stad, wybrane.datum.year.toString()).joinToString(", ").let { " · $it" })
+        return listOf(wybrane)
     }
 
     /** tytuły kafelków urodzinowych („🎂 Dziś urodziny: Ola · 8 lat”) wg id zdjęcia */

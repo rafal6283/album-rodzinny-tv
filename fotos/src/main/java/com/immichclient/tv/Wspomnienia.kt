@@ -113,11 +113,50 @@ fun RoczniceRij(nav: Nav) {
     }
 }
 
+/**
+ * Urodziny dziś: przy pierwszym uruchomieniu aplikacji w tym dniu automatyczny pokaz (z muzyką, jeśli włączona)
+ * zdjęć solenizanta — z okolic jego urodzin w poprzednich latach i losowe z całego życia.
+ */
+object UrodzinyStart {
+    @Volatile var pokazano = false
+
+    /** tytuł pokazu i zdjęcia; null = nikt nie ma dziś urodzin albo pokaz już był dzisiaj */
+    suspend fun dzis(c: android.content.Context): Pair<String, List<Asset>>? {
+        val dzis = LocalDate.now()
+        val prefs = c.getSharedPreferences("urodziny_start", android.content.Context.MODE_PRIVATE)
+        if (prefs.getString("dzien", "") == dzis.toString()) return null
+        val osoby = runCatching { Immich.osobyZUrodzinami() }.getOrDefault(emptyList()).filter { p ->
+            !Instellingen.osobaUkryta(p.id) && p.urodziny?.let { it.monthValue == dzis.monthValue && it.dayOfMonth == dzis.dayOfMonth } == true
+        }
+        if (osoby.isEmpty()) return null
+        val zdjecia = osoby.flatMap { o ->
+            val ur = o.urodziny!!
+            val zUrodzin = (1..minOf(30, dzis.year - ur.year)).flatMap { lat ->
+                val d = dzis.minusYears(lat.toLong())
+                runCatching { Immich.osobaWDniach(o.id, d.minusDays(3), d.plusDays(3), 40) }.getOrDefault(emptyList())
+                    .filter { !it.video }.let { Pokazane.wybierz(it, 5) { a -> a.id } }
+            }
+            val losowe = runCatching { Immich.osobaLosowo(o.id, null, null, 30) }.getOrDefault(emptyList())
+            (zUrodzin + Pokazane.wybierz(losowe, 15) { it.id }).distinctBy { it.id }
+        }.sortedBy { it.datum }.take(150)
+        if (zdjecia.isEmpty()) return null
+        prefs.edit().putString("dzien", dzis.toString()).apply()
+        Pokazane.zapamietaj(zdjecia.map { it.id })
+        val imiona = osoby.joinToString(", ") { it.naam }
+        return "🎂 " + c.getString(R.string.urodziny_osoby, imiona) to zdjecia
+    }
+}
+
 /** „Tego dnia” jako pokaz na start (Ustawienia): raz na uruchomienie aplikacji. */
 object TegoDniaStart {
     @Volatile var pokazano = false
 
-    suspend fun zasoby(): List<Asset> = runCatching { Immich.herinneringen(LocalDate.now()).flatMap { it.assets } }
+    /** Wspomnienia z dzisiaj; z każdego roku do 25 zdjęć, losowo (najpierw jeszcze niepokazane), lata po kolei. */
+    suspend fun zasoby(): List<Asset> = runCatching {
+        Immich.herinneringen(LocalDate.now()).sortedBy { it.jaar }.flatMap { h ->
+            Pokazane.wybierz(h.assets, 25) { it.id }.sortedBy { it.datum }
+        }.also { l -> Pokazane.zapamietaj(l.map { it.id }) }
+    }
         .onFailure { Log.w("Fotos", "tego dnia", it) }.getOrDefault(emptyList())
 }
 
@@ -133,13 +172,22 @@ fun KiedysIDzis(osobaId: String, imie: String, sluit: () -> Unit) {
     LaunchedEffect(Unit) { delay(40); runCatching { fr.requestFocus() } }
     var lat by remember { mutableIntStateOf(1) }
     val dzis = LocalDate.now()
-    val teraz by produceState<Asset?>(null, osobaId) { value = runCatching { Immich.osobaWOkresie(osobaId, null, null, 1).firstOrNull() }.getOrNull() }
+    // „dziś”: jedno z najnowszych zdjęć (ostatnie ~3 miesiące od najnowszego), losowo
+    val teraz by produceState<Asset?>(null, osobaId) {
+        value = runCatching {
+            val naj = Immich.osobaWOkresie(osobaId, null, null, 1).firstOrNull() ?: return@runCatching null
+            val od = naj.datum.toLocalDate().minusMonths(3)
+            Immich.osobaLosowo(osobaId, od, naj.datum.toLocalDate(), 15).let { Pokazane.wybierz(it, 1) { x -> x.id }.firstOrNull() } ?: naj
+        }.getOrNull()
+    }
     val wtedy by produceState<Pair<Boolean, Asset?>>(false to null, osobaId, lat) {
         value = false to null
         val srodek = dzis.minusYears(lat.toLong())
         val a = runCatching {
-            Immich.osobaWOkresie(osobaId, srodek.minusDays(45), srodek.plusDays(45), 1).firstOrNull()
-                ?: Immich.osobaWOkresie(osobaId, LocalDate.of(srodek.year, 1, 1), LocalDate.of(srodek.year, 12, 31), 1).firstOrNull()
+            // losowo (nie zawsze to samo zdjęcie), najpierw jeszcze niepokazane
+            (Immich.osobaLosowo(osobaId, srodek.minusDays(45), srodek.plusDays(45), 20).takeIf { it.isNotEmpty() }
+                ?: Immich.osobaLosowo(osobaId, LocalDate.of(srodek.year, 1, 1), LocalDate.of(srodek.year, 12, 31), 20))
+                .let { Pokazane.wybierz(it, 1) { x -> x.id }.firstOrNull() }?.also { Pokazane.zapamietaj(listOf(it.id)) }
         }.getOrNull()
         value = true to a
     }
@@ -329,13 +377,17 @@ fun otworzUrodziny(nav: Nav, osoba: Persoon, nazwa: String) {
     val ostatni = if (wRoku(teraz.year).isAfter(teraz)) teraz.year - 1 else teraz.year
     val najstarszy = maxOf(ur.year, ostatni - 40)
     var nastepny = ostatni
-    nav.open(Scherm.Lijst(tytul, sub, true, nav.scope) { strona ->
+    nav.open(Scherm.Lijst(tytul, sub, true, nav.scope, losowyPokaz = true) { strona ->
         // kolejne lata wstecz, aż uzbiera się choć kilkanaście zdjęć (w niektórych latach nie ma żadnych)
         if (strona == 1) nastepny = ostatni
         val zdjecia = ArrayList<Asset>()
         while (nastepny >= najstarszy && zdjecia.size < 15) {
             val d = wRoku(nastepny)
-            zdjecia += runCatching { Immich.osobaWDniach(osoba.id, d.minusDays(3), d.plusDays(3)) }.getOrDefault(emptyList())
+            // ±3 dni wokół urodzin; gdy w tym roku prawie nic — szersze okno ±7 dni
+            var zRoku = runCatching { Immich.osobaWDniach(osoba.id, d.minusDays(3), d.plusDays(3)) }.getOrDefault(emptyList())
+            if (zRoku.size < 3) zRoku = runCatching { Immich.osobaWDniach(osoba.id, d.minusDays(7), d.plusDays(7)) }.getOrDefault(zRoku)
+            // dużo zdjęć z jednego roku: losowa porcja (najpierw jeszcze niepokazane), żeby za każdym razem było coś innego
+            zdjecia += if (zRoku.size > 24) Pokazane.wybierz(zRoku, 24) { it.id }.also { w -> Pokazane.zapamietaj(w.map { it.id }) } else zRoku
             nastepny--
         }
         Pagina(zdjecia.sortedByDescending { it.datum }, if (nastepny >= najstarszy) strona + 1 else null)
