@@ -943,4 +943,26 @@
     <string name="urodziny_start">"Verjaardagsdiashow bij start"</string>
     <string name="urodziny_start_uitleg">"Op iemands verjaardag speelt de eerste start van de dag diens foto\'s af"</string>
     <string name="kanal_dzien">"Foto van de dag"</string>
+    <string name="serwer_spi_tytul">"De fotoserver slaapt"</string>
+    <string name="serwer_spi_opis">"De server reageert niet — waarschijnlijk staat hij uit (bijv. alleen ’s avonds aan)."</string>
+    <string name="serwer_spi_tailscale">"De server reageert niet. Hij staat mogelijk uit (bijv. alleen ’s avonds), of Tailscale op deze tv is nog niet verbonden."</string>
+    <string name="tailscale_brak">"Tailscale staat niet op deze tv — installeer het via Google Play."</string>
+    <string name="serwer_sprobuj">"Nu proberen"</string>
+    <string name="tailscale_otworz">"Tailscale openen"</string>
+    <string name="serwer_kontynuuj">"Toch doorgaan"</string>
+    <string name="serwer_spi_auto">"Ik probeer het elke minuut opnieuw en start vanzelf zodra de server wakker is."</string>
+    <string name="groep_zdalnie">"Toegang op afstand (Tailscale)"</string>
+    <string name="zdalnie_teraz">"Verbonden via"</string>
+    <string name="zdalnie_przez_zdalny">"adres op afstand · %1$s"</string>
+    <string name="zdalnie_przez_dom">"thuisadres · %1$s"</string>
+    <string name="zdalnie_adres_immich">"Immich-adres op afstand"</string>
+    <string name="zdalnie_adres_synology">"Synology-adres op afstand"</string>
+    <string name="zdalnie_brak_adresu">"Niet ingesteld — bijv. het Tailscale-adres (100.x.y.z of naam.ts.net); gebruikt als het thuisadres niet reageert"</string>
+    <string name="tailscale_otworz_uitleg">"Log in of controleer de verbinding in de Tailscale-app"</string>
+    <string name="tailscale_zawsze">"Tailscale altijd aan — hoe?"</string>
+    <string name="tailscale_zawsze_uitleg">"De app vraagt Tailscale zelf om op de achtergrond te verbinden; hiermee start het meteen bij het aanzetten van de tv"</string>
+    <string name="tailscale_instrukcja">"Als de tv-instellingen een VPN-menu hebben: Netwerk en internet → VPN → ⚙ bij Tailscale → Altijd-aan-VPN (zonder verbindingen zonder VPN te blokkeren).\nZo niet — eenmalig vanaf een computer (USB-/netwerkfoutopsporing aan op de tv):\nadb connect IP-van-tv\nadb shell settings put secure always_on_vpn_app com.tailscale.ipn\nadb shell settings put secure always_on_vpn_lockdown 0\nTailscale start dan vanzelf als de tv aangaat; internet werkt gewoon, ook als je server uit staat."</string>
+    <string name="html_zdalny">"Adres op afstand (optioneel)"</string>
+    <string name="html_zdalny_hint">"Bijv. het Tailscale-adres van de server (100.x.y.z:2283). De tv gebruikt het als het thuisadres niet reageert — bijv. bij opa en oma."</string>
+    <string name="koppel_przez_tailscale">"Of op afstand, via Tailscale (vanaf je eigen telefoon):"</string>
 </resources>

@@ -80,6 +80,7 @@ class SynologyStaat(private val scope: CoroutineScope) {
         val z = zakladka
         scope.launch {
             runCatching {
+                Synology.wybierzAdres(Taal.ctx)
                 when (z) {
                     SynoZakladka.MOJE -> { albumy = null; albumy = Synology.albumy(); sprawdz() }
                     SynoZakladka.UDOSTEPNIONE -> { albumy = null; albumy = Synology.albumyUdostepnione(); sprawdz() }

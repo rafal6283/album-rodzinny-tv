@@ -35,8 +35,13 @@ object Immich {
 
     @Volatile var sleutel = ""
         private set
-    /** Basisadres zonder /api, bijv. http://192.168.1.10:2283 of https://photos.example.com */
+    /** Basisadres zonder /api, bijv. http://192.168.1.10:2283 of https://photos.example.com — het adres dat nu gebruikt wordt */
     @Volatile var server = ""
+        private set
+    /** adres główny (dom) i zdalny (np. Tailscale 100.x / *.ts.net); aktywny = [server], wybiera [Zdalnie.wybierz] */
+    @Volatile var serverDom = ""
+        private set
+    @Volatile var serverZdalny = ""
         private set
     /** Profiel waarvan het account nu gebruikt wordt (null = het algemene account). */
     @Volatile var kijker: String? = null
@@ -65,24 +70,38 @@ object Immich {
         val k = (kijker ?: p.getString(Profile.AKTYWNY, null))?.takeIf { it.isNotBlank() && p.contains("sleutel_$it") }
         this.kijker = k
         sleutel = p.getString(if (k != null) "sleutel_$k" else "sleutel", "") ?: ""
-        server = p.getString(if (k != null) "server_$k" else "server", "") ?: ""
+        serverDom = p.getString(if (k != null) "server_$k" else "server", "") ?: ""
+        serverZdalny = p.getString(if (k != null) "zdalny_$k" else "zdalny", "") ?: ""
+        server = serverDom.ifBlank { serverZdalny }
         ik = null
         Instellingen.laad(c, k)
         stand++
     }
 
-    fun zetSleutel(c: Context, nieuw: String, kijker: String?, serverAdres: String? = null) {
+    fun zetSleutel(c: Context, nieuw: String, kijker: String?, serverAdres: String? = null, zdalny: String? = null) {
         val na = if (kijker.isNullOrBlank()) "" else "_$kijker"
         c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().apply {
             putString("sleutel$na", nieuw.trim())
             serverAdres?.let { putString("server$na", Koppel.normaliseer(it)) }
+            zdalny?.let { if (it.isBlank()) remove("zdalny$na") else putString("zdalny$na", Koppel.normaliseer(it)) }
         }.apply()
     }
+
+    /** Adres zdalny (Tailscale) bieżącego konta; pusty = brak. */
+    fun zetZdalny(c: Context, adres: String) {
+        val na = if (kijker.isNullOrBlank()) "" else "_$kijker"
+        val a = adres.trim().takeIf { it.isNotEmpty() }?.let { Koppel.normaliseer(it) }.orEmpty()
+        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().apply { if (a.isEmpty()) remove("zdalny$na") else putString("zdalny$na", a) }.apply()
+        serverZdalny = a
+    }
+
+    /** Przełącz na działający adres (dom albo zdalny). */
+    fun ustawAktywny(adres: String) { server = adres }
 
     /** Sleutel (en adres) van dit account wissen; de sleutel zelf blijft in Immich staan tot je hem daar verwijdert. */
     fun ontkoppel(c: Context, kijker: String?) {
         val na = if (kijker.isNullOrBlank()) "" else "_$kijker"
-        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove("sleutel$na").remove("server$na").apply()
+        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().remove("sleutel$na").remove("server$na").remove("zdalny$na").apply()
         kiesAccount(c, kijker)
     }
 

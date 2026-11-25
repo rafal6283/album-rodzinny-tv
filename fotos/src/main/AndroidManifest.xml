@@ -17,6 +17,11 @@
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
+    <!-- Tailscale na telewizorze: sprawdzenie, czy jest zainstalowany, i prośba o połączenie w tle -->
+    <queries>
+        <package android:name="com.tailscale.ipn" />
+    </queries>
+
     <application
         android:name=".App"
         android:label="@string/app_name"

@@ -34,7 +34,11 @@ object Synology {
     private const val PREFS = "synology"
     private const val TAG = "Synology"
 
+    /** adres używany teraz: domowy albo zdalny (Tailscale), wybierany w [wybierzAdres] */
     @Volatile var adres = ""; private set
+    @Volatile var adresDom = ""; private set
+    @Volatile var adresZdalny = ""; private set
+    @Volatile private var wybrano = false
     @Volatile private var konto = ""
     @Volatile private var haslo = ""
     @Volatile private var sid = ""
@@ -47,7 +51,9 @@ object Synology {
 
     fun wczytaj(c: Context) {
         val p = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        adres = p.getString("adres", "").orEmpty(); konto = p.getString("konto", "").orEmpty()
+        adresDom = p.getString("adres", "").orEmpty(); adresZdalny = p.getString("adres_zdalny", "").orEmpty()
+        adres = adresDom.ifBlank { adresZdalny }; wybrano = false
+        konto = p.getString("konto", "").orEmpty()
         haslo = p.getString("haslo", "").orEmpty(); sid = p.getString("sid", "").orEmpty()
         wariant = p.getInt("wariant_miniatur", 0)
         okladkiTeam = p.getBoolean("okladki_team", false)
@@ -56,12 +62,12 @@ object Synology {
 
     private fun zapisz(c: Context) {
         c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putString("adres", adres).putString("konto", konto).putString("haslo", haslo).putString("sid", sid).apply()
+            .putString("adres", adresDom.ifBlank { adres }).putString("konto", konto).putString("haslo", haslo).putString("sid", sid).apply()
         stan++
     }
 
     fun wyloguj(c: Context) {
-        adres = ""; konto = ""; haslo = ""; sid = ""
+        adres = ""; adresDom = ""; adresZdalny = ""; konto = ""; haslo = ""; sid = ""
         c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()
         stan++
     }
@@ -99,7 +105,8 @@ object Synology {
         if (host.endsWith(".local")) return true
         val p = host.split('.').mapNotNull { it.toIntOrNull() }
         if (p.size != 4) return false
-        return p[0] == 10 || (p[0] == 192 && p[1] == 168) || (p[0] == 172 && p[1] in 16..31)
+        // 100.64–127.x = Tailscale (połączenie i tak szyfrowane przez Tailscale)
+        return p[0] == 10 || (p[0] == 192 && p[1] == 168) || (p[0] == 172 && p[1] in 16..31) || (p[0] == 100 && p[1] in 64..127)
     }
 
     /** Czy to adres skonfigurowanego NAS w sieci lokalnej (wtedy klient z certyfikatami z podpisem własnym). */
@@ -110,6 +117,32 @@ object Synology {
 
     /** Wszystkie połączenia aplikacji (Immich, obrazy, filmy): do lokalnego NAS przez [klientLan], reszta zwykle. */
     val polaczenia = okhttp3.Call.Factory { r -> if (naszLokalny(r.url)) klientLan.newCall(r) else Immich.http.newCall(r) }
+
+    /** Adres zdalny NAS (np. Tailscale); pusty = brak. */
+    fun zetZdalny(c: Context, a: String) {
+        adresZdalny = a.trim().takeIf { it.isNotEmpty() }?.let { normalizuj(it) }.orEmpty()
+        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString("adres_zdalny", adresZdalny).apply()
+        wybrano = false
+    }
+
+    /** Raz na uruchomienie (i po zmianie adresów): adres domowy, a gdy nie odpowiada — zdalny (z prośbą do Tailscale). */
+    suspend fun wybierzAdres(c: Context) {
+        if (wybrano) return
+        val adresy = listOf(adresDom, adresZdalny).filter { it.isNotBlank() }.distinct()
+        if (adresy.size < 2) { wybrano = true; return }
+        for (a in adresy) {
+            if (Zdalnie.jestTailscale(a)) Zdalnie.polacz(c)
+            val ok = withContext(Dispatchers.IO) {
+                runCatching {
+                    val u = ("$a/webapi/query.cgi?api=SYNO.API.Info&method=query&version=1&query=SYNO.API.Auth").toHttpUrlOrNull() ?: return@runCatching false
+                    polaczenia.newCall(Request.Builder().url(u).build()).execute().use { it.isSuccessful }
+                }.getOrDefault(false)
+            }
+            if (ok) { adres = a; wybrano = true; Log.i(TAG, "adres: $a"); return }
+        }
+        // nic nie odpowiada: zostaje domowy (błąd pokaże się przy wczytywaniu)
+        wybrano = true
+    }
 
     private fun url(api: String, metoda: String, wersja: Int, vararg param: Pair<String, String>, zSid: Boolean = true): HttpUrl {
         val b = ("$adres/webapi/entry.cgi".toHttpUrlOrNull() ?: throw IOException("niepoprawny adres Synology")).newBuilder()
@@ -134,7 +167,7 @@ object Synology {
 
     /** Logowanie; [otp] = kod z aplikacji uwierzytelniającej, gdy konto ma 2FA. */
     suspend fun zaloguj(c: Context, adresNas: String, login: String, hasloNas: String, otp: String?) {
-        adres = normalizuj(adresNas); konto = login.trim(); haslo = hasloNas
+        adres = normalizuj(adresNas); adresDom = adres; wybrano = true; konto = login.trim(); haslo = hasloNas
         val p = mutableListOf("account" to konto, "passwd" to haslo, "session" to "SynologyPhotos", "format" to "sid")
         if (!otp.isNullOrBlank()) p += "otp_code" to otp.trim()
         val d = wywolaj(url("SYNO.API.Auth", "login", 7, *p.toTypedArray(), zSid = false))
