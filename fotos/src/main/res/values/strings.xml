@@ -947,4 +947,22 @@
     <string name="rosla_diagnoza">"Photos of the person: %1$d · with a detected face: %2$d"</string>
     <string name="synology_miniatury_blad">"Thumbnails don't load — NAS response: %1$s"</string>
     <string name="synology_zdjecie">photo</string>
+    <string name="pokaz_losowo">"Random slideshow"</string>
+    <string name="quiz_ile_lat">"How old was %1$s in this photo?"</string>
+    <string name="podobni_tytul">"Who looks more alike?"</string>
+    <string name="podobni_opis">"A child next to parents and grandparents at the same age"</string>
+    <string name="podobni_wybierz">"Whose photos?"</string>
+    <string name="podobni_hint">"OK — next round"</string>
+    <string name="podobni_brak_daty">"This person has no date of birth in Immich. Add it under Edit person."</string>
+    <string name="podobni_brak_starszych">"No older people with a date of birth (at least 14 years older). Add birth dates of parents and grandparents."</string>
+    <string name="podobni_brak_zdjec">"No photos of the others at the same age were found."</string>
+    <string name="kadr_tytul">"Same spot"</string>
+    <string name="kadr_opis">"Two photos from the same place, years apart"</string>
+    <string name="kadr_hint">"Then and now in the same place · OK — next pair"</string>
+    <string name="kadr_brak">"No places with photos from different years were found (photos need a GPS location)."</string>
+    <string name="rok_osoby_tytul">"%1$s in %2$d"</string>
+    <string name="rok_osoby_przycisk">"Their year"</string>
+    <string name="urodziny_start">"Birthday slideshow at start"</string>
+    <string name="urodziny_start_uitleg">"On someone\'s birthday, the first launch of the day plays their photos"</string>
+    <string name="kanal_dzien">"Photo of the day"</string>
 </resources>

@@ -586,7 +586,19 @@ fun LijstScherm(scherm: Scherm.Lijst, nav: Nav) {
             modifier = Modifier.fillMaxSize(),
         ) {
             item(key = "boven") {
-                SchermKop(scherm.titel, listOfNotNull(scherm.sub, if (res.assets.isNotEmpty()) pluralStringResource(R.plurals.items, res.assets.size, res.assets.size) + (if (res.bezig) "+" else "") else null).joinToString("  ·  "))
+                SchermKop(scherm.titel, listOfNotNull(scherm.sub, if (res.assets.isNotEmpty()) pluralStringResource(R.plurals.items, res.assets.size, res.assets.size) + (if (res.bezig) "+" else "") else null).joinToString("  ·  ")) {
+                    // pokaz w losowej kolejności (najpierw zdjęcia jeszcze niepokazane), np. urodziny z różnych lat
+                    if (scherm.losowyPokaz && res.assets.isNotEmpty()) Keuze(
+                        selected = false,
+                        onClick = {
+                            val lista = Pokazane.nowePierwsze(res.assets)
+                            Pokazane.zapamietaj(lista.take(30).map { it.id })
+                            nav.bekijk(LijstBron(lista), 0, scherm.titel, true, null)
+                        },
+                        leadingIcon = { androidx.tv.material3.Icon(androidx.compose.material.icons.Icons.Filled.Shuffle, null, Modifier.size(18.dp)) },
+                        tekst = stringResource(R.string.pokaz_losowo),
+                    )
+                }
                 if (res.fout != null && res.assets.isEmpty()) Text(stringResource(R.string.laden_mislukt, res.fout.orEmpty()), color = Kleur.zacht)
             }
         }

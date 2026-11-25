@@ -238,6 +238,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         if (alles) schakel(R.string.partner, R.string.partner_uitleg, uitAan, Instellingen.partners) { Instellingen.partners = it }
         if (alles) schakel(R.string.herinneringen_boven, R.string.herinneringen_boven_uitleg, uitAan, Instellingen.herinneringen) { Instellingen.herinneringen = it }
         schakel(R.string.tego_dnia_start, R.string.tego_dnia_start_uitleg, uitAan, Instellingen.tegoDniaStart) { Instellingen.tegoDniaStart = it }
+        schakel(R.string.urodziny_start, R.string.urodziny_start_uitleg, uitAan, Instellingen.urodzinyStart) { Instellingen.urodzinyStart = it }
         item {
             val keuzes = listOf(Sectie.FOTOS, Sectie.FILMY, Sectie.HERINNERINGEN, Sectie.ROCZNICE, Sectie.KAART, Sectie.ALBUMS, Sectie.LUDZIE, Sectie.MAPPEN, Sectie.FAVORIETEN)
             Keuzes(stringResource(R.string.startscherm), stringResource(R.string.startscherm_uitleg), keuzes.map { stringResource(if (it == Sectie.FOTOS) Instellingen.uiterlijk.label else it.label) },

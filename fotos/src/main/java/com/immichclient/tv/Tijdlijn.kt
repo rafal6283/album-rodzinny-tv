@@ -2,6 +2,7 @@ package com.immichclient.tv
 
 import androidx.compose.foundation.border
 import androidx.compose.material.icons.filled.ChildCare
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material.icons.filled.CompareArrows
 import androidx.compose.material.icons.filled.Edit
@@ -337,6 +338,15 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                                 selected = false, onClick = { kiezer = true }, modifier = Modifier.focusRequester(datumKnop),
                                 leadingIcon = { Icon(Icons.Filled.CalendarMonth, null, Modifier.width(18.dp)) },
                             tekst = stringResource(R.string.ga_naar_datum))
+                            // odliczanie do urodzin (główna oś czasu): najbliższe w ciągu 30 dni, OK = zdjęcia z jej urodzin
+                            if (scherm.metHerinneringen) {
+                                LaunchedEffect(Unit) { Kalendarz.laduj() }
+                                Kalendarz.lista.filter { it.osoba != null && it.zaIle in 0..30 }.take(2).forEach { w ->
+                                    val o = w.osoba!!
+                                    val kiedy = when (w.zaIle) { 0 -> stringResource(R.string.kalendarz_dzis); 1 -> stringResource(R.string.kalendarz_jutro); else -> stringResource(R.string.kalendarz_za, w.zaIle) }
+                                    Keuze(selected = w.zaIle == 0, onClick = { otworzUrodziny(nav, o, o.naam) }, tekst = "🎂 ${o.naam} · $kiedy")
+                                }
+                            }
                             // pokaz slajdów osoby / albumu jednym przyciskiem (z muzyką, jeśli włączona)
                             if (staat.filter.persoonId != null || staat.filter.albumId != null) Keuze(
                                 selected = false, onClick = { if (staat.aantal > 0) nav.bekijk(staat, 0, titel, true, staat.raster) },
@@ -355,6 +365,15 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                                     selected = false, onClick = { nav.open(Scherm.Rosniecie(id, scherm.titel, nav.scope)) },
                                     leadingIcon = { Icon(Icons.Filled.ChildCare, null, Modifier.width(18.dp)) },
                                     tekst = stringResource(R.string.rosla_przycisk),
+                                )
+                            }
+                            // rok osoby: podsumowanie jej roku (jak „Rok w skrócie”), w styczniu i lutym poprzedni rok
+                            staat.filter.persoonId?.let { id ->
+                                val rokOsoby = java.time.LocalDate.now().let { if (it.monthValue <= 2) it.year - 1 else it.year }
+                                Keuze(
+                                    selected = false, onClick = { nav.open(Scherm.Rok(rokOsoby, nav.scope, id, scherm.titel)) },
+                                    leadingIcon = { Icon(androidx.compose.material.icons.Icons.Filled.Insights, null, Modifier.width(18.dp)) },
+                                    tekst = stringResource(R.string.rok_osoby_przycisk),
                                 )
                             }
                             // edycja: osoba (imię, data urodzenia, ukrycie, połączenie) albo nazwa albumu

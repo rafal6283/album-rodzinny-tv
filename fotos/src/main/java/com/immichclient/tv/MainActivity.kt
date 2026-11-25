@@ -143,14 +143,16 @@ sealed class Scherm {
     data object Impreza : Scherm()
     class Podroz(albumId: String, nazwa: String, scope: CoroutineScope) : Scherm() { val staat = PodrozStaat(albumId, nazwa, scope) }
     class Rosniecie(osobaId: String, imie: String, scope: CoroutineScope) : Scherm() { val staat = RosniecieStaat(osobaId, imie, scope) }
+    class Podobni(osobaId: String, imie: String, scope: CoroutineScope) : Scherm() { val staat = PodobniStaat(osobaId, imie, scope) }
+    class Kadr(scope: CoroutineScope) : Scherm() { val staat = KadrStaat(scope) }
     class Powroty(scope: CoroutineScope) : Scherm() { val staat = PowrotyStaat(scope) }
     @Suppress("UNUSED_PARAMETER") class Kolory(scope: CoroutineScope) : Scherm()
     class Synology(scope: CoroutineScope) : Scherm() { val staat = SynologyStaat(scope) }
     /** Rok w skrócie (ze Wspomnień) */
-    class Rok(rok: Int, scope: CoroutineScope) : Scherm() { val staat = RokStaat(scope, rok) }
+    class Rok(rok: Int, scope: CoroutineScope, osobaId: String? = null, imie: String? = null) : Scherm() { val staat = RokStaat(scope, rok, osobaId, imie) }
     /** sekcja Filmy: kolejność, przejście do daty, losowo */
     class Filmy(scope: CoroutineScope) : Scherm() { val staat = FilmyStaat(scope) }
-    class Lijst(val titel: String, val sub: String?, val perDag: Boolean, scope: CoroutineScope, laad: suspend (Int) -> Pagina) : Scherm() {
+    class Lijst(val titel: String, val sub: String?, val perDag: Boolean, scope: CoroutineScope, val losowyPokaz: Boolean = false, laad: suspend (Int) -> Pagina) : Scherm() {
         val res = Resultaten(scope).also { it.start(laad) }
     }
 }
@@ -425,6 +427,12 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
     }
     // „Tego dnia” jako pokaz na start (Ustawienia → Oś czasu): raz na uruchomienie, tylko gdy są zdjęcia z tego dnia
     androidx.compose.runtime.LaunchedEffect(Unit) {
+        // urodziny dziś: pokaz solenizanta (raz dziennie) ma pierwszeństwo przed „Tego dnia”
+        if (!UrodzinyStart.pokazano && testIndex < 0 && WejscieKanal.zadanie == null && Instellingen.urodzinyStart) {
+            UrodzinyStart.pokazano = true
+            val u = UrodzinyStart.dzis(ctx)
+            if (u != null && kijker == null) { TegoDniaStart.pokazano = true; nav.bekijk(LijstBron(u.second), 0, u.first, true, null); return@LaunchedEffect }
+        }
         if (!Instellingen.tegoDniaStart || TegoDniaStart.pokazano || testIndex >= 0 || WejscieKanal.zadanie != null) return@LaunchedEffect
         TegoDniaStart.pokazano = true
         val lista = TegoDniaStart.zasoby()
@@ -609,6 +617,8 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         is Scherm.Impreza -> ImprezaScherm()
                         is Scherm.Podroz -> PodrozScherm(scherm.staat)
                         is Scherm.Rosniecie -> RosniecieScherm(scherm.staat)
+                        is Scherm.Podobni -> PodobniScherm(scherm.staat)
+                        is Scherm.Kadr -> KadrScherm(scherm.staat)
                         is Scherm.Powroty -> PowrotyScherm(scherm.staat, nav)
                         is Scherm.Kolory -> KoloryScherm(nav)
                         is Scherm.Synology -> SynologyScherm(scherm.staat, nav)

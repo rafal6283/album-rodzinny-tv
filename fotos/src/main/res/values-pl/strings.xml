@@ -975,4 +975,22 @@
     <string name="rosla_diagnoza">"Zdjęć osoby: %1$d · z odczytaną twarzą: %2$d"</string>
     <string name="synology_miniatury_blad">"Miniatury się nie wczytują — odpowiedź NAS: %1$s"</string>
     <string name="synology_zdjecie">zdjęcie</string>
+    <string name="pokaz_losowo">"Pokaz losowo"</string>
+    <string name="quiz_ile_lat">"Ile lat miał(a) %1$s na tym zdjęciu?"</string>
+    <string name="podobni_tytul">"Kto bardziej podobny?"</string>
+    <string name="podobni_opis">"Dziecko obok rodziców i dziadków w tym samym wieku"</string>
+    <string name="podobni_wybierz">"Czyje zdjęcia?"</string>
+    <string name="podobni_hint">"OK — następna runda"</string>
+    <string name="podobni_brak_daty">"Ta osoba nie ma daty urodzenia w Immich. Dodaj ją w „Edytuj osobę”."</string>
+    <string name="podobni_brak_starszych">"Brak starszych osób z datą urodzenia (co najmniej 14 lat starszych). Dodaj daty urodzenia rodziców i dziadków."</string>
+    <string name="podobni_brak_zdjec">"Nie znaleziono zdjęć pozostałych osób z tego samego wieku."</string>
+    <string name="kadr_tytul">"Ten sam kadr"</string>
+    <string name="kadr_opis">"Dwa zdjęcia z tego samego miejsca, z różnych lat"</string>
+    <string name="kadr_hint">"Wtedy i teraz w tym samym miejscu · OK — następna para"</string>
+    <string name="kadr_brak">"Nie znaleziono miejsc ze zdjęciami z różnych lat (zdjęcia muszą mieć lokalizację GPS)."</string>
+    <string name="rok_osoby_tytul">"%1$s w %2$d"</string>
+    <string name="rok_osoby_przycisk">"Rok osoby"</string>
+    <string name="urodziny_start">"Pokaz urodzinowy na start"</string>
+    <string name="urodziny_start_uitleg">"W dniu czyichś urodzin pierwsze uruchomienie w tym dniu odtwarza zdjęcia solenizanta"</string>
+    <string name="kanal_dzien">"Zdjęcie dnia"</string>
 </resources>

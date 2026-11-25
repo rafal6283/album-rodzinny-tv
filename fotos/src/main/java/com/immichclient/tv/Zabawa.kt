@@ -20,6 +20,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material.icons.filled.ChildCare
+import androidx.compose.material.icons.filled.FamilyRestroom
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.FlightTakeoff
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Quiz
@@ -63,6 +65,8 @@ fun ZabawaScherm(nav: Nav) {
         Pozycja("impreza", Icons.Filled.Celebration, R.string.impreza_tytul, R.string.impreza_opis, Color(0xFF5C3418)),
         Pozycja("podroz", Icons.Filled.FlightTakeoff, R.string.podroz_tytul, R.string.podroz_opis, Color(0xFF1E2050)),
         Pozycja("rosla", Icons.Filled.ChildCare, R.string.rosla_tytul, R.string.rosla_opis, Color(0xFF22404A)),
+        Pozycja("podobni", Icons.Filled.FamilyRestroom, R.string.podobni_tytul, R.string.podobni_opis, Color(0xFF3E3358)),
+        Pozycja("kadr", Icons.Filled.CameraAlt, R.string.kadr_tytul, R.string.kadr_opis, Color(0xFF2E4A3A)),
         Pozycja("powroty", Icons.Filled.Replay, R.string.powroty_tytul, R.string.powroty_opis, Color(0xFF2C3E58)),
         Pozycja("kolory", Icons.Filled.Palette, R.string.kolory_tytul, R.string.kolory_opis, Color(0xFF4A2A55)),
     )
@@ -81,7 +85,8 @@ fun ZabawaScherm(nav: Nav) {
                         "impreza" -> nav.open(Scherm.Impreza)
                         "powroty" -> nav.open(Scherm.Powroty(nav.scope))
                         "kolory" -> nav.open(Scherm.Kolory(nav.scope))
-                        else -> wybor = p.klucz // podróż: wybór albumu; jak rosła: wybór osoby
+                        "kadr" -> nav.open(Scherm.Kadr(nav.scope))
+                        else -> wybor = p.klucz // podróż: wybór albumu; jak rosła / kto podobny: wybór osoby
                     }
                 },
                 modifier = Modifier.pamiecFokusu("zabawa", p.klucz, pierwszy = p.klucz == "quiz").fillMaxWidth().height(150.dp),
@@ -107,13 +112,17 @@ fun ZabawaScherm(nav: Nav) {
         "rosla" -> KiesLijst(stringResource(R.string.rosla_wybierz), persoonKeuzes(), "", sluit = { wybor = null }) { id, naam ->
             ZabawaPamiec.wybor = wybor; wybor = null; nav.open(Scherm.Rosniecie(id, naam, nav.scope))
         }
+        "podobni" -> KiesLijst(stringResource(R.string.podobni_wybierz), persoonKeuzes(), "", sluit = { wybor = null }) { id, naam ->
+            ZabawaPamiec.wybor = wybor; wybor = null; nav.open(Scherm.Podobni(id, naam, nav.scope))
+        }
     }
 }
 
 // ---------------- Quiz ----------------
 
 /** Pytanie quizu: zdjęcie, rodzaj, 4 odpowiedzi i indeks dobrej. */
-class Pytanie(val zdjecie: Asset, val rodzaj: Int, val odpowiedzi: List<String>, val dobra: Int)
+/** [osoba] = imię w pytaniu „Ile lat miała Ola?” (rodzaj 3) */
+class Pytanie(val zdjecie: Asset, val rodzaj: Int, val odpowiedzi: List<String>, val dobra: Int, val osoba: String? = null)
 
 /**
  * Rodzinny quiz: 10 pytań z losowych zdjęć — gdzie to było (miasto z GPS), który to rok, kto jest na zdjęciu. Jedna
@@ -134,6 +143,11 @@ class QuizStaat(private val scope: CoroutineScope) {
         pytania = null; nr = 0; wybrana = null; punkty = 0; blad = false
         scope.launch {
             val probka = runCatching { Immich.losoweZOsobami(150) }.getOrDefault(emptyList())
+                .let { l -> Pokazane.nowePierwsze(l) } // najpierw zdjęcia, których w quizie jeszcze nie było
+            // daty urodzenia: pytanie „Ile lat miała Ola na tym zdjęciu?”
+            val urodziny = runCatching { Immich.osobyZUrodzinami() }.getOrDefault(emptyList()).mapNotNull { p -> p.urodziny?.let { p.id to it } }.toMap()
+            fun wiek(a: Asset, id: String): Int? = urodziny[id]?.let { u -> java.time.temporal.ChronoUnit.YEARS.between(u, a.datum.toLocalDate()).toInt() }?.takeIf { it in 0..100 }
+            fun lat(n: Int) = Taal.ctx.resources.getQuantityString(R.plurals.lat, n, n)
             val miasta = probka.mapNotNull { it.stad }.distinct()
             val osoby = probka.flatMap { it.osoby }.filter { it.naam.isNotBlank() && !Instellingen.osobaUkryta(it.id) }.distinctBy { it.id }
             val lista = ArrayList<Pytanie>()
@@ -143,12 +157,22 @@ class QuizStaat(private val scope: CoroutineScope) {
                     if (a.stad != null && miasta.size >= 4) add(0)
                     add(1)
                     if (a.osoby.any { it.naam.isNotBlank() && !Instellingen.osobaUkryta(it.id) } && osoby.size >= 4) add(2)
+                    if (a.osoby.any { it.naam.isNotBlank() && !Instellingen.osobaUkryta(it.id) && wiek(a, it.id) != null }) add(3)
                 }
                 // różnorodność: rodzaj, którego było najmniej
                 val r = rodzaje.minByOrNull { k -> lista.count { it.rodzaj == k } } ?: continue
+                var imie: String? = null
                 val (dobra, zle) = when (r) {
                     0 -> a.stad!! to miasta.filter { it != a.stad }.shuffled().take(3)
                     1 -> a.datum.year.toString() to (listOf(-3, -2, -1, 1, 2, 3).shuffled().take(3).map { (a.datum.year + it).toString() })
+                    3 -> {
+                        val kto = a.osoby.first { it.naam.isNotBlank() && !Instellingen.osobaUkryta(it.id) && wiek(a, it.id) != null }
+                        val w = wiek(a, kto.id)!!
+                        imie = kto.naam
+                        // złe odpowiedzi blisko prawdziwego wieku (u małych dzieci ±1–2 lata, u dorosłych do ±6)
+                        val rozrzut = if (w < 10) listOf(-2, -1, 1, 2, 3) else listOf(-6, -4, -2, 2, 4, 6)
+                        lat(w) to rozrzut.map { w + it }.filter { it >= 0 }.shuffled().take(3).map { lat(it) }
+                    }
                     else -> {
                         val kto = a.osoby.first { it.naam.isNotBlank() && !Instellingen.osobaUkryta(it.id) }
                         kto.naam to osoby.filter { o -> a.osoby.none { it.id == o.id } }.shuffled().take(3).map { it.naam }
@@ -156,9 +180,10 @@ class QuizStaat(private val scope: CoroutineScope) {
                 }
                 if (zle.size < 3) continue
                 val odp = (zle + dobra).shuffled()
-                lista.add(Pytanie(a, r, odp, odp.indexOf(dobra)))
+                lista.add(Pytanie(a, r, odp, odp.indexOf(dobra), imie))
             }
             if (lista.isEmpty()) blad = true
+            Pokazane.zapamietaj(lista.map { it.zdjecie.id })
             pytania = lista
         }
     }
@@ -202,7 +227,8 @@ fun QuizScherm(staat: QuizStaat, nav: Nav) {
                 Column(Modifier.weight(1f).fillMaxSize(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(stringResource(R.string.quiz_pytanie_nr, staat.nr + 1, lista.size) + "  ·  " + stringResource(R.string.quiz_punkty, staat.punkty),
                         style = EtykietaStyl)
-                    Text(stringResource(when (p.rodzaj) { 0 -> R.string.quiz_gdzie; 1 -> R.string.quiz_kiedy; else -> R.string.quiz_kto }),
+                    Text(if (p.rodzaj == 3) stringResource(R.string.quiz_ile_lat, p.osoba.orEmpty())
+                        else stringResource(when (p.rodzaj) { 0 -> R.string.quiz_gdzie; 1 -> R.string.quiz_kiedy; else -> R.string.quiz_kto }),
                         style = MaterialTheme.typography.headlineMedium, color = Color.White, modifier = Modifier.padding(bottom = 8.dp))
                     p.odpowiedzi.forEachIndexed { i, o ->
                         val w = staat.wybrana
