@@ -58,6 +58,11 @@ object Zdalnie {
         }.onFailure { Log.w(TAG, "Tailscale: broadcast", it) }
     }
 
+    private fun prefs(c: Context) = c.getSharedPreferences("zdalnie", Context.MODE_PRIVATE)
+    /** Prośba do Tailscale o połączenie także przy starcie telewizora i co ~3 godziny w tle (np. dla Plexa) */
+    fun tailscaleStart(c: Context): Boolean = prefs(c).getBoolean("tailscale_start", true)
+    fun ustawTailscaleStart(c: Context, wl: Boolean) { prefs(c).edit().putBoolean("tailscale_start", wl).apply() }
+
     /** Otwórz aplikację Tailscale (gdy trzeba się zalogować albo coś zmienić ręcznie). */
     fun otworz(c: Context) {
         val i = c.packageManager.getLaunchIntentForPackage(TAILSCALE)
@@ -114,4 +119,16 @@ object Zdalnie {
 
     /** Ręczne „Kontynuuj mimo to”: aplikacja działa dalej (np. z zapamiętanymi zdjęciami), bez sprawdzania. */
     fun pomin() { stan = Stan.OK }
+}
+
+/**
+ * Start telewizora (i aktualizacja aplikacji): prośba do Tailscale o połączenie w tle — bez otwierania czegokolwiek.
+ * Dzięki temu Tailscale jest gotowy także dla innych aplikacji (np. Plex), choć nikt nie uruchomił Albumu Rodzinnego.
+ */
+class StartOntvanger : android.content.BroadcastReceiver() {
+    override fun onReceive(c: Context, i: Intent) {
+        if (i.action != Intent.ACTION_BOOT_COMPLETED && i.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
+        if (Zdalnie.tailscaleStart(c)) Zdalnie.polacz(c)
+        Kanaly.zaplanuj(c.applicationContext)
+    }
 }

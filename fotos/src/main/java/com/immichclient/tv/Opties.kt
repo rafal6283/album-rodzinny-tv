@@ -74,6 +74,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
     /** edycja adresu zdalnego: "immich" / "synology" / null */
     var zdalnyInvoer by remember { mutableStateOf<String?>(null) }
     var instrukcjaTailscale by remember { mutableStateOf(false) }
+    var tailscaleStart by remember { mutableStateOf(Zdalnie.tailscaleStart(ctx)) }
     var profilInvoer by remember { mutableStateOf(false) }
     /** profil, na który przełączamy (wymaga PIN-u) / dla którego ustawiamy PIN */
     var pinCel by remember { mutableStateOf<String?>(null) }
@@ -404,6 +405,9 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         }
         if (Synology.skonfigurowane) item {
             Actie(stringResource(R.string.zdalnie_adres_synology), Synology.adresZdalny.ifBlank { stringResource(R.string.zdalnie_brak_adresu) }) { zdalnyInvoer = "synology" }
+        }
+        if (Zdalnie.tailscaleZainstalowany(ctx)) schakel(R.string.tailscale_start, R.string.tailscale_start_uitleg, uitAan, tailscaleStart) {
+            tailscaleStart = it; Zdalnie.ustawTailscaleStart(ctx, it); if (it) Zdalnie.polacz(ctx)
         }
         if (Zdalnie.tailscaleZainstalowany(ctx)) item {
             Actie(stringResource(R.string.tailscale_otworz), stringResource(R.string.tailscale_otworz_uitleg)) { Zdalnie.otworz(ctx) }

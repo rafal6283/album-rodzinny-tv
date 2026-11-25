@@ -965,4 +965,6 @@
     <string name="html_zdalny">"Adres op afstand (optioneel)"</string>
     <string name="html_zdalny_hint">"Bijv. het Tailscale-adres van de server (100.x.y.z:2283). De tv gebruikt het als het thuisadres niet reageert — bijv. bij opa en oma."</string>
     <string name="koppel_przez_tailscale">"Of op afstand, via Tailscale (vanaf je eigen telefoon):"</string>
+    <string name="tailscale_start">"Tailscale bij aanzetten van de tv"</string>
+    <string name="tailscale_start_uitleg">"Vraagt Tailscale op de achtergrond te verbinden bij het starten van de tv en om de paar uur — ook voor andere apps (bijv. Plex), zelfs als deze app niet geopend wordt"</string>
 </resources>

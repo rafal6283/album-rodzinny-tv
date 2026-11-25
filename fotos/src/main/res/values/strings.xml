@@ -987,4 +987,6 @@
     <string name="html_zdalny">"Remote address (optional)"</string>
     <string name="html_zdalny_hint">"E.g. the server’s Tailscale address (100.x.y.z:2283). The TV uses it when the home address does not respond — e.g. at the grandparents’."</string>
     <string name="koppel_przez_tailscale">"Or remotely, via Tailscale (from your own phone):"</string>
+    <string name="tailscale_start">"Tailscale when the TV turns on"</string>
+    <string name="tailscale_start_uitleg">"Asks Tailscale to connect in the background when the TV starts and every few hours — also for other apps (e.g. Plex), even if this app is not opened"</string>
 </resources>

@@ -1015,4 +1015,6 @@
     <string name="html_zdalny">"Adres zdalny (opcjonalnie)"</string>
     <string name="html_zdalny_hint">"Np. adres serwera w Tailscale (100.x.y.z:2283). Telewizor użyje go, gdy adres domowy nie odpowiada — np. u dziadków."</string>
     <string name="koppel_przez_tailscale">"Albo na odległość, przez Tailscale (z Twojego telefonu):"</string>
+    <string name="tailscale_start">"Tailscale przy włączeniu telewizora"</string>
+    <string name="tailscale_start_uitleg">"Prosi Tailscale o połączenie w tle przy starcie telewizora i co kilka godzin — także dla innych aplikacji (np. Plex), nawet gdy ta aplikacja nie jest otwierana"</string>
 </resources>

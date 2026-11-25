@@ -965,4 +965,6 @@
     <string name="html_zdalny">"Fernadresse (optional)"</string>
     <string name="html_zdalny_hint">"Z. B. die Tailscale-Adresse des Servers (100.x.y.z:2283). Der TV nutzt sie, wenn die Heimadresse nicht antwortet — z. B. bei den Großeltern."</string>
     <string name="koppel_przez_tailscale">"Oder aus der Ferne über Tailscale (vom eigenen Handy):"</string>
+    <string name="tailscale_start">"Tailscale beim Einschalten des TV"</string>
+    <string name="tailscale_start_uitleg">"Bittet Tailscale beim Start des TV und alle paar Stunden im Hintergrund zu verbinden — auch für andere Apps (z. B. Plex), selbst wenn diese App nicht geöffnet wird"</string>
 </resources>
