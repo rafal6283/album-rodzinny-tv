@@ -650,7 +650,8 @@ fun HerinneringenRij(nav: Nav) {
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            items(lijst, key = { it.id }) { h -> HerinneringKaart(h, nav) }
+            // pamięć fokusu: po zamknięciu oglądanego wspomnienia fokus wraca na jego kafelek (nie na „Od najnowszych”)
+                items(lijst, key = { it.id }) { h -> HerinneringKaart(h, nav, modifier = Modifier.pamiecFokusu("tego_dnia", h.id)) }
         }
     }
 }
