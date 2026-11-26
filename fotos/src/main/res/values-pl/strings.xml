@@ -1040,4 +1040,30 @@
     <string name="podreczne_wszystkie_do_albumu">"Dodaj wszystkie (%1$d) do albumu"</string>
     <string name="podreczne_sub">"Przytrzymaj OK na kafelku, by otworzyć to menu"</string>
     <string name="recht_album_delete">"Usuwanie albumów"</string>
+    <string name="twarz_przypisano">"Przypisano (%1$d) do: %2$s"</string>
+    <string name="twarz_odpieto">"Odpięto: %1$d"</string>
+    <string name="twarz_usunieto">"Usunięto twarze: %1$d"</string>
+    <string name="twarz_menu_sub">"Popraw błędne dopasowanie"</string>
+    <string name="twarz_to_jest">"To jest…"</string>
+    <string name="twarz_nowa">"Nowa osoba…"</string>
+    <string name="twarz_nie_ta">"To nie ta osoba"</string>
+    <string name="twarz_nie_twarz">"To nie twarz — usuń"</string>
+    <string name="twarze_tytul">"Osoby na tym zdjęciu"</string>
+    <string name="twarze_sub">"OK na twarzy — popraw, kto to jest"</string>
+    <string name="twarze_brak">"Nie znaleziono twarzy"</string>
+    <string name="twarze_akcja">"Osoby"</string>
+    <string name="popraw_przycisk">"Popraw dopasowania"</string>
+    <string name="popraw_tytul">"Popraw dopasowania: %1$s"</string>
+    <string name="popraw_ile">"Twarzy: %1$d"</string>
+    <string name="popraw_zaznaczone">"Zaznaczone: %1$d"</string>
+    <string name="popraw_hint">"OK = zaznacz błędną twarz · przytrzymaj OK = całe zdjęcie"</string>
+    <string name="popraw_popraw">"Popraw zaznaczone (%1$d)"</string>
+    <string name="popraw_wyczysc">"Wyczyść zaznaczenie"</string>
+    <string name="popraw_polacz">"Połącz z…"</string>
+    <string name="popraw_polacz_tytul">"Połącz osobę %1$s z…"</string>
+    <string name="popraw_polaczono">"Połączono: %1$s → %2$s"</string>
+    <string name="recht_person_create">"Tworzenie osób (korekty twarzy)"</string>
+    <string name="recht_face_read">"Odczyt twarzy (korekty, Jak rosła)"</string>
+    <string name="recht_face_update">"Przepisywanie twarzy"</string>
+    <string name="recht_face_delete">"Usuwanie błędnie wykrytych twarzy"</string>
 </resources>

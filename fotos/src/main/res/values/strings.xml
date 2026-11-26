@@ -1012,4 +1012,30 @@
     <string name="podreczne_wszystkie_do_albumu">"Add all (%1$d) to album"</string>
     <string name="podreczne_sub">"Hold OK on a tile to open this menu"</string>
     <string name="recht_album_delete">"Deleting albums"</string>
+    <string name="twarz_przypisano">"Assigned %1$d to %2$s"</string>
+    <string name="twarz_odpieto">"Unlinked: %1$d"</string>
+    <string name="twarz_usunieto">"Faces removed: %1$d"</string>
+    <string name="twarz_menu_sub">"Correct a wrong match"</string>
+    <string name="twarz_to_jest">"This is…"</string>
+    <string name="twarz_nowa">"New person…"</string>
+    <string name="twarz_nie_ta">"Not this person"</string>
+    <string name="twarz_nie_twarz">"Not a face — remove"</string>
+    <string name="twarze_tytul">"People in this photo"</string>
+    <string name="twarze_sub">"OK on a face — correct who it is"</string>
+    <string name="twarze_brak">"No faces found"</string>
+    <string name="twarze_akcja">"People"</string>
+    <string name="popraw_przycisk">"Fix matches"</string>
+    <string name="popraw_tytul">"Fix matches: %1$s"</string>
+    <string name="popraw_ile">"%1$d faces"</string>
+    <string name="popraw_zaznaczone">"Selected: %1$d"</string>
+    <string name="popraw_hint">"OK = select a wrong face · hold OK = whole photo"</string>
+    <string name="popraw_popraw">"Correct selected (%1$d)"</string>
+    <string name="popraw_wyczysc">"Clear selection"</string>
+    <string name="popraw_polacz">"Merge with…"</string>
+    <string name="popraw_polacz_tytul">"Merge %1$s with…"</string>
+    <string name="popraw_polaczono">"%1$s merged into %2$s"</string>
+    <string name="recht_person_create">"Creating people (face corrections)"</string>
+    <string name="recht_face_read">"Reading faces (corrections, How they grew)"</string>
+    <string name="recht_face_update">"Reassigning faces"</string>
+    <string name="recht_face_delete">"Removing wrongly detected faces"</string>
 </resources>

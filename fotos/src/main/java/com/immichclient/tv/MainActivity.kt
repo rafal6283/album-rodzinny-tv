@@ -145,6 +145,7 @@ sealed class Scherm {
     class Rosniecie(osobaId: String, imie: String, scope: CoroutineScope) : Scherm() { val staat = RosniecieStaat(osobaId, imie, scope) }
     class Podobni(osobaId: String, imie: String, scope: CoroutineScope) : Scherm() { val staat = PodobniStaat(osobaId, imie, scope) }
     class Kadr(scope: CoroutineScope) : Scherm() { val staat = KadrStaat(scope) }
+    class Popraw(osobaId: String, imie: String, scope: CoroutineScope) : Scherm() { val staat = PoprawStaat(osobaId, imie, scope) }
     class Powroty(scope: CoroutineScope) : Scherm() { val staat = PowrotyStaat(scope) }
     @Suppress("UNUSED_PARAMETER") class Kolory(scope: CoroutineScope) : Scherm()
     class Synology(scope: CoroutineScope) : Scherm() { val staat = SynologyStaat(scope) }
@@ -649,6 +650,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         is Scherm.Rosniecie -> RosniecieScherm(scherm.staat)
                         is Scherm.Podobni -> PodobniScherm(scherm.staat)
                         is Scherm.Kadr -> KadrScherm(scherm.staat)
+                        is Scherm.Popraw -> PoprawScherm(scherm.staat, nav)
                         is Scherm.Powroty -> PowrotyScherm(scherm.staat, nav)
                         is Scherm.Kolory -> KoloryScherm(nav)
                         is Scherm.Synology -> SynologyScherm(scherm.staat, nav)

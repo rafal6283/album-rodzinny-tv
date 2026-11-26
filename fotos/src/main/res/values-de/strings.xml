@@ -990,4 +990,30 @@
     <string name="podreczne_wszystkie_do_albumu">"Alle (%1$d) zum Album hinzufügen"</string>
     <string name="podreczne_sub">"OK auf einer Kachel gedrückt halten öffnet dieses Menü"</string>
     <string name="recht_album_delete">"Alben löschen"</string>
+    <string name="twarz_przypisano">"%1$d %2$s zugewiesen"</string>
+    <string name="twarz_odpieto">"Getrennt: %1$d"</string>
+    <string name="twarz_usunieto">"Gesichter entfernt: %1$d"</string>
+    <string name="twarz_menu_sub">"Falsche Zuordnung korrigieren"</string>
+    <string name="twarz_to_jest">"Das ist…"</string>
+    <string name="twarz_nowa">"Neue Person…"</string>
+    <string name="twarz_nie_ta">"Nicht diese Person"</string>
+    <string name="twarz_nie_twarz">"Kein Gesicht — entfernen"</string>
+    <string name="twarze_tytul">"Personen auf diesem Foto"</string>
+    <string name="twarze_sub">"OK auf einem Gesicht — korrigieren, wer es ist"</string>
+    <string name="twarze_brak">"Keine Gesichter gefunden"</string>
+    <string name="twarze_akcja">"Personen"</string>
+    <string name="popraw_przycisk">"Zuordnungen korrigieren"</string>
+    <string name="popraw_tytul">"Zuordnungen: %1$s"</string>
+    <string name="popraw_ile">"%1$d Gesichter"</string>
+    <string name="popraw_zaznaczone">"Ausgewählt: %1$d"</string>
+    <string name="popraw_hint">"OK = falsches Gesicht wählen · OK halten = ganzes Foto"</string>
+    <string name="popraw_popraw">"Ausgewählte korrigieren (%1$d)"</string>
+    <string name="popraw_wyczysc">"Auswahl aufheben"</string>
+    <string name="popraw_polacz">"Zusammenführen mit…"</string>
+    <string name="popraw_polacz_tytul">"%1$s zusammenführen mit…"</string>
+    <string name="popraw_polaczono">"%1$s mit %2$s zusammengeführt"</string>
+    <string name="recht_person_create">"Personen anlegen (Gesichtskorrekturen)"</string>
+    <string name="recht_face_read">"Gesichter lesen (Korrekturen, Wie sie wuchsen)"</string>
+    <string name="recht_face_update">"Gesichter neu zuordnen"</string>
+    <string name="recht_face_delete">"Falsch erkannte Gesichter entfernen"</string>
 </resources>

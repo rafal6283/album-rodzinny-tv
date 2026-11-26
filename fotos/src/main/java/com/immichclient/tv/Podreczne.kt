@@ -105,6 +105,7 @@ object Podreczne {
         p += Pozycja(s(R.string.rosla_przycisk)) { n.open(Scherm.Rosniecie(id, nazwa, n.scope)) }
         if (!Instellingen.trybDzieciecy) {
             p += Pozycja(s(R.string.edytuj_osobe)) { osobaEdycja = id to nazwa }
+            p += Pozycja(s(R.string.popraw_przycisk)) { n.open(Scherm.Popraw(id, nazwa, n.scope)) }
             p += Pozycja(s(R.string.podreczne_ukryj)) {
                 Edycja.zakres.launch {
                     runCatching { Immich.ukryjOsobe(id, true) }

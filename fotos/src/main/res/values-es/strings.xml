@@ -997,4 +997,30 @@
     <string name="podreczne_wszystkie_do_albumu">"Añadir todas (%1$d) al álbum"</string>
     <string name="podreczne_sub">"Mantén OK sobre un elemento para abrir este menú"</string>
     <string name="recht_album_delete">"Eliminar álbumes"</string>
+    <string name="twarz_przypisano">"%1$d asignado(s) a %2$s"</string>
+    <string name="twarz_odpieto">"Desvinculados: %1$d"</string>
+    <string name="twarz_usunieto">"Caras eliminadas: %1$d"</string>
+    <string name="twarz_menu_sub">"Corregir una asignación errónea"</string>
+    <string name="twarz_to_jest">"Esta es…"</string>
+    <string name="twarz_nowa">"Nueva persona…"</string>
+    <string name="twarz_nie_ta">"No es esta persona"</string>
+    <string name="twarz_nie_twarz">"No es una cara — eliminar"</string>
+    <string name="twarze_tytul">"Personas en esta foto"</string>
+    <string name="twarze_sub">"OK en una cara — corregir quién es"</string>
+    <string name="twarze_brak">"No se encontraron caras"</string>
+    <string name="twarze_akcja">"Personas"</string>
+    <string name="popraw_przycisk">"Corregir asignaciones"</string>
+    <string name="popraw_tytul">"Asignaciones: %1$s"</string>
+    <string name="popraw_ile">"%1$d caras"</string>
+    <string name="popraw_zaznaczone">"Seleccionadas: %1$d"</string>
+    <string name="popraw_hint">"OK = seleccionar cara errónea · mantener OK = foto completa"</string>
+    <string name="popraw_popraw">"Corregir seleccionadas (%1$d)"</string>
+    <string name="popraw_wyczysc">"Borrar selección"</string>
+    <string name="popraw_polacz">"Combinar con…"</string>
+    <string name="popraw_polacz_tytul">"Combinar %1$s con…"</string>
+    <string name="popraw_polaczono">"%1$s combinado con %2$s"</string>
+    <string name="recht_person_create">"Crear personas (correcciones)"</string>
+    <string name="recht_face_read">"Leer caras (correcciones, Cómo creció)"</string>
+    <string name="recht_face_update">"Reasignar caras"</string>
+    <string name="recht_face_delete">"Eliminar caras mal detectadas"</string>
 </resources>

@@ -997,4 +997,30 @@
     <string name="podreczne_wszystkie_do_albumu">"Tout ajouter (%1$d) à un album"</string>
     <string name="podreczne_sub">"Maintenez OK sur une vignette pour ouvrir ce menu"</string>
     <string name="recht_album_delete">"Suppression d’albums"</string>
+    <string name="twarz_przypisano">"%1$d attribué(s) à %2$s"</string>
+    <string name="twarz_odpieto">"Détachés : %1$d"</string>
+    <string name="twarz_usunieto">"Visages supprimés : %1$d"</string>
+    <string name="twarz_menu_sub">"Corriger une mauvaise association"</string>
+    <string name="twarz_to_jest">"C’est…"</string>
+    <string name="twarz_nowa">"Nouvelle personne…"</string>
+    <string name="twarz_nie_ta">"Pas cette personne"</string>
+    <string name="twarz_nie_twarz">"Pas un visage — supprimer"</string>
+    <string name="twarze_tytul">"Personnes sur cette photo"</string>
+    <string name="twarze_sub">"OK sur un visage — corriger qui c’est"</string>
+    <string name="twarze_brak">"Aucun visage trouvé"</string>
+    <string name="twarze_akcja">"Personnes"</string>
+    <string name="popraw_przycisk">"Corriger les associations"</string>
+    <string name="popraw_tytul">"Associations : %1$s"</string>
+    <string name="popraw_ile">"%1$d visages"</string>
+    <string name="popraw_zaznaczone">"Sélectionnés : %1$d"</string>
+    <string name="popraw_hint">"OK = sélectionner un visage erroné · maintenir OK = photo entière"</string>
+    <string name="popraw_popraw">"Corriger la sélection (%1$d)"</string>
+    <string name="popraw_wyczysc">"Effacer la sélection"</string>
+    <string name="popraw_polacz">"Fusionner avec…"</string>
+    <string name="popraw_polacz_tytul">"Fusionner %1$s avec…"</string>
+    <string name="popraw_polaczono">"%1$s fusionné avec %2$s"</string>
+    <string name="recht_person_create">"Création de personnes (corrections)"</string>
+    <string name="recht_face_read">"Lecture des visages (corrections, Comme il a grandi)"</string>
+    <string name="recht_face_update">"Réattribution des visages"</string>
+    <string name="recht_face_delete">"Suppression de faux visages"</string>
 </resources>

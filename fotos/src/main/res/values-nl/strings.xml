@@ -990,4 +990,30 @@
     <string name="podreczne_wszystkie_do_albumu">"Alle (%1$d) aan album toevoegen"</string>
     <string name="podreczne_sub">"Houd OK ingedrukt op een tegel voor dit menu"</string>
     <string name="recht_album_delete">"Albums verwijderen"</string>
+    <string name="twarz_przypisano">"%1$d toegewezen aan %2$s"</string>
+    <string name="twarz_odpieto">"Losgekoppeld: %1$d"</string>
+    <string name="twarz_usunieto">"Gezichten verwijderd: %1$d"</string>
+    <string name="twarz_menu_sub">"Corrigeer een verkeerde koppeling"</string>
+    <string name="twarz_to_jest">"Dit is…"</string>
+    <string name="twarz_nowa">"Nieuwe persoon…"</string>
+    <string name="twarz_nie_ta">"Niet deze persoon"</string>
+    <string name="twarz_nie_twarz">"Geen gezicht — verwijderen"</string>
+    <string name="twarze_tytul">"Personen op deze foto"</string>
+    <string name="twarze_sub">"OK op een gezicht — corrigeer wie het is"</string>
+    <string name="twarze_brak">"Geen gezichten gevonden"</string>
+    <string name="twarze_akcja">"Personen"</string>
+    <string name="popraw_przycisk">"Koppelingen corrigeren"</string>
+    <string name="popraw_tytul">"Koppelingen: %1$s"</string>
+    <string name="popraw_ile">"%1$d gezichten"</string>
+    <string name="popraw_zaznaczone">"Geselecteerd: %1$d"</string>
+    <string name="popraw_hint">"OK = verkeerd gezicht selecteren · OK vasthouden = hele foto"</string>
+    <string name="popraw_popraw">"Geselecteerde corrigeren (%1$d)"</string>
+    <string name="popraw_wyczysc">"Selectie wissen"</string>
+    <string name="popraw_polacz">"Samenvoegen met…"</string>
+    <string name="popraw_polacz_tytul">"%1$s samenvoegen met…"</string>
+    <string name="popraw_polaczono">"%1$s samengevoegd met %2$s"</string>
+    <string name="recht_person_create">"Personen aanmaken (gezichtscorrecties)"</string>
+    <string name="recht_face_read">"Gezichten lezen (correcties, Zo groeiden ze)"</string>
+    <string name="recht_face_update">"Gezichten toewijzen"</string>
+    <string name="recht_face_delete">"Verkeerd herkende gezichten verwijderen"</string>
 </resources>

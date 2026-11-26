@@ -2,6 +2,7 @@ package com.immichclient.tv
 
 import androidx.compose.foundation.border
 import androidx.compose.material.icons.filled.ChildCare
+import androidx.compose.material.icons.filled.FaceRetouchingNatural
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Slideshow
@@ -367,6 +368,14 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                                     selected = false, onClick = { nav.open(Scherm.Rosniecie(id, scherm.titel, nav.scope)) },
                                     leadingIcon = { Icon(Icons.Filled.ChildCare, null, Modifier.width(18.dp)) },
                                     tekst = stringResource(R.string.rosla_przycisk),
+                                )
+                            }
+                            // korekta dopasowań: siatka twarzy osoby, błędne zaznaczyć i przepisać
+                            staat.filter.persoonId?.let { id ->
+                                if (!Instellingen.trybDzieciecy) Keuze(
+                                    selected = false, onClick = { nav.open(Scherm.Popraw(id, scherm.titel, nav.scope)) },
+                                    leadingIcon = { Icon(androidx.compose.material.icons.Icons.Filled.FaceRetouchingNatural, null, Modifier.width(18.dp)) },
+                                    tekst = stringResource(R.string.popraw_przycisk),
                                 )
                             }
                             // rok osoby: podsumowanie jej roku (jak „Rok w skrócie”), w styczniu i lutym poprzedni rok
