@@ -926,14 +926,16 @@ private fun InfoPaneel(a: Asset, staat: KijkerStaat, metKaartSprong: Boolean) {
                     if (albums.isNotEmpty()) InfoRegel(Icons.Filled.PhotoLibrary, albums.joinToString(", "), null, maxRegels = 3)
                     d.omschrijving?.let { InfoRegel(Icons.Filled.Description, it, null, maxRegels = 5) }
                     if (a.lat != null && a.lon != null && Instellingen.mapaSzczegoly) {
-                        KaartKlein(a.lat, a.lon, Modifier.padding(start = 56.dp).fillMaxWidth().height(100.dp).background(Kleur.vlak, RoundedCornerShape(14.dp)))
+                        KaartKlein(a.lat, a.lon, Modifier.padding(start = 56.dp).fillMaxWidth().height(80.dp).background(Kleur.vlak, RoundedCornerShape(14.dp)))
                     }
-                    // na samym końcu (zajmuje dużo miejsca): położenie pliku na serwerze, mniejszą czcionką
-                    d.sciezka?.let {
-                        Column(Modifier.padding(start = 56.dp, top = 10.dp)) {
-                            Text(it, style = MaterialTheme.typography.labelMedium, color = Kleur.zacht, maxLines = 3)
-                            Text(stringResource(if (d.zewnetrzna) R.string.info_biblioteka_zewn else R.string.info_przeslane), style = MaterialTheme.typography.labelSmall, color = Kleur.zacht.copy(alpha = 0.7f), maxLines = 1)
-                        }
+                    // na samym końcu: sam folder pliku (nazwa jest wyżej), mała czcionka — razem z rodzajem biblioteki w 1–2 wierszach
+                    d.sciezka?.let { pelna ->
+                        val folder = pelna.substringBeforeLast('/', pelna) + "/"
+                        Text(
+                            folder + "  ·  " + stringResource(if (d.zewnetrzna) R.string.info_biblioteka_zewn else R.string.info_przeslane),
+                            style = MaterialTheme.typography.labelSmall, color = Kleur.zacht, maxLines = 2,
+                            modifier = Modifier.padding(start = 56.dp, top = 6.dp),
+                        )
                     }
                 } else {
                     Text(stringResource(R.string.laden), style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht)
