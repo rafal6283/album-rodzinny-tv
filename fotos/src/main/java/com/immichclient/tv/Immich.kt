@@ -831,6 +831,8 @@ object Immich {
         val mensen = o.optJSONArray("people")
         Details(
             bestand = o.optString("originalFileName"),
+            sciezka = o.optString("originalPath").takeIf { it.isNotBlank() && it != "null" },
+            zewnetrzna = !o.isNull("libraryId") && o.optString("libraryId").isNotBlank(),
             camera = listOfNotNull(s("make"), s("model")).joinToString(" ").ifEmpty { null },
             lens = s("lensModel"),
             // kolejność jak w Immichin: przysłona · czas · ISO · ogniskowa

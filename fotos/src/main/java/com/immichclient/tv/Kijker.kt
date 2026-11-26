@@ -65,6 +65,9 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Slideshow
@@ -272,7 +275,7 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     LaunchedEffect(staat.doAlbumu == null && !staat.twarze) { if (staat.doAlbumu == null && !staat.twarze) { delay(50); runCatching { fr.requestFocus() } } }
     // album, z którego coś usunięto: po zamknięciu przeglądarki jego oś czasu wczytuje się od nowa
     DisposableEffect(Unit) {
-        onDispose { (staat.bron as? TijdlijnStaat)?.let { t -> t.filter.albumId?.let { if (Edycja.doOdswiezenia.remove(it)) t.herlaad() } } }
+        onDispose { (staat.bron as? TijdlijnStaat)?.let { t -> (t.filter.albumId ?: t.filter.persoonId)?.let { if (Edycja.doOdswiezenia.remove(it)) t.herlaad() } } }
     }
     val albumZrodla = (staat.bron as? TijdlijnStaat)?.filter?.albumId
     // przeglądarka z osi czasu osoby: „Zdjęcie główne” tej osoby
@@ -355,6 +358,9 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
             }
             Akcja.TWARZE -> if (huidig != null) { staat.diashow = false; staat.twarze = true }
             Akcja.GLOWNE -> if (huidig != null && osobaZrodla != null) Edycja.ustawGlowne(osobaZrodla, huidig.id)
+            // błędnie przypisane zdjęcie: odepnij tę osobę albo przepisz twarz do innej (oś czasu odświeży się po zamknięciu)
+            Akcja.NIE_TA -> if (huidig != null && osobaZrodla != null) Podreczne.odepnijOsobe(huidig.id, osobaZrodla) { Edycja.odpiete[huidig.id] = true }
+            Akcja.INNA -> if (huidig != null && osobaZrodla != null) { staat.diashow = false; Podreczne.przepisanie = huidig.id to osobaZrodla }
             Akcja.WYCZYSC -> { Udostepnianie.wyczysc(); staat.komunikat = ctx.getString(R.string.zazn_wyczyszczono) }
             // to zdjęcie jako okładka albumu (w Immich i w aplikacji)
             Akcja.OKLADKA -> if (huidig != null && albumZrodla != null) {
@@ -913,6 +919,8 @@ private fun InfoPaneel(a: Asset, staat: KijkerStaat, metKaartSprong: Boolean) {
                         if (d.wideo) Icons.Filled.Videocam else Icons.Filled.Image, d.bestand.ifEmpty { "—" },
                         listOfNotNull(d.dlugosc, d.plikSub ?: d.afmeting).joinToString("  ·  ").ifEmpty { null },
                     )
+                    // dokładne położenie pliku na serwerze (ścieżka widziana przez Immich) i skąd pochodzi
+                    d.sciezka?.let { InfoRegel(Icons.Filled.Folder, it, stringResource(if (d.zewnetrzna) R.string.info_biblioteka_zewn else R.string.info_przeslane), maxRegels = 3) }
                     d.camera?.let { InfoRegel(Icons.Filled.CameraAlt, it, listOfNotNull(d.instellingen, d.lens).joinToString("\n").ifEmpty { null }) }
                     (d.plaats ?: d.wspolrzedne)?.let { InfoRegel(Icons.Filled.Place, it, d.wspolrzedne.takeIf { d.plaats != null }) }
                     if (Ulubione.jest(a)) InfoRegel(Icons.Filled.Favorite, stringResource(R.string.w_ulubionych), null, kolorIkony = Color(0xFFFF5C8A))
@@ -974,7 +982,7 @@ private fun OsobyRegel(osoby: List<Persoon>) {
 }
 
 /** Akcje dolnego paska przeglądarki (▼), jak okrągłe przyciski w Immichin. */
-enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, WYCZYSC, ALBUM, Z_ALBUMU, OKLADKA, GLOWNE, TWARZE, MAPA }
+enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, WYCZYSC, ALBUM, Z_ALBUMU, OKLADKA, GLOWNE, NIE_TA, INNA, TWARZE, MAPA }
 
 fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false, zOsoby: Boolean = false): List<Akcja> = if (a != null && Synology.jestSyno(a.id)) listOf(Akcja.POKAZ) else buildList {
     add(Akcja.POKAZ)
@@ -988,7 +996,7 @@ fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false, zOsoby: Boolea
     if (a != null && !Instellingen.trybDzieciecy) add(Akcja.ALBUM)
     if (a != null && zAlbumu && !Instellingen.trybDzieciecy) add(Akcja.Z_ALBUMU)
     if (a != null && zAlbumu && !Instellingen.trybDzieciecy) add(Akcja.OKLADKA)
-    if (a != null && zOsoby && !Instellingen.trybDzieciecy) add(Akcja.GLOWNE)
+    if (a != null && zOsoby && !Instellingen.trybDzieciecy) { add(Akcja.GLOWNE); add(Akcja.NIE_TA); add(Akcja.INNA) }
     if (a != null && !Instellingen.trybDzieciecy) add(Akcja.TWARZE)
     if (zMapa && a?.lat != null) add(Akcja.MAPA)
 }
@@ -1053,6 +1061,8 @@ private fun PasekAkcji(staat: KijkerStaat, akcje: List<Akcja>) {
                     Akcja.OKLADKA -> Icons.Filled.Wallpaper to stringResource(R.string.album_okladka)
                     Akcja.TWARZE -> Icons.Filled.Face to stringResource(R.string.twarze_akcja)
                     Akcja.GLOWNE -> Icons.Filled.AccountCircle to stringResource(R.string.glowne_krotko)
+                    Akcja.NIE_TA -> Icons.Filled.PersonRemove to stringResource(R.string.osoba_nie_ta_krotko)
+                    Akcja.INNA -> Icons.Filled.SwapHoriz to stringResource(R.string.osoba_inna_krotko)
                     Akcja.WYCZYSC -> Icons.Filled.DeleteSweep to stringResource(R.string.zazn_wyczysc_krotko)
                     Akcja.Z_ALBUMU -> {
                         val usuniete = staat.bron.op(staat.index)?.let { staat.usunieteZAlbumu[it.id] } == true

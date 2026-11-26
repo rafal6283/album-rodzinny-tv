@@ -1169,4 +1169,14 @@
     <string name="menu_ukryto">"Ukryto: %1$s (przytrzymaj OK w menu → pokaż ukryte)"</string>
     <string name="menu_edytuj">"Edytuj menu…"</string>
     <string name="menu_pokaz_ukryte">"Pokaż ukryte sekcje (%1$d)"</string>
+    <string name="kto_poprzednia">"Poprzednia"</string>
+    <string name="kto_nastepna">"Następna"</string>
+    <string name="kto_zdjecia">"Pokaż zdjęcia"</string>
+    <string name="kto_zdjecia_sub">"Wszystkie zdjęcia z tą twarzą — łatwiej rozpoznać"</string>
+    <string name="osoba_nie_ta">"To nie jest %1$s (odepnij)"</string>
+    <string name="osoba_inna">"To jest ktoś inny…"</string>
+    <string name="osoba_nie_ta_krotko">"Nie ta osoba"</string>
+    <string name="osoba_inna_krotko">"Ktoś inny"</string>
+    <string name="info_biblioteka_zewn">"Biblioteka zewnętrzna (folder na serwerze/NAS podpięty do Immich)"</string>
+    <string name="info_przeslane">"Przesłane do Immich (folder przesyłania na serwerze)"</string>
 </resources>

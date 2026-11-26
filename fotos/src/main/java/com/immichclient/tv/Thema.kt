@@ -1,6 +1,7 @@
 package com.immichclient.tv
 
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.PersonOff
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.MotionPhotosOn
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -276,6 +277,11 @@ fun FotoVak(
         if (Ulubione.jest(asset)) Icon(
             Icons.Filled.Favorite, null, Modifier.align(Alignment.BottomStart).padding(6.dp).size(16.dp), tint = Color.White,
         )
+        // odpięte od osoby (korekta z osi czasu osoby): mocno przyciemnione z ikoną
+        if (Edycja.odpiete[asset.id] == true) {
+            Box(Modifier.matchParentSize().background(Color(0xB3000000)))
+            Icon(androidx.compose.material.icons.Icons.Filled.PersonOff, null, Modifier.align(Alignment.Center).size(30.dp), tint = Color(0xCCFFFFFF))
+        }
         // zaznaczone: przyciemnienie, złota ramka i duży znaczek — widać z kanapy, także po wielu zdjęciach
         if (Udostepnianie.zawiera(asset)) {
             Box(Modifier.matchParentSize().background(Color(0x66000000)).border(4.dp, Color(0xFFF5B83D), vorm))

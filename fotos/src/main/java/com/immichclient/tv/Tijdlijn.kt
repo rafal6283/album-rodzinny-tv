@@ -214,6 +214,13 @@ class TijdlijnStaat(val filter: Filter, nieuwsteEerst: Boolean, private val scop
 
 @Composable
 fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
+    // oś czasu osoby: kontekst dla menu zdjęcia („To nie jest …”, „To jest ktoś inny…”) — na całym ekranie, nie w elemencie listy
+    scherm.staat.filter.persoonId?.let { oid ->
+        androidx.compose.runtime.DisposableEffect(oid) {
+            Podreczne.osobaKontekst = Triple(oid, scherm.titel, scherm.staat)
+            onDispose { if (Podreczne.osobaKontekst?.third === scherm.staat) Podreczne.osobaKontekst = null }
+        }
+    }
     val staat = scherm.staat
     val scope = rememberCoroutineScope()
     // hoofdtijdlijn heet zoals de app (instelling Naam en icoon), ook als hij al bestond toen die veranderde

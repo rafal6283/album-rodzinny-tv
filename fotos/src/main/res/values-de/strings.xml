@@ -1119,4 +1119,14 @@
     <string name="menu_ukryto">"Ausgeblendet: %1$s (OK im Menü halten → ausgeblendete zeigen)"</string>
     <string name="menu_edytuj">"Menü bearbeiten…"</string>
     <string name="menu_pokaz_ukryte">"Ausgeblendete Bereiche zeigen (%1$d)"</string>
+    <string name="kto_poprzednia">"Vorherige"</string>
+    <string name="kto_nastepna">"Nächste"</string>
+    <string name="kto_zdjecia">"Fotos zeigen"</string>
+    <string name="kto_zdjecia_sub">"Alle Fotos mit diesem Gesicht — leichter zu erkennen"</string>
+    <string name="osoba_nie_ta">"Das ist nicht %1$s (trennen)"</string>
+    <string name="osoba_inna">"Das ist jemand anderes…"</string>
+    <string name="osoba_nie_ta_krotko">"Nicht diese Person"</string>
+    <string name="osoba_inna_krotko">"Jemand anderes"</string>
+    <string name="info_biblioteka_zewn">"Externe Bibliothek (Ordner auf Server/NAS, in Immich eingebunden)"</string>
+    <string name="info_przeslane">"In Immich hochgeladen (Upload-Ordner auf dem Server)"</string>
 </resources>

@@ -1141,4 +1141,14 @@
     <string name="menu_ukryto">"Hidden: %1$s (hold OK on the menu → show hidden)"</string>
     <string name="menu_edytuj">"Edit menu…"</string>
     <string name="menu_pokaz_ukryte">"Show hidden sections (%1$d)"</string>
+    <string name="kto_poprzednia">"Previous"</string>
+    <string name="kto_nastepna">"Next"</string>
+    <string name="kto_zdjecia">"Show photos"</string>
+    <string name="kto_zdjecia_sub">"All photos with this face — easier to recognize"</string>
+    <string name="osoba_nie_ta">"This is not %1$s (unlink)"</string>
+    <string name="osoba_inna">"This is someone else…"</string>
+    <string name="osoba_nie_ta_krotko">"Not this person"</string>
+    <string name="osoba_inna_krotko">"Someone else"</string>
+    <string name="info_biblioteka_zewn">"External library (folder on the server/NAS mounted in Immich)"</string>
+    <string name="info_przeslane">"Uploaded to Immich (its upload folder on the server)"</string>
 </resources>

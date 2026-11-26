@@ -1119,4 +1119,14 @@
     <string name="menu_ukryto">"Verborgen: %1$s (OK vasthouden in menu → verborgen tonen)"</string>
     <string name="menu_edytuj">"Menu bewerken…"</string>
     <string name="menu_pokaz_ukryte">"Verborgen secties tonen (%1$d)"</string>
+    <string name="kto_poprzednia">"Vorige"</string>
+    <string name="kto_nastepna">"Volgende"</string>
+    <string name="kto_zdjecia">"Foto’s tonen"</string>
+    <string name="kto_zdjecia_sub">"Alle foto’s met dit gezicht — makkelijker herkennen"</string>
+    <string name="osoba_nie_ta">"Dit is niet %1$s (loskoppelen)"</string>
+    <string name="osoba_inna">"Dit is iemand anders…"</string>
+    <string name="osoba_nie_ta_krotko">"Niet deze persoon"</string>
+    <string name="osoba_inna_krotko">"Iemand anders"</string>
+    <string name="info_biblioteka_zewn">"Externe bibliotheek (map op server/NAS, gekoppeld aan Immich)"</string>
+    <string name="info_przeslane">"Geüpload naar Immich (uploadmap op de server)"</string>
 </resources>

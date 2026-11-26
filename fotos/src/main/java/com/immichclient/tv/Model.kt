@@ -54,7 +54,12 @@ class Markers(
     val aantal get() = id.size
 }
 data class Details(
-    val bestand: String, val camera: String?, val lens: String?, val instellingen: String?, val plaats: String?,
+    val bestand: String,
+    /** pełna ścieżka pliku na serwerze (tak, jak widzi ją Immich, np. /data/upload/… albo /mnt/…) */
+    val sciezka: String? = null,
+    /** true = z biblioteki zewnętrznej (folder podpięty do Immich), false = wysłane do Immich */
+    val zewnetrzna: Boolean = false,
+    val camera: String?, val lens: String?, val instellingen: String?, val plaats: String?,
     /** rozpoznane osoby (id do miniatury twarzy + imię); bez imienia pomijane */
     val mensen: List<Persoon>, val omschrijving: String?, val afmeting: String?,
     /** „2.5 MP · 1920 × 1281 · 375.1 KB” (jak w Immichin) */
