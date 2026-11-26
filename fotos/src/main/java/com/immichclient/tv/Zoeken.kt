@@ -421,6 +421,7 @@ private fun Suggesties(staat: ZoekStaat, nav: Nav, zoek: (String) -> Unit) {
  */
 @Composable
 fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, actie: String = stringResource(R.string.actie_zoeken), wielkie: Boolean = false, sluit: () -> Unit, klaar: (String) -> Unit) {
+    Lagen.Open()
     var tekst by remember { mutableStateOf(begin) }
     /** pozycja kursora (0..długość); ◀ ▶ na klawiaturze przesuwają go po wpisanym tekście */
     var kursor by remember { mutableIntStateOf(begin.length) }
@@ -547,7 +548,8 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
             }
         }
     }
-    LaunchedEffect(Unit) { delay(40); runCatching { eerste.requestFocus() } }
+    // kilka prób: pod spodem bywa okno, które właśnie oddaje fokus
+    LaunchedEffect(Unit) { delay(40); repeat(8) { if (runCatching { eerste.requestFocus() }.isSuccess) return@LaunchedEffect; delay(40) } }
 }
 
 @Composable

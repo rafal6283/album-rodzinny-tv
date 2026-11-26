@@ -349,11 +349,23 @@ fun Gezicht(p: Persoon, grootte: Dp) {
     }
 }
 
-/** Voor lagen over een scherm (toetsenbord, datumkiezer): focus blijft binnen de laag. */
+/** liczba otwartych warstw z [focusVangen] (stos: wyższa warstwa może przejąć fokus od niższej) */
+object Pulapki { var ile by androidx.compose.runtime.mutableIntStateOf(0) }
+
+/**
+ * Voor lagen over een scherm (toetsenbord, datumkiezer): focus blijft binnen de laag. Wyjątek: gdy nad tą warstwą
+ * otworzy się kolejna (menu, lista wyboru, klawiatura), fokus może do niej przejść — wcześniej niższa warstwa go
+ * „więziła” i przycisków nowego okna nie dało się wybrać (np. „Kto to jest?” → „To jest…”).
+ */
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-fun Modifier.focusVangen(): Modifier = this
-    .focusProperties { exit = { androidx.compose.ui.focus.FocusRequester.Cancel } }
-    .focusGroup()
+@androidx.compose.runtime.Composable
+fun Modifier.focusVangen(): Modifier {
+    val ponizej = androidx.compose.runtime.remember { Pulapki.ile }
+    androidx.compose.runtime.DisposableEffect(Unit) { Pulapki.ile++; onDispose { Pulapki.ile-- } }
+    return this
+        .focusProperties { exit = { if (Pulapki.ile > ponizej + 1) androidx.compose.ui.focus.FocusRequester.Default else androidx.compose.ui.focus.FocusRequester.Cancel } }
+        .focusGroup()
+}
 
 /** ▲▼ scrollen een lange tekstlaag (verticalScroll heeft zelf geen toetsbediening). */
 @Composable

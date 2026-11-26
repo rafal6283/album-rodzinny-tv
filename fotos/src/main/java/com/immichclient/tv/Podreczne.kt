@@ -9,6 +9,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -31,6 +32,12 @@ object Podreczne {
 
     /** zarejestrowane menu elementu z fokusem: (właściciel, akcja) */
     @Volatile var aktywne: Pair<Any, () -> Unit>? = null
+    /** element, na którym przytrzymano OK: po zamknięciu menu (i okien z niego) fokus wraca na niego */
+    @Volatile var aktywnyFr: androidx.compose.ui.focus.FocusRequester? = null
+    var zrodlo: androidx.compose.ui.focus.FocusRequester? = null
+    /** zmienia się przy każdej zmianie ekranu / otwarciu przeglądarki (MainActivity): wtedy fokusu nie przywracamy */
+    var wersjaEkranu = 0
+    var wersjaPrzyOtwarciu = -1
 
     var menu by mutableStateOf<Pair<String, List<Pozycja>>?>(null)
     /** okna otwierane z menu (rysuje je [PodreczneWarstwa]) */
@@ -69,6 +76,7 @@ object Podreczne {
     fun dlugieOk(): Boolean {
         val a = aktywne ?: return false
         if (menu != null) return false
+        zrodlo = aktywnyFr; wersjaPrzyOtwarciu = wersjaEkranu
         a.second()
         return true
     }
@@ -169,11 +177,12 @@ object Podreczne {
 @Composable
 fun Modifier.langeOk(akcja: () -> Unit): Modifier {
     val wlasciciel = remember { Any() }
+    val fr = remember { androidx.compose.ui.focus.FocusRequester() }
     val aktualna by rememberUpdatedState(akcja)
-    DisposableEffect(Unit) { onDispose { if (Podreczne.aktywne?.first === wlasciciel) Podreczne.aktywne = null } }
-    return this.onFocusChanged {
-        if (it.hasFocus) Podreczne.aktywne = wlasciciel to { aktualna() }
-        else if (Podreczne.aktywne?.first === wlasciciel) Podreczne.aktywne = null
+    DisposableEffect(Unit) { onDispose { if (Podreczne.aktywne?.first === wlasciciel) { Podreczne.aktywne = null; Podreczne.aktywnyFr = null } } }
+    return this.focusRequester(fr).onFocusChanged {
+        if (it.hasFocus) { Podreczne.aktywne = wlasciciel to { aktualna() }; Podreczne.aktywnyFr = fr }
+        else if (Podreczne.aktywne?.first === wlasciciel) { Podreczne.aktywne = null; Podreczne.aktywnyFr = null }
     }
 }
 
@@ -181,6 +190,17 @@ fun Modifier.langeOk(akcja: () -> Unit): Modifier {
 @Composable
 fun PodreczneWarstwa() {
     val ctx = LocalContext.current
+    // po zamknięciu menu i okien z niego: fokus z powrotem na element, na którym przytrzymano OK (nie do bocznego menu)
+    val otwarte = Podreczne.menu != null || Podreczne.doAlbumu != null || Podreczne.zmianaNazwy != null || Podreczne.usuwanie != null ||
+        Podreczne.osobaEdycja != null || Podreczne.edycjaMenu || Edytor.data != null || Edytor.miejsce != null || Edytor.opis != null ||
+        Edytor.ocena != null || Edytor.link != null || Edytor.udostepnij != null
+    androidx.compose.runtime.LaunchedEffect(otwarte) {
+        if (otwarte) return@LaunchedEffect
+        val z = Podreczne.zrodlo ?: return@LaunchedEffect
+        Podreczne.zrodlo = null
+        if (Podreczne.wersjaEkranu != Podreczne.wersjaPrzyOtwarciu) return@LaunchedEffect
+        repeat(5) { kotlinx.coroutines.delay(40); if (runCatching { z.requestFocus() }.isSuccess) return@LaunchedEffect }
+    }
     Podreczne.menu?.let { (tytul, pozycje) ->
         MenuWarstwa(tytul, stringResource(R.string.podreczne_sub), { Podreczne.menu = null }) { pierwszy ->
             pozycje.forEachIndexed { i, p ->
