@@ -154,7 +154,8 @@ fun TwarzeZdjecia(a: Asset, sluit: () -> Unit) {
     val pierwszy = remember { FocusRequester() }
     BackHandler(enabled = wybrana == null) { sluit() }
     LaunchedEffect(twarze, wybrana) { if (wybrana == null) { delay(60); runCatching { pierwszy.requestFocus() } } }
-    Box(Modifier.fillMaxSize().background(Color(0xF20A0A0A)).focusVangen().padding(horizontal = 56.dp, vertical = 40.dp)) {
+    // lista twarzy znika na czas menu korekty: inaczej trzymała fokus (focusVangen) i przycisków menu nie dało się wybrać
+    if (wybrana == null) Box(Modifier.fillMaxSize().background(Color(0xF20A0A0A)).focusVangen().padding(horizontal = 56.dp, vertical = 40.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(stringResource(R.string.twarze_tytul), style = MaterialTheme.typography.displaySmall)
             Text(stringResource(R.string.twarze_sub), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht)
