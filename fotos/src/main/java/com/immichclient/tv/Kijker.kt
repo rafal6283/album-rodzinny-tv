@@ -449,6 +449,16 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
                     else -> false
                 }
             }
+            // cyfry 0–5: ocena gwiazdkami (0 = bez oceny)
+            if (k in KeyEvent.KEYCODE_0..KeyEvent.KEYCODE_5 && huidig != null && !Synology.jestSyno(huidig.id) && !Instellingen.trybDzieciecy) {
+                val g = k - KeyEvent.KEYCODE_0
+                Edycja.zakres.launch {
+                    runCatching { Immich.ocen(huidig.id, g) }
+                        .onSuccess { staat.komunikat = if (g == 0) ctx.getString(R.string.edytor_bez_oceny) else "★".repeat(g) + "☆".repeat(5 - g) }
+                        .onFailure { staat.komunikat = Edycja.blad(it) }
+                }
+                return@onPreviewKeyEvent true
+            }
             // poprzedni / następny element zawsze: kanał ▲▼, ⏮ ⏭, strona w górę / w dół
             when (k) {
                 KeyEvent.KEYCODE_MEDIA_NEXT, KeyEvent.KEYCODE_CHANNEL_UP, KeyEvent.KEYCODE_PAGE_DOWN -> { staat.diashow = false; ga(1); return@onPreviewKeyEvent true }

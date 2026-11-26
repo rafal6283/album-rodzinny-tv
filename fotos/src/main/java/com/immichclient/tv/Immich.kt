@@ -302,7 +302,8 @@ object Immich {
             id = o.getString("id"),
             jaar = data?.optInt("year") ?: 0,
             dag = dag,
-            assets = List(assets.length()) { asset(assets.getJSONObject(it)) }.sortedBy { it.datum },
+            // „Nie pokazuj we wspomnieniach” (lista na telewizorze)
+            assets = List(assets.length()) { asset(assets.getJSONObject(it)) }.filter { !UkryteWeWspomnieniach.jest(it.id) }.sortedBy { it.datum },
             typ = typ, tytul = tytul,
         )
     }
@@ -597,6 +598,95 @@ object Immich {
             najw
         }
     }.onFailure { Log.w("Fotos", "faces $assetId: ${it.message}") }.getOrNull()
+
+    // ---- Porządki: kosz, archiwum, data, miejsce, opis, ocena, duplikaty, linki ----
+
+    /** Do kosza (asset.delete); z kosza można przywrócić. */
+    suspend fun doKosza(ids: List<String>) { delete("/assets", JSONObject().put("ids", JSONArray(ids)).put("force", false)) }
+    suspend fun przywrocZKosza(ids: List<String>) { post("/trash/restore/assets", JSONObject().put("ids", JSONArray(ids))) }
+    suspend fun oproznijKosz() { post("/trash/empty", JSONObject()) }
+
+    /** Zdjęcia w koszu, strona po 200 (od ostatnio usuniętych). */
+    suspend fun kosz(strona: Int): Pagina = withContext(Dispatchers.Default) {
+        val body = JSONObject().put("size", 200).put("page", strona).put("withDeleted", true).put("trashedAfter", "1970-01-01T00:00:00.000Z").put("withExif", true)
+        pagina(JSONObject(post("/search/metadata", body)))
+    }
+
+    /** Archiwum (ukryte z osi czasu), strona po 200. */
+    suspend fun archiwum(strona: Int): Pagina = withContext(Dispatchers.Default) {
+        pagina(JSONObject(post("/search/metadata", JSONObject().put("size", 200).put("page", strona).put("visibility", "archive").put("withExif", true))))
+    }
+
+    /** Archiwizuj (true) albo przywróć na oś czasu (false). */
+    suspend fun archiwizuj(ids: List<String>, tak: Boolean) {
+        put("/assets", JSONObject().put("ids", JSONArray(ids)).put("visibility", if (tak) "archive" else "timeline"))
+    }
+
+    /** Data i godzina wykonania (strefa telewizora). */
+    suspend fun zmienDate(id: String, kiedy: java.time.LocalDateTime) {
+        val z = kiedy.atZone(java.time.ZoneId.systemDefault()).toOffsetDateTime().toString()
+        put("/assets", JSONObject().put("ids", JSONArray(listOf(id))).put("dateTimeOriginal", z))
+    }
+
+    suspend fun zmienMiejsce(ids: List<String>, lat: Double, lon: Double) {
+        put("/assets", JSONObject().put("ids", JSONArray(ids)).put("latitude", lat).put("longitude", lon))
+    }
+
+    suspend fun zmienOpis(id: String, opis: String) { put("/assets/$id", JSONObject().put("description", opis)) }
+
+    /** Ocena 1–5 (0 = bez oceny). */
+    suspend fun ocen(id: String, gwiazdki: Int) { put("/assets/$id", JSONObject().put("rating", if (gwiazdki == 0) JSONObject.NULL else gwiazdki)) }
+
+    /** Zdjęcia z oceną co najmniej [min] (losowa kolejność nie jest potrzebna: od najnowszych). */
+    suspend fun zOcena(min: Int, strona: Int): Pagina = withContext(Dispatchers.Default) {
+        val wszystkie = ArrayList<Asset>()
+        var dalej = false
+        for (r in min..5) {
+            val p = pagina(JSONObject(post("/search/metadata", JSONObject().put("size", 200).put("page", strona).put("rating", r).put("withExif", true))))
+            wszystkie += p.assets; if (p.volgende != null) dalej = true
+        }
+        Pagina(wszystkie.sortedByDescending { it.datum }, if (dalej) strona + 1 else null)
+    }
+
+    /** Nowo wysłane od [od] (data dodania do Immich), strona po 200, od najstarszych. */
+    suspend fun noweOd(od: java.time.Instant, strona: Int): Pagina = withContext(Dispatchers.Default) {
+        pagina(JSONObject(post("/search/metadata", JSONObject().put("size", 200).put("page", strona).put("order", "asc")
+            .put("createdAfter", od.toString()).put("visibility", "timeline").put("withExif", true))))
+    }
+
+    /** Grupy duplikatów wykrytych przez Immich: (id grupy, zdjęcia). */
+    suspend fun duplikaty(): List<Pair<String, List<Asset>>> = withContext(Dispatchers.Default) {
+        val a = JSONArray(get("/duplicates"))
+        (0 until a.length()).map { i ->
+            val g = a.getJSONObject(i)
+            val l = g.getJSONArray("assets")
+            g.optString("duplicateId") to List(l.length()) { asset(l.getJSONObject(it)) }
+        }.filter { it.second.size > 1 }
+    }
+
+    /** „To nie duplikaty”: grupa znika z listy. */
+    suspend fun odrzucDuplikat(id: String) { haal(Request.Builder().url("$api/duplicates/$id").delete().build()) }
+
+    /** Link do albumu dla osób bez konta; zwraca pełny adres (domena zewnętrzna z ustawień serwera, jeśli jest). */
+    suspend fun linkDoAlbumu(albumId: String, dni: Int?): String {
+        val body = JSONObject().put("type", "ALBUM").put("albumId", albumId).put("allowDownload", true).put("showMetadata", true)
+        dni?.let { body.put("expiresAt", java.time.Instant.now().plus(java.time.Duration.ofDays(it.toLong())).toString()) }
+        val key = JSONObject(post("/shared-links", body)).getString("key")
+        val zewn = runCatching { JSONObject(get("/server/config")).optString("externalDomain").trim().trimEnd('/') }.getOrNull().orEmpty()
+        return (zewn.ifBlank { server }) + "/share/" + key
+    }
+
+    /** Konta Immich (do udostępniania albumu), bez własnego. */
+    suspend fun uzytkownicy(): List<Pair<String, String>> = withContext(Dispatchers.Default) {
+        val ja = runCatching { JSONObject(get("/users/me")).optString("id") }.getOrNull()
+        val a = JSONArray(get("/users"))
+        (0 until a.length()).map { a.getJSONObject(it) }.filter { it.optString("id") != ja }
+            .map { it.optString("id") to it.optString("name").ifBlank { it.optString("email") } }
+    }
+
+    suspend fun udostepnijAlbum(albumId: String, userId: String) {
+        put("/albums/$albumId/users", JSONObject().put("albumUsers", JSONArray().put(JSONObject().put("userId", userId).put("role", "viewer"))))
+    }
 
     // ---- Korekty twarzy (face.read / face.update / face.delete / person.create) ----
 

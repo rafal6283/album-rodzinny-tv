@@ -771,6 +771,9 @@ object Herinneringen {
         private set
     private var opgehaald: LocalDate? = null
 
+    /** po ukryciu zdjęć: następne wejście wczyta wspomnienia od nowa */
+    fun uniewaznij() { opgehaald = null }
+
     suspend fun laadVandaag() {
         val d = LocalDate.now()
         if (opgehaald == d) return

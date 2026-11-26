@@ -73,10 +73,13 @@ object Podreczne {
         }
         if (!Instellingen.trybDzieciecy) p += Pozycja(s(R.string.album_akcja)) { doAlbumu = (Udostepnianie.koszyk.map { it.id } + a.id).distinct() }
         if (a.lat != null) naMape?.let { m -> p += Pozycja(s(R.string.podreczne_na_mapie)) { m(a) } }
+        // edycja: data, miejsce, opis, ocena, archiwum, „nie we wspomnieniach”, kosz
+        if (!Instellingen.trybDzieciecy) p += Edytor.pozycjeZdjecia(a)
         pokaz?.let { f -> p += Pozycja(s(R.string.pokaz_od_tego)) { f(a) } }
         // zaznaczenie: pokaz, udostępnienie, wyczyszczenie jednym ruchem, tryb zaznaczania
         val ile = Udostepnianie.koszyk.size
         if (ile > 0) {
+            if (!Instellingen.trybDzieciecy) p += Pozycja(s(R.string.edytor_zaznaczone_akcja, ile)) { Edytor.menuZaznaczonych() }
             p += Pozycja(s(R.string.zazn_pokaz, ile)) { nav?.bekijk(LijstBron(Udostepnianie.koszyk.sortedBy { it.datum }), 0, s(R.string.zazn_tytul), true, null) }
             p += Pozycja(s(R.string.zazn_udostepnij, ile)) { Udostepnianie.otworz(Taal.ctx) }
             p += Pozycja(s(if (Udostepnianie.tryb) R.string.zazn_koniec else R.string.zazn_dalej)) { Udostepnianie.tryb = !Udostepnianie.tryb }
@@ -103,6 +106,8 @@ object Podreczne {
                 Kanaly.odswiezWTle(Taal.ctx)
                 komunikat(s(if (naEkranie) R.string.podreczne_z_ekranu_ok else R.string.podreczne_na_ekran_ok))
             }
+            p += Pozycja(s(R.string.link_akcja)) { Edytor.link = id to nazwa }
+            p += Pozycja(s(R.string.edytor_udostepnij_akcja)) { Edytor.udostepnij = id to nazwa }
             p += Pozycja(s(R.string.album_usun_caly)) { poUsunieciu = null; usuwanie = id to nazwa }
         }
         menu = nazwa to p

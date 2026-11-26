@@ -134,7 +134,7 @@ fun odcienSekcji(s: Sectie): Color = when (s) {
     Sectie.ALBUMS, Sectie.MAPPEN, Sectie.SYNOLOGY -> Color(0xFF2C3E58)
     Sectie.VERKENNEN, Sectie.LUDZIE -> Color(0xFF22404A)
     Sectie.KAART -> Color(0xFF1E2050)
-    Sectie.INSTELLINGEN -> Color(0xFF2A2A36)
+    Sectie.INSTELLINGEN, Sectie.PORZADKI -> Color(0xFF2A2A36)
 }
 
 /**

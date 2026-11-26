@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -100,7 +101,8 @@ fun MenuWarstwa(tytul: String, podtytul: String?, sluit: () -> Unit, tresc: @Com
     BackHandler { sluit() }
     LaunchedEffect(Unit) { delay(40); runCatching { fr.requestFocus() } }
     Box(Modifier.fillMaxSize().background(Color(0xF20A0A0A)).focusVangen().padding(horizontal = 64.dp, vertical = 40.dp)) {
-        Column(Modifier.widthIn(max = 620.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // przewijane: długie menu (np. podręczne z edycją) nie ucieka poza ekran
+        Column(Modifier.widthIn(max = 620.dp).verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(tytul, style = MaterialTheme.typography.displaySmall)
             podtytul?.let { Text(it, style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht) }
             Box(Modifier.height(8.dp))
