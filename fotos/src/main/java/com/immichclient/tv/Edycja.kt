@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +61,17 @@ object Edycja {
     val nazwyAlbumow = mutableStateMapOf<String, String>()
     var wersjaOsob by mutableIntStateOf(0)
     var wersjaAlbumow by mutableIntStateOf(0)
+    /** rośnie po zmianie zdjęcia głównego osoby (nowe adresy miniatur twarzy) */
+    var wersjaGlownych by mutableIntStateOf(0)
+
+    /** Ustaw zdjęcie główne osoby (jej twarz z tego zdjęcia) i odśwież miniatury. */
+    fun ustawGlowne(osobaId: String, assetId: String, poSukcesie: () -> Unit = {}) {
+        zakres.launch {
+            runCatching { Immich.ustawZdjecieOsoby(osobaId, assetId) }
+                .onSuccess { wersjaGlownych++; wersjaOsob++; komunikat = Taal.s(R.string.glowne_ustawione); poSukcesie() }
+                .onFailure { komunikat = blad(it) }
+        }
+    }
     /** albumy, z których usunięto zdjęcie w przeglądarce: oś czasu albumu wczytuje się od nowa po jej zamknięciu */
     val doOdswiezenia = HashSet<String>()
     /**
@@ -89,7 +101,8 @@ fun MenuWarstwa(tytul: String, podtytul: String?, sluit: () -> Unit, tresc: @Com
     BackHandler { sluit() }
     LaunchedEffect(Unit) { delay(40); runCatching { fr.requestFocus() } }
     Box(Modifier.fillMaxSize().background(Color(0xF20A0A0A)).focusVangen().padding(horizontal = 64.dp, vertical = 40.dp)) {
-        Column(Modifier.widthIn(max = 620.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // przewijane: długie menu (np. podręczne z edycją) nie ucieka poza ekran
+        Column(Modifier.widthIn(max = 620.dp).verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(tytul, style = MaterialTheme.typography.displaySmall)
             podtytul?.let { Text(it, style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht) }
             Box(Modifier.height(8.dp))

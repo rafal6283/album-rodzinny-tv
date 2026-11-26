@@ -122,6 +122,7 @@ object Korekta {
 /** Menu dla wybranych twarzy: to jest…, nowa osoba, to nie ta osoba, to nie twarz. */
 @Composable
 fun TwarzeAkcje(twarze: List<Twarz>, tytul: String, sluit: () -> Unit, gotowe: (List<Twarz>) -> Unit) {
+    val jedna = twarze.singleOrNull()?.takeIf { it.osoba != null }
     var okno by remember { mutableStateOf<String?>(null) }
     when (okno) {
         null -> MenuWarstwa(tytul, stringResource(R.string.twarz_menu_sub), sluit) { pierwszy ->
@@ -129,6 +130,10 @@ fun TwarzeAkcje(twarze: List<Twarz>, tytul: String, sluit: () -> Unit, gotowe: (
             Knop(stringResource(R.string.twarz_nowa), null, Modifier.width(560.dp)) { okno = "nowa" }
             Knop(stringResource(R.string.twarz_nie_ta), null, Modifier.width(560.dp)) { sluit(); Korekta.odepnij(twarze, gotowe) }
             Knop(stringResource(R.string.twarz_nie_twarz), null, Modifier.width(560.dp)) { sluit(); Korekta.usun(twarze, gotowe) }
+            // jedna twarz przypisanej osoby: to zdjęcie jako jej zdjęcie główne
+            if (jedna != null) Knop(stringResource(R.string.glowne_ta_twarz, Edycja.imie(jedna.osoba!!).ifBlank { "…" }), null, Modifier.width(560.dp)) {
+                sluit(); Edycja.ustawGlowne(jedna.osoba!!.id, jedna.assetId)
+            }
         }
         "osoba" -> KiesLijst(stringResource(R.string.twarz_to_jest), persoonKeuzes(), "", sluit = { okno = null }) { id, naam ->
             sluit(); Korekta.przypisz(twarze, id, naam, gotowe)
@@ -224,11 +229,13 @@ class PoprawStaat(val osobaId: String, val imie: String, private val scope: Coro
 }
 
 @Composable
-fun PoprawScherm(staat: PoprawStaat, nav: Nav) {
+fun PoprawScherm(staat: PoprawStaat, nav: Nav, wyborGlownego: Boolean = false) {
     var okno by remember { mutableStateOf<String?>(null) }
     val pierwszy = remember { FocusRequester() }
     val ile = staat.zaznaczone.count { it.value }
     LaunchedEffect(Unit) { delay(80); runCatching { pierwszy.requestFocus() } }
+    val pierwszaTwarz = remember { FocusRequester() }
+    if (wyborGlownego) LaunchedEffect(staat.lista.isNotEmpty()) { if (staat.lista.isNotEmpty()) { delay(60); runCatching { pierwszaTwarz.requestFocus() } } }
     LazyVerticalGrid(
         columns = GridCells.Adaptive(140.dp),
         contentPadding = PaddingValues(start = 24.dp, end = 40.dp, top = 20.dp, bottom = 80.dp),
@@ -237,7 +244,12 @@ fun PoprawScherm(staat: PoprawStaat, nav: Nav) {
     ) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             Column {
-                SchermKop(
+                if (wyborGlownego) SchermKop(
+                    stringResource(R.string.glowne_tytul, staat.imie),
+                    stringResource(R.string.popraw_ile, staat.lista.size) + (if (!staat.gotowe) "…" else "") + "  ·  " + stringResource(R.string.glowne_hint),
+                    etykieta = stringResource(R.string.personen),
+                )
+                else SchermKop(
                     stringResource(R.string.popraw_tytul, staat.imie),
                     listOfNotNull(
                         stringResource(R.string.popraw_ile, staat.lista.size) + if (!staat.gotowe) "…" else "",
@@ -247,6 +259,10 @@ fun PoprawScherm(staat: PoprawStaat, nav: Nav) {
                 ) {
                     Keuze(selected = false, onClick = { if (ile > 0) okno = "akcje" }, modifier = Modifier.focusRequester(pierwszy),
                         tekst = stringResource(R.string.popraw_popraw, ile))
+                    // dokładnie jedna zaznaczona twarz: jako zdjęcie główne osoby
+                    if (ile == 1) Keuze(selected = false, onClick = {
+                        staat.lista.firstOrNull { staat.zaznaczone[it.second.id] == true }?.let { (a, _) -> Edycja.ustawGlowne(staat.osobaId, a.id); staat.zaznaczone.clear() }
+                    }, tekst = stringResource(R.string.glowne_przycisk))
                     if (ile > 0) Keuze(selected = false, onClick = { staat.zaznaczone.clear() }, tekst = stringResource(R.string.popraw_wyczysc))
                     Keuze(selected = false, onClick = { okno = "polacz" }, tekst = stringResource(R.string.popraw_polacz))
                 }
@@ -259,9 +275,13 @@ fun PoprawScherm(staat: PoprawStaat, nav: Nav) {
             val wybrana = staat.zaznaczone[t.id] == true
             Column {
                 Card(
-                    onClick = { staat.zaznaczone[t.id] = !wybrana },
+                    onClick = {
+                        if (wyborGlownego) Edycja.ustawGlowne(staat.osobaId, a.id) { nav.terug() }
+                        else staat.zaznaczone[t.id] = !wybrana
+                    },
                     // przytrzymanie OK: całe zdjęcie (sprawdzić, kto to naprawdę jest)
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).langeOk { nav.bekijk(LijstBron(listOf(a)), 0, staat.imie, false, null) },
+                    modifier = (if (wyborGlownego && t === staat.lista.firstOrNull()?.second) Modifier.focusRequester(pierwszaTwarz) else Modifier)
+                        .fillMaxWidth().aspectRatio(1f).langeOk { nav.bekijk(LijstBron(listOf(a)), 0, staat.imie, false, null) },
                     shape = CardDefaults.shape(RoundedCornerShape(16.dp)), scale = CardDefaults.scale(focusedScale = 1.08f),
                     border = CardDefaults.border(
                         border = if (wybrana) androidx.tv.material3.Border(BorderStroke(4.dp, Color(0xFFF5B83D)), shape = RoundedCornerShape(16.dp)) else androidx.tv.material3.Border.None,

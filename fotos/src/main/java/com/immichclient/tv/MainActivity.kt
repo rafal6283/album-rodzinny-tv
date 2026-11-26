@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -145,7 +146,12 @@ sealed class Scherm {
     class Rosniecie(osobaId: String, imie: String, scope: CoroutineScope) : Scherm() { val staat = RosniecieStaat(osobaId, imie, scope) }
     class Podobni(osobaId: String, imie: String, scope: CoroutineScope) : Scherm() { val staat = PodobniStaat(osobaId, imie, scope) }
     class Kadr(scope: CoroutineScope) : Scherm() { val staat = KadrStaat(scope) }
-    class Popraw(osobaId: String, imie: String, scope: CoroutineScope) : Scherm() { val staat = PoprawStaat(osobaId, imie, scope) }
+    /** [wyborGlownego] = siatka twarzy do wyboru zdjęcia głównego osoby (OK = ustaw) */
+    data object Porzadki : Scherm()
+    class Przeglad(scope: CoroutineScope) : Scherm() { val staat = PrzegladStaat(scope) }
+    class Duplikaty(scope: CoroutineScope) : Scherm() { val staat = DuplikatyStaat(scope) }
+    class Kosz(scope: CoroutineScope) : Scherm() { val res = Resultaten(scope).also { it.start { s -> Immich.kosz(s) } } }
+    class Popraw(osobaId: String, imie: String, scope: CoroutineScope, val wyborGlownego: Boolean = false) : Scherm() { val staat = PoprawStaat(osobaId, imie, scope) }
     class Powroty(scope: CoroutineScope) : Scherm() { val staat = PowrotyStaat(scope) }
     @Suppress("UNUSED_PARAMETER") class Kolory(scope: CoroutineScope) : Scherm()
     class Synology(scope: CoroutineScope) : Scherm() { val staat = SynologyStaat(scope) }
@@ -218,11 +224,13 @@ enum class Sectie(@StringRes val label: Int, val icoon: ImageVector) {
     LUDZIE(R.string.personen, Icons.Filled.People),
     /** same filmy z osi czasu, od najnowszych */
     FILMY(R.string.sectie_filmy, Icons.Filled.VideoLibrary),
+    /** porządki: przegląd nowych, duplikaty, kosz, archiwum (nie w trybie dziecięcym) */
+    PORZADKI(R.string.sectie_porzadki, Icons.Filled.CleaningServices),
     INSTELLINGEN(R.string.sectie_instellingen, Icons.Filled.Settings);
 
     companion object {
         /** Kolejność w bocznej szynie, jak w Immichin: szukaj, zdjęcia+wideo, wspomnienia, ulubione, albumy, ludzie, mapa… */
-        val KOLEJNOSC = listOf(ZOEKEN, FOTOS, FILMY, HERINNERINGEN, ROCZNICE, ZABAWA, FAVORIETEN, ALBUMS, SYNOLOGY, LUDZIE, VERKENNEN, KAART, MAPPEN, INSTELLINGEN)
+        val KOLEJNOSC = listOf(ZOEKEN, FOTOS, FILMY, HERINNERINGEN, ROCZNICE, ZABAWA, FAVORIETEN, ALBUMS, SYNOLOGY, LUDZIE, VERKENNEN, KAART, MAPPEN, PORZADKI, INSTELLINGEN)
     }
 }
 
@@ -419,6 +427,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             Sectie.KAART -> Scherm.Kaart(scope)
             Sectie.LUDZIE -> Scherm.Personen(PersonenStaat(emptyList(), scope) { Immich.wszystkieOsoby() })
             Sectie.ALBUMS -> Scherm.Albums(scope)
+            Sectie.PORZADKI -> Scherm.Porzadki
             Sectie.MAPPEN -> Scherm.Mappen(MappenBoom(scope), null, scope)
             Sectie.FILMY -> Scherm.Filmy(scope)
             Sectie.FAVORIETEN -> Scherm.Tijdlijn(ctx.getString(R.string.sectie_favorieten), null, Filter(favorieten = true), Instellingen.nieuwsteEerst, false, scope)
@@ -652,7 +661,11 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         is Scherm.Rosniecie -> RosniecieScherm(scherm.staat)
                         is Scherm.Podobni -> PodobniScherm(scherm.staat)
                         is Scherm.Kadr -> KadrScherm(scherm.staat)
-                        is Scherm.Popraw -> PoprawScherm(scherm.staat, nav)
+                        is Scherm.Popraw -> PoprawScherm(scherm.staat, nav, scherm.wyborGlownego)
+                        is Scherm.Porzadki -> PorzadkiScherm(nav)
+                        is Scherm.Przeglad -> PrzegladScherm(scherm.staat, nav)
+                        is Scherm.Duplikaty -> DuplikatyScherm(scherm.staat)
+                        is Scherm.Kosz -> KoszScherm(scherm, nav)
                         is Scherm.Powroty -> PowrotyScherm(scherm.staat, nav)
                         is Scherm.Kolory -> KoloryScherm(nav)
                         is Scherm.Synology -> SynologyScherm(scherm.staat, nav)
@@ -706,6 +719,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         if (kijker == null && Udostepnianie.koszyk.isNotEmpty()) PasekZaznaczenia(Modifier.align(androidx.compose.ui.Alignment.BottomStart))
         // menu podręczne (przytrzymanie OK) i okna z niego — nad wszystkim, także nad przeglądarką
         PodreczneWarstwa()
+        EdytorWarstwa()
         EdycjaKomunikat(Modifier.align(androidx.compose.ui.Alignment.BottomCenter))
     }
 }

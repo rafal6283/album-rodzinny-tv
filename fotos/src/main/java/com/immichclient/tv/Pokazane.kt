@@ -39,3 +39,21 @@ object Pokazane {
     /** Lista zdjęć z nowymi na początku (kolejność losowa w obu grupach). */
     fun nowePierwsze(z: List<Asset>): List<Asset> = wybierz(z, z.size) { it.id }
 }
+
+/** Zdjęcia, których nie pokazywać we wspomnieniach („Tego dnia”, wspomnienia, kanał) — lista na tym telewizorze. */
+object UkryteWeWspomnieniach {
+    private const val PREFS = "ukryte_wspomnienia"
+    private var zbior: MutableSet<String>? = null
+    private fun prefs() = Taal.ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    @Synchronized private fun z(): MutableSet<String> = zbior ?: runCatching { prefs().getStringSet("idy", emptySet()).orEmpty().toMutableSet() }
+        .getOrDefault(HashSet()).also { zbior = it }
+
+    @Synchronized fun jest(id: String) = id in z()
+
+    @Synchronized fun ukryj(ids: Collection<String>) {
+        z().addAll(ids)
+        runCatching { prefs().edit().putStringSet("idy", HashSet(z())).apply() }
+        Herinneringen.uniewaznij()
+    }
+}
