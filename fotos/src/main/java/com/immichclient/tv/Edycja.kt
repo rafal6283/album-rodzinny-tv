@@ -99,7 +99,8 @@ fun MenuWarstwa(tytul: String, podtytul: String?, sluit: () -> Unit, tresc: @Com
     Lagen.Open()
     val fr = remember { FocusRequester() }
     BackHandler { sluit() }
-    LaunchedEffect(Unit) { delay(40); runCatching { fr.requestFocus() } }
+    // kilka prób: pod spodem bywa ekran, który właśnie oddaje fokus (np. lista twarzy w przeglądarce)
+    LaunchedEffect(Unit) { delay(40); repeat(8) { if (runCatching { fr.requestFocus() }.isSuccess) return@LaunchedEffect; delay(40) } }
     Box(Modifier.fillMaxSize().background(Color(0xF20A0A0A)).focusVangen().padding(horizontal = 64.dp, vertical = 40.dp)) {
         // przewijane: długie menu (np. podręczne z edycją) nie ucieka poza ekran
         Column(Modifier.widthIn(max = 620.dp).verticalScroll(androidx.compose.foundation.rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {

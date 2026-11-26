@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,6 +55,34 @@ import kotlinx.coroutines.launch
  * Kolejność sekcji w bocznym menu (Ustawienia → Wygląd → Kolejność menu). Zapisana jako lista nazw; sekcje, których
  * zapis nie zna (np. nowe w aktualizacji), dochodzą na końcu w domyślnej kolejności. Ustawienia zawsze na dole.
  */
+/** Ukryte sekcje (Ustawienia nigdy). */
+fun Sectie.Companion.ukryte(): Set<Sectie> = Instellingen.ukryteSekcje.split(',').mapNotNull { n -> Sectie.entries.firstOrNull { it.name == n.trim() } }
+    .filter { it != Sectie.INSTELLINGEN }.toSet()
+
+fun Sectie.Companion.ukryj(s: Sectie, tak: Boolean) {
+    if (s == Sectie.INSTELLINGEN) return
+    val u = ukryte().toMutableSet().apply { if (tak) add(s) else remove(s) }
+    Instellingen.ukryteSekcje = u.joinToString(",") { it.name }
+}
+
+/** Przesuń sekcję w kolejności menu o [d] (−1 wyżej, +1 niżej), licząc także ukryte. */
+fun Sectie.Companion.przesun(s: Sectie, d: Int) {
+    val l = wszystkieWKolejnosci().toMutableList()
+    val i = l.indexOf(s); val j = i + d
+    if (i < 0 || j !in l.indices) return
+    l.removeAt(i); l.add(j, s)
+    Instellingen.sekcje = l.joinToString(",") { it.name }
+}
+
+/** Kolejność wszystkich sekcji (z ukrytymi), bez Ustawień. */
+fun Sectie.Companion.wszystkieWKolejnosci(): List<Sectie> {
+    val zapis = Instellingen.sekcje.split(',').mapNotNull { n -> Sectie.entries.firstOrNull { it.name == n.trim() } }
+        .filter { it != Sectie.INSTELLINGEN }.distinct()
+    return (zapis + Sectie.KOLEJNOSC.filter { it != Sectie.INSTELLINGEN && it !in zapis })
+        .filter { it != Sectie.SYNOLOGY || Synology.skonfigurowane }
+        .filter { it != Sectie.PORZADKI || !Instellingen.trybDzieciecy }
+}
+
 fun Sectie.Companion.menu(): List<Sectie> {
     val zapis = Instellingen.sekcje.split(',').mapNotNull { n -> Sectie.entries.firstOrNull { it.name == n.trim() } }
         .filter { it != Sectie.INSTELLINGEN }.distinct()
@@ -61,7 +90,8 @@ fun Sectie.Companion.menu(): List<Sectie> {
     @Suppress("UNUSED_VARIABLE") val zmiana = Synology.stan // odczyt stanu: menu odświeża się po połączeniu
     return (zapis + Sectie.KOLEJNOSC.filter { it != Sectie.INSTELLINGEN && it !in zapis })
         .filter { it != Sectie.SYNOLOGY || Synology.skonfigurowane }
-        .filter { it != Sectie.PORZADKI || !Instellingen.trybDzieciecy } + Sectie.INSTELLINGEN
+        .filter { it != Sectie.PORZADKI || !Instellingen.trybDzieciecy }
+        .filter { it !in ukryte() } + Sectie.INSTELLINGEN
 }
 
 @Composable
@@ -71,7 +101,8 @@ fun nazwaSekcji(s: Sectie): String = stringResource(if (s == Sectie.FOTOS) Inste
 @Composable
 fun KolejnoscSekcji(sluit: () -> Unit) {
     Lagen.Open()
-    val lista = remember { Sectie.menu().filter { it != Sectie.INSTELLINGEN }.toMutableStateList() }
+    val lista = remember { Sectie.wszystkieWKolejnosci().toMutableStateList() }
+    var ukryte by remember { mutableStateOf(Sectie.ukryte()) }
     var trzymany by remember { mutableStateOf<Sectie?>(null) }
     val fr = remember { Sectie.entries.associateWith { FocusRequester() } }
     val scope = rememberCoroutineScope()
@@ -100,6 +131,10 @@ fun KolejnoscSekcji(sluit: () -> Unit) {
                             modifier = Modifier.fillMaxWidth().height(48.dp).focusRequester(fr.getValue(s))
                                 .onFocusChanged { focus = it.isFocused }
                                 .onPreviewKeyEvent { e ->
+                                    // ▶ na niechwyconej sekcji: ukryj / pokaż w menu
+                                    if (!chwycony && e.type == KeyEventType.KeyDown && e.key.nativeKeyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                                        Sectie.ukryj(s, s !in ukryte); ukryte = Sectie.ukryte(); return@onPreviewKeyEvent true
+                                    }
                                     if (!chwycony || e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                                     when (e.key.nativeKeyCode) {
                                         KeyEvent.KEYCODE_DPAD_UP -> { przesun(s, -1); true }
@@ -117,7 +152,8 @@ fun KolejnoscSekcji(sluit: () -> Unit) {
                             Row(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
                                 Text("${i + 1}.", style = MaterialTheme.typography.titleMedium, color = kolor.copy(alpha = 0.7f), modifier = Modifier.width(36.dp))
                                 Icon(s.icoon, null, Modifier.size(22.dp), tint = kolor)
-                                Text(nazwaSekcji(s), style = MaterialTheme.typography.titleMedium, color = kolor, modifier = Modifier.padding(start = 14.dp).weight(1f))
+                                Text(nazwaSekcji(s), style = MaterialTheme.typography.titleMedium, color = if (s in ukryte) kolor.copy(alpha = 0.45f) else kolor, modifier = Modifier.padding(start = 14.dp).weight(1f))
+                                if (s in ukryte) Icon(Icons.Filled.VisibilityOff, null, Modifier.padding(end = 8.dp).size(20.dp), tint = kolor.copy(alpha = 0.7f))
                                 if (chwycony) Icon(Icons.Filled.SwapVert, null, Modifier.size(22.dp), tint = kolor)
                             }
                         }
@@ -129,7 +165,7 @@ fun KolejnoscSekcji(sluit: () -> Unit) {
                     onClick = {
                         trzymany = null
                         lista.clear(); lista.addAll(Sectie.KOLEJNOSC.filter { it != Sectie.INSTELLINGEN })
-                        Instellingen.sekcje = ""
+                        Instellingen.sekcje = ""; Instellingen.ukryteSekcje = ""; ukryte = emptySet()
                     },
                     modifier = Modifier.padding(top = 10.dp).fillMaxWidth().height(48.dp).onFocusChanged { focus = it.isFocused },
                     shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(12.dp)),

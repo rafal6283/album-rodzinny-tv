@@ -689,7 +689,7 @@
     </plurals>
     <string name="menu_kolejnosc">"Volgorde menu"</string>
     <string name="menu_kolejnosc_uitleg">"Zet de onderdelen van het zijmenu in je eigen volgorde"</string>
-    <string name="menu_kolejnosc_hint">"OK oppakken / neerzetten   ·   ▲▼ verplaatsen   ·   Terug sluiten"</string>
+    <string name="menu_kolejnosc_hint">"OK oppakken / neerzetten   ·   ▲▼ verplaatsen   ·   Terug sluiten · ▶ verbergen / tonen"</string>
     <string name="menu_domyslna">"Standaardvolgorde herstellen"</string>
     <string name="wideo_ok">"Afspelen / pauze"</string>
     <string name="wideo_poprz_nast">"Vorige / volgende"</string>
@@ -1113,4 +1113,10 @@
     <string name="recht_duplicate_delete">"Dubbele (afwijzen)"</string>
     <string name="recht_shared_link">"Albumlinks met QR-code"</string>
     <string name="recht_album_user">"Albums delen met accounts"</string>
+    <string name="menu_wyzej">"Omhoog"</string>
+    <string name="menu_nizej">"Omlaag"</string>
+    <string name="menu_ukryj">"“%1$s” verbergen in het menu"</string>
+    <string name="menu_ukryto">"Verborgen: %1$s (OK vasthouden in menu → verborgen tonen)"</string>
+    <string name="menu_edytuj">"Menu bewerken…"</string>
+    <string name="menu_pokaz_ukryte">"Verborgen secties tonen (%1$d)"</string>
 </resources>

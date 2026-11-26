@@ -735,7 +735,7 @@
     </plurals>
     <string name="menu_kolejnosc">"Kolejność menu"</string>
     <string name="menu_kolejnosc_uitleg">"Ułóż sekcje bocznego menu po swojemu"</string>
-    <string name="menu_kolejnosc_hint">"OK chwyć / upuść   ·   ▲▼ przesuń chwyconą sekcję   ·   Wstecz zamknij"</string>
+    <string name="menu_kolejnosc_hint">"OK chwyć / upuść   ·   ▲▼ przesuń chwyconą sekcję   ·   Wstecz zamknij · ▶ ukryj / pokaż"</string>
     <string name="menu_domyslna">"Przywróć domyślną kolejność"</string>
     <string name="wideo_ok">"Odtwórz / pauza"</string>
     <string name="wideo_poprz_nast">"Poprzedni / następny"</string>
@@ -1163,4 +1163,10 @@
     <string name="recht_duplicate_delete">"Duplikaty (odrzucanie)"</string>
     <string name="recht_shared_link">"Linki do albumów z kodem QR"</string>
     <string name="recht_album_user">"Udostępnianie albumów kontom"</string>
+    <string name="menu_wyzej">"Przesuń wyżej"</string>
+    <string name="menu_nizej">"Przesuń niżej"</string>
+    <string name="menu_ukryj">"Ukryj „%1$s” w menu"</string>
+    <string name="menu_ukryto">"Ukryto: %1$s (przytrzymaj OK w menu → pokaż ukryte)"</string>
+    <string name="menu_edytuj">"Edytuj menu…"</string>
+    <string name="menu_pokaz_ukryte">"Pokaż ukryte sekcje (%1$d)"</string>
 </resources>
