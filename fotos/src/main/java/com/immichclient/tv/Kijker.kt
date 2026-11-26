@@ -896,7 +896,7 @@ private fun InfoPaneel(a: Asset, staat: KijkerStaat, metKaartSprong: Boolean) {
             // Inhoud mag langer zijn dan het scherm (veel personen, lange omschrijving) en scrolt dan; de hint blijft onderaan.
             Column(
                 Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -919,21 +919,24 @@ private fun InfoPaneel(a: Asset, staat: KijkerStaat, metKaartSprong: Boolean) {
                         if (d.wideo) Icons.Filled.Videocam else Icons.Filled.Image, d.bestand.ifEmpty { "—" },
                         listOfNotNull(d.dlugosc, d.plikSub ?: d.afmeting).joinToString("  ·  ").ifEmpty { null },
                     )
-                    d.camera?.let { InfoRegel(Icons.Filled.CameraAlt, it, listOfNotNull(d.instellingen, d.lens).joinToString("\n").ifEmpty { null }) }
+                    // obiektyw w jednym wierszu (bywa długi, np. „iPhone 12 mini back dual wide camera 4.2mm f/1.6”)
+                    d.camera?.let { InfoRegel(Icons.Filled.CameraAlt, it, listOfNotNull(d.instellingen, d.lens).joinToString("\n").ifEmpty { null }, maxSub = 2) }
                     (d.plaats ?: d.wspolrzedne)?.let { InfoRegel(Icons.Filled.Place, it, d.wspolrzedne.takeIf { d.plaats != null }) }
                     if (Ulubione.jest(a)) InfoRegel(Icons.Filled.Favorite, stringResource(R.string.w_ulubionych), null, kolorIkony = Color(0xFFFF5C8A))
                     val albums = albumNamen(a.id)
                     if (albums.isNotEmpty()) InfoRegel(Icons.Filled.PhotoLibrary, albums.joinToString(", "), null, maxRegels = 3)
                     d.omschrijving?.let { InfoRegel(Icons.Filled.Description, it, null, maxRegels = 5) }
-                    if (a.lat != null && a.lon != null && Instellingen.mapaSzczegoly) {
-                        KaartKlein(a.lat, a.lon, Modifier.padding(start = 56.dp).fillMaxWidth().height(100.dp).background(Kleur.vlak, RoundedCornerShape(14.dp)))
+                    // sam folder pliku (nazwa jest wyżej), mała czcionka — razem z rodzajem biblioteki w 1–2 wierszach
+                    d.sciezka?.let { pelna ->
+                        val folder = pelna.substringBeforeLast('/', pelna) + "/"
+                        Text(
+                            folder + "  ·  " + stringResource(if (d.zewnetrzna) R.string.info_biblioteka_zewn else R.string.info_przeslane),
+                            style = MaterialTheme.typography.labelSmall, color = Kleur.zacht, maxLines = 2,
+                            modifier = Modifier.padding(start = 56.dp, top = 6.dp),
+                        )
                     }
-                    // na samym końcu (zajmuje dużo miejsca): położenie pliku na serwerze, mniejszą czcionką
-                    d.sciezka?.let {
-                        Column(Modifier.padding(start = 56.dp, top = 10.dp)) {
-                            Text(it, style = MaterialTheme.typography.labelMedium, color = Kleur.zacht, maxLines = 3)
-                            Text(stringResource(if (d.zewnetrzna) R.string.info_biblioteka_zewn else R.string.info_przeslane), style = MaterialTheme.typography.labelSmall, color = Kleur.zacht.copy(alpha = 0.7f), maxLines = 1)
-                        }
+                    if (a.lat != null && a.lon != null && Instellingen.mapaSzczegoly) {
+                        KaartKlein(a.lat, a.lon, Modifier.padding(start = 56.dp).fillMaxWidth().height(64.dp).background(Kleur.vlak, RoundedCornerShape(14.dp)))
                     }
                 } else {
                     Text(stringResource(R.string.laden), style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht)
@@ -948,7 +951,7 @@ private fun InfoPaneel(a: Asset, staat: KijkerStaat, metKaartSprong: Boolean) {
 }
 
 @Composable
-private fun InfoRegel(icoon: ImageVector, titel: String, sub: String?, maxRegels: Int = Int.MAX_VALUE, kolorIkony: Color = Color(0xDDFFFFFF)) {
+private fun InfoRegel(icoon: ImageVector, titel: String, sub: String?, maxRegels: Int = Int.MAX_VALUE, kolorIkony: Color = Color(0xDDFFFFFF), maxSub: Int = Int.MAX_VALUE) {
     Row(verticalAlignment = if (sub == null) Alignment.CenterVertically else Alignment.Top) {
         // ikona w okrągłym, półprzezroczystym tle (jak w Immichin)
         Box(Modifier.size(40.dp).background(Color(0x1FFFFFFF), androidx.compose.foundation.shape.CircleShape), contentAlignment = Alignment.Center) {
@@ -956,7 +959,7 @@ private fun InfoRegel(icoon: ImageVector, titel: String, sub: String?, maxRegels
         }
         Column(Modifier.padding(start = 16.dp, top = if (sub == null) 0.dp else 1.dp)) {
             Text(titel, style = MaterialTheme.typography.titleMedium, maxLines = maxRegels, overflow = TextOverflow.Ellipsis)
-            sub?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht, modifier = Modifier.padding(top = 2.dp)) }
+            sub?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = Kleur.zacht, maxLines = maxSub, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp)) }
         }
     }
 }
