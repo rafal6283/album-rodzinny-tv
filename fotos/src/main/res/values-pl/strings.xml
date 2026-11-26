@@ -1017,4 +1017,6 @@
     <string name="koppel_przez_tailscale">"Albo na odległość, przez Tailscale (z Twojego telefonu):"</string>
     <string name="tailscale_start">"Tailscale przy włączeniu telewizora"</string>
     <string name="tailscale_start_uitleg">"Prosi Tailscale o połączenie w tle przy starcie telewizora i co kilka godzin — także dla innych aplikacji (np. Plex), nawet gdy ta aplikacja nie jest otwierana"</string>
+    <string name="album_okladka">"Okładka albumu"</string>
+    <string name="album_okladka_ustawiona">"Ustawiono jako okładkę albumu"</string>
 </resources>

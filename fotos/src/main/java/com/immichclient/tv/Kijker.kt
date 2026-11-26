@@ -63,6 +63,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.ZoomIn
+import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Videocam
@@ -344,6 +345,14 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
                 staat.diashow = false
                 // zaznaczone (koszyk z „Zaznacz”) razem z bieżącym; bez zaznaczenia samo bieżące zdjęcie
                 staat.doAlbumu = (Udostepnianie.koszyk.map { it.id } + huidig.id).distinct()
+            }
+            // to zdjęcie jako okładka albumu (w Immich i w aplikacji)
+            Akcja.OKLADKA -> if (huidig != null && albumZrodla != null) {
+                Edycja.zakres.launch {
+                    runCatching { Immich.ustawOkladke(albumZrodla, huidig.id) }
+                        .onSuccess { Edycja.wersjaAlbumow++; staat.komunikat = ctx.getString(R.string.album_okladka_ustawiona) }
+                        .onFailure { staat.komunikat = Edycja.blad(it) }
+                }
             }
             Akcja.Z_ALBUMU -> if (huidig != null && albumZrodla != null) {
                 val bylo = staat.usunieteZAlbumu[huidig.id] == true
@@ -935,7 +944,7 @@ private fun OsobyRegel(osoby: List<Persoon>) {
 }
 
 /** Akcje dolnego paska przeglądarki (▼), jak okrągłe przyciski w Immichin. */
-enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, ALBUM, Z_ALBUMU, MAPA }
+enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, ALBUM, Z_ALBUMU, OKLADKA, MAPA }
 
 fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false): List<Akcja> = if (a != null && Synology.jestSyno(a.id)) listOf(Akcja.POKAZ) else buildList {
     add(Akcja.POKAZ)
@@ -947,6 +956,7 @@ fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false): List<Akcja> =
     if (Udostepnianie.koszyk.isNotEmpty()) add(Akcja.KOD_QR)
     if (a != null && !Instellingen.trybDzieciecy) add(Akcja.ALBUM)
     if (a != null && zAlbumu && !Instellingen.trybDzieciecy) add(Akcja.Z_ALBUMU)
+    if (a != null && zAlbumu && !Instellingen.trybDzieciecy) add(Akcja.OKLADKA)
     if (zMapa && a?.lat != null) add(Akcja.MAPA)
 }
 
@@ -1007,6 +1017,7 @@ private fun PasekAkcji(staat: KijkerStaat, akcje: List<Akcja>) {
                     Akcja.KOD_QR -> androidx.compose.material.icons.Icons.Filled.QrCode2 to stringResource(R.string.udost_kod, Udostepnianie.koszyk.size)
                     Akcja.ALBUM -> Icons.Filled.LibraryAdd to
                         (if (Udostepnianie.koszyk.isNotEmpty()) stringResource(R.string.album_akcja_n, (Udostepnianie.koszyk.map { it.id } + listOfNotNull(staat.bron.op(staat.index)?.id)).distinct().size) else stringResource(R.string.album_akcja))
+                    Akcja.OKLADKA -> Icons.Filled.Wallpaper to stringResource(R.string.album_okladka)
                     Akcja.Z_ALBUMU -> {
                         val usuniete = staat.bron.op(staat.index)?.let { staat.usunieteZAlbumu[it.id] } == true
                         (if (usuniete) Icons.AutoMirrored.Filled.Undo else Icons.Filled.RemoveCircleOutline) to

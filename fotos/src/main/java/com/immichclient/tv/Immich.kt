@@ -653,6 +653,9 @@ object Immich {
         return (0 until a.length()).count { a.getJSONObject(it).optBoolean("success") }
     }
 
+    /** Okładka albumu (uprawnienie album.update). */
+    suspend fun ustawOkladke(albumId: String, assetId: String) { patch("/albums/$albumId", JSONObject().put("albumThumbnailAssetId", assetId)) }
+
     suspend fun usunZAlbumu(albumId: String, ids: List<String>) { delete("/albums/$albumId/assets", JSONObject().put("ids", JSONArray(ids))) }
 
     suspend fun zmienNazweAlbumu(albumId: String, nazwa: String) { patch("/albums/$albumId", JSONObject().put("albumName", nazwa.trim())) }

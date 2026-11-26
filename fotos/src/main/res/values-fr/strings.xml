@@ -974,4 +974,6 @@
     <string name="koppel_przez_tailscale">"Ou à distance, via Tailscale (depuis votre téléphone) :"</string>
     <string name="tailscale_start">"Tailscale à l’allumage du téléviseur"</string>
     <string name="tailscale_start_uitleg">"Demande à Tailscale de se connecter en arrière-plan au démarrage du téléviseur et toutes les quelques heures — aussi pour d’autres apps (ex. Plex), même si cette app n’est pas ouverte"</string>
+    <string name="album_okladka">"Couverture"</string>
+    <string name="album_okladka_ustawiona">"Définie comme couverture de l’album"</string>
 </resources>

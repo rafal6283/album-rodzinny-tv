@@ -967,4 +967,6 @@
     <string name="koppel_przez_tailscale">"Oder aus der Ferne über Tailscale (vom eigenen Handy):"</string>
     <string name="tailscale_start">"Tailscale beim Einschalten des TV"</string>
     <string name="tailscale_start_uitleg">"Bittet Tailscale beim Start des TV und alle paar Stunden im Hintergrund zu verbinden — auch für andere Apps (z. B. Plex), selbst wenn diese App nicht geöffnet wird"</string>
+    <string name="album_okladka">"Albumcover"</string>
+    <string name="album_okladka_ustawiona">"Als Albumcover festgelegt"</string>
 </resources>
