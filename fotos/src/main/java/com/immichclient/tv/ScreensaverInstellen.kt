@@ -340,7 +340,7 @@ fun KiesLijst(titel: String, items: List<KiesItem>?, gekozen: String, sluit: () 
         if (zichtbaar.isEmpty()) { if (items != null) { delay(40); runCatching { zoekKnop.requestFocus() } }; return@LaunchedEffect }
         lijst.scrollToItem(0)
         delay(40)
-        repeat(5) { if (runCatching { fr.requestFocus() }.isSuccess) return@LaunchedEffect; delay(16) }
+        repeat(10) { if (runCatching { fr.requestFocus() }.isSuccess) return@LaunchedEffect; delay(40) }
     }
     var wasOpen by remember { mutableStateOf(false) }
     Box(Modifier.fillMaxSize().background(Color(0xF60A0A0A)).focusVangen().padding(horizontal = 64.dp, vertical = 36.dp)) {

@@ -44,6 +44,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
@@ -554,6 +555,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         val laatsteSleutel = remember { androidx.compose.runtime.mutableStateOf(wisselSleutel) }
         val wisselt = remember { androidx.compose.runtime.mutableStateOf(false) }
         val ladeDicht = wisselSleutel != laatsteSleutel.value || wisselt.value
+        androidx.compose.runtime.LaunchedEffect(scherm, kijker != null) { Podreczne.wersjaEkranu++ }
         androidx.compose.runtime.LaunchedEffect(wisselSleutel) {
             if (wisselSleutel == laatsteSleutel.value) return@LaunchedEffect
             wisselt.value = true
@@ -640,6 +642,8 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                             else androidx.compose.ui.focus.FocusRequester.Default
                         }
                     }
+                    // powrót fokusu do treści (po zamknięciu okna, przeglądarki): na ostatnio wybrany element, nie na pierwszy
+                    .focusRestorer()
                     .focusGroup(),
             ) {
                 key(scherm) {
