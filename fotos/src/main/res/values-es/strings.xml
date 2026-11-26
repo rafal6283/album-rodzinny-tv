@@ -974,4 +974,6 @@
     <string name="koppel_przez_tailscale">"O a distancia, vía Tailscale (desde tu propio teléfono):"</string>
     <string name="tailscale_start">"Tailscale al encender el televisor"</string>
     <string name="tailscale_start_uitleg">"Pide a Tailscale que se conecte en segundo plano al iniciar el televisor y cada pocas horas — también para otras apps (p. ej. Plex), aunque esta app no se abra"</string>
+    <string name="album_okladka">"Portada"</string>
+    <string name="album_okladka_ustawiona">"Establecida como portada del álbum"</string>
 </resources>

@@ -62,6 +62,12 @@ object Edycja {
     var wersjaAlbumow by mutableIntStateOf(0)
     /** albumy, z których usunięto zdjęcie w przeglądarce: oś czasu albumu wczytuje się od nowa po jej zamknięciu */
     val doOdswiezenia = HashSet<String>()
+    /**
+     * Zakres dla zapisów na serwerze (album, osoba): niezależny od okna, które je zleciło — okno zamyka się od razu,
+     * a zapis trwa dalej (wcześniej zamknięcie okna przerywało zapis: „The coroutine scope left the composition”).
+     */
+    val zakres = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Main)
+
     /** krótki komunikat na dole ekranu (pokazuje MainActivity, także nad przeglądarką) */
     var komunikat by mutableStateOf<String?>(null)
 
@@ -112,7 +118,7 @@ fun OsobaMenu(id: String, imie: String, ustawTytul: (String) -> Unit, poPolaczen
         Knop(stringResource(R.string.osoba_urodziny), urodziny?.format(Formaat.dagJaar) ?: stringResource(R.string.osoba_urodziny_brak), Modifier.width(560.dp)) { okno = "data" }
         Knop(stringResource(if (ukryta) R.string.osoba_pokaz else R.string.osoba_ukryj), stringResource(if (ukryta) R.string.osoba_pokaz_sub else R.string.osoba_ukryj_sub), Modifier.width(560.dp)) {
             val nowe = !ukryta
-            scope.launch {
+            Edycja.zakres.launch {
                 runCatching { Immich.ukryjOsobe(id, nowe) }
                     .onSuccess { ukryta = nowe; Edycja.ukryte[id] = nowe; Edycja.wersjaOsob++; komunikat(Taal.s(if (nowe) R.string.osoba_ukryta else R.string.osoba_widoczna)) }
                     .onFailure { komunikat(Edycja.blad(it)) }
@@ -123,7 +129,7 @@ fun OsobaMenu(id: String, imie: String, ustawTytul: (String) -> Unit, poPolaczen
     when (okno) {
         "imie" -> TekstInvoer(stringResource(R.string.osoba_imie), nazwa, actie = stringResource(R.string.zapisz), wielkie = true, sluit = { okno = null }) { nowe ->
             okno = null
-            if (nowe.isNotBlank() && nowe.trim() != nazwa) scope.launch {
+            if (nowe.isNotBlank() && nowe.trim() != nazwa) Edycja.zakres.launch {
                 runCatching { Immich.zmienImie(id, nowe) }
                     .onSuccess { Edycja.imiona[id] = nowe.trim(); Edycja.wersjaOsob++; ustawTytul(nowe.trim()); Urodziny.uniewaznij(); Kalendarz.uniewaznij(); Kalendarz.laduj(); komunikat(Taal.s(R.string.zapisano)) }
                     .onFailure { komunikat(Edycja.blad(it)) }
@@ -131,7 +137,7 @@ fun OsobaMenu(id: String, imie: String, ustawTytul: (String) -> Unit, poPolaczen
         }
         "data" -> DataUrodzin(nazwa.ifBlank { bez }, urodziny, sluit = { okno = null }) { nowa ->
             okno = null
-            scope.launch {
+            Edycja.zakres.launch {
                 runCatching { Immich.zmienUrodziny(id, nowa) }
                     .onSuccess { urodziny = nowa; Urodziny.uniewaznij(); Kalendarz.uniewaznij(); Kalendarz.laduj(); komunikat(Taal.s(R.string.zapisano)) }
                     .onFailure { komunikat(Edycja.blad(it)) }
@@ -150,7 +156,7 @@ fun OsobaMenu(id: String, imie: String, ustawTytul: (String) -> Unit, poPolaczen
             else MenuWarstwa(stringResource(R.string.osoba_polacz_pytanie, nazwa.ifBlank { bez }, c.second), stringResource(R.string.osoba_polacz_uwaga), sluit = { cel = null }) { pierwszy ->
                 Knop(stringResource(R.string.anuluj), null, pierwszy.width(420.dp)) { cel = null }
                 Knop(stringResource(R.string.osoba_polacz_tak), null, Modifier.width(420.dp)) {
-                    scope.launch {
+                    Edycja.zakres.launch {
                         runCatching { Immich.polaczOsoby(c.first, listOf(id)) }
                             .onSuccess {
                                 Edycja.polaczone[id] = true; Edycja.wersjaOsob++
@@ -249,7 +255,7 @@ fun AlbumWybor(ids: List<String>, komunikat: (String) -> Unit, sluit: () -> Unit
         if (id == NOWY) nazwaOkno = true
         else {
             sluit()
-            scope.launch {
+            Edycja.zakres.launch {
                 runCatching { Immich.dodajDoAlbumu(id, ids) }
                     .onSuccess { n -> Edycja.wersjaAlbumow++; komunikat(if (n == 0) Taal.s(R.string.album_juz_jest, naam) else Taal.s(R.string.album_dodano, Taal.getal(n), naam)) }
                     .onFailure { komunikat(Edycja.blad(it)) }
@@ -259,7 +265,7 @@ fun AlbumWybor(ids: List<String>, komunikat: (String) -> Unit, sluit: () -> Unit
     else TekstInvoer(stringResource(R.string.album_nazwa), "", actie = stringResource(R.string.album_utworz), wielkie = true, sluit = { nazwaOkno = false }) { nazwa ->
         if (nazwa.isBlank()) return@TekstInvoer
         sluit()
-        scope.launch {
+        Edycja.zakres.launch {
             runCatching { Immich.nowyAlbum(nazwa, ids) }
                 .onSuccess { Edycja.wersjaAlbumow++; komunikat(Taal.s(R.string.album_utworzono, nazwa.trim())) }
                 .onFailure { komunikat(Edycja.blad(it)) }
@@ -336,7 +342,7 @@ fun KtoToJest(sluit: () -> Unit) {
                     Knop(stringResource(R.string.kto_to_jest), stringResource(R.string.kto_to_jest_sub), Modifier.width(420.dp).focusRequester(pierwszy)) { okno = "wybierz" }
                     Knop(stringResource(R.string.kto_nowe), stringResource(R.string.kto_nowe_sub), Modifier.width(420.dp)) { okno = "imie" }
                     Knop(stringResource(R.string.osoba_ukryj), stringResource(R.string.osoba_ukryj_sub), Modifier.width(420.dp)) {
-                        scope.launch {
+                        Edycja.zakres.launch {
                             runCatching { Immich.ukryjOsobe(p.id, true) }
                                 .onSuccess { Edycja.ukryte[p.id] = true; zrobione(Taal.s(R.string.osoba_ukryta)) }
                                 .onFailure { Edycja.komunikat = Edycja.blad(it) }
@@ -351,7 +357,7 @@ fun KtoToJest(sluit: () -> Unit) {
     when (okno) {
         "imie" -> TekstInvoer(stringResource(R.string.osoba_imie), "", actie = stringResource(R.string.zapisz), wielkie = true, sluit = { okno = null }) { nowe ->
             okno = null
-            if (nowe.isNotBlank()) scope.launch {
+            if (nowe.isNotBlank()) Edycja.zakres.launch {
                 runCatching { Immich.zmienImie(obecna.id, nowe) }
                     .onSuccess { Edycja.imiona[obecna.id] = nowe.trim(); zrobione(Taal.s(R.string.zapisano)) }
                     .onFailure { Edycja.komunikat = Edycja.blad(it) }
@@ -363,7 +369,7 @@ fun KtoToJest(sluit: () -> Unit) {
             "", sluit = { okno = null },
         ) { cel, celNaam ->
             okno = null
-            scope.launch {
+            Edycja.zakres.launch {
                 runCatching { Immich.polaczOsoby(cel, listOf(obecna.id)) }
                     .onSuccess { Edycja.polaczone[obecna.id] = true; zrobione(Taal.s(R.string.osoba_polaczona, celNaam)) }
                     .onFailure { Edycja.komunikat = Edycja.blad(it) }

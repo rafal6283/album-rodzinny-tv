@@ -989,4 +989,6 @@
     <string name="koppel_przez_tailscale">"Or remotely, via Tailscale (from your own phone):"</string>
     <string name="tailscale_start">"Tailscale when the TV turns on"</string>
     <string name="tailscale_start_uitleg">"Asks Tailscale to connect in the background when the TV starts and every few hours — also for other apps (e.g. Plex), even if this app is not opened"</string>
+    <string name="album_okladka">"Album cover"</string>
+    <string name="album_okladka_ustawiona">"Set as the album cover"</string>
 </resources>
