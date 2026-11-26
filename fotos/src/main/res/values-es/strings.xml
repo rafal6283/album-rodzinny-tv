@@ -1126,4 +1126,8 @@
     <string name="menu_ukryto">"Oculto: %1$s (mantén OK en el menú → mostrar ocultas)"</string>
     <string name="menu_edytuj">"Editar menú…"</string>
     <string name="menu_pokaz_ukryte">"Mostrar secciones ocultas (%1$d)"</string>
+    <string name="kto_poprzednia">"Anterior"</string>
+    <string name="kto_nastepna">"Siguiente"</string>
+    <string name="kto_zdjecia">"Ver fotos"</string>
+    <string name="kto_zdjecia_sub">"Todas las fotos con esta cara — más fácil de reconocer"</string>
 </resources>

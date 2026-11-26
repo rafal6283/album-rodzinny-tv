@@ -1141,4 +1141,8 @@
     <string name="menu_ukryto">"Hidden: %1$s (hold OK on the menu → show hidden)"</string>
     <string name="menu_edytuj">"Edit menu…"</string>
     <string name="menu_pokaz_ukryte">"Show hidden sections (%1$d)"</string>
+    <string name="kto_poprzednia">"Previous"</string>
+    <string name="kto_nastepna">"Next"</string>
+    <string name="kto_zdjecia">"Show photos"</string>
+    <string name="kto_zdjecia_sub">"All photos with this face — easier to recognize"</string>
 </resources>

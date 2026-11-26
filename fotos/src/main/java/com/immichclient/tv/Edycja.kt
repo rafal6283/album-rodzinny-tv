@@ -320,7 +320,16 @@ fun KtoToJest(sluit: () -> Unit) {
     // przypisana / nazwana / ukryta twarz znika z listy, więc ten sam indeks pokazuje następną; „Pomiń” = indeks + 1
     fun zrobione(msg: String) { Edycja.wersjaOsob++; Edycja.komunikat = msg }
 
-    Box(Modifier.fillMaxSize().background(Color(0xF7090910)).focusVangen().padding(horizontal = 56.dp, vertical = 32.dp)) {
+    // ◀ ▶ (gdy fokus na przyciskach), kanał ▲▼, ⏮ ⏭: poprzednia / następna twarz bez imienia
+    fun idz(d: Int) { val n = lista?.size ?: 0; if (n > 0) i = (i + d).mod(n) }
+    Box(Modifier.fillMaxSize().background(Color(0xF7090910)).focusVangen().onPreviewKeyEvent { e ->
+        if (okno != null || e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+        when (e.key.nativeKeyCode) {
+            android.view.KeyEvent.KEYCODE_DPAD_LEFT, android.view.KeyEvent.KEYCODE_CHANNEL_DOWN, android.view.KeyEvent.KEYCODE_MEDIA_PREVIOUS, android.view.KeyEvent.KEYCODE_PAGE_UP -> { idz(-1); true }
+            android.view.KeyEvent.KEYCODE_DPAD_RIGHT, android.view.KeyEvent.KEYCODE_CHANNEL_UP, android.view.KeyEvent.KEYCODE_MEDIA_NEXT, android.view.KeyEvent.KEYCODE_PAGE_DOWN -> { idz(1); true }
+            else -> false
+        }
+    }.padding(horizontal = 56.dp, vertical = 32.dp)) {
         Column {
             Text(stringResource(R.string.kto_etyk).uppercase(Taal.locale), style = EtykietaStyl)
             Text(stringResource(R.string.kto_tytul), style = TytulStyl, color = Color.White)
@@ -345,7 +354,7 @@ fun KtoToJest(sluit: () -> Unit) {
                         contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                     )
                     // kilka zdjęć z tą osobą, żeby łatwiej rozpoznać
-                    val zdjecia by produceState<List<Asset>>(emptyList(), p.id) { value = runCatching { Immich.osobaWOkresie(p.id, null, null, 3) }.getOrDefault(emptyList()) }
+                    val zdjecia by produceState<List<Asset>>(emptyList(), p.id) { value = runCatching { Immich.osobaWOkresie(p.id, null, null, 4) }.getOrDefault(emptyList()) }
                     Row(Modifier.padding(top = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         zdjecia.forEach { a ->
                             coil3.compose.AsyncImage(beeld(Immich.thumb(a.id)), null, Modifier.size(96.dp).clip(RoundedCornerShape(12.dp)), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
@@ -362,7 +371,19 @@ fun KtoToJest(sluit: () -> Unit) {
                                 .onFailure { Edycja.komunikat = Edycja.blad(it) }
                         }
                     }
-                    Knop(stringResource(R.string.kto_pomin), null, Modifier.width(420.dp)) { i++ }
+                    // nawigacja między twarzami bez imienia (także ◀ ▶ na pilocie)
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Knop("◀  " + stringResource(R.string.kto_poprzednia), null, Modifier.width(205.dp)) { idz(-1) }
+                        Knop(stringResource(R.string.kto_nastepna) + "  ▶", null, Modifier.width(205.dp)) { idz(1) }
+                    }
+                    Knop(stringResource(R.string.kto_zdjecia), stringResource(R.string.kto_zdjecia_sub), Modifier.width(420.dp)) {
+                        val osoba = p
+                        Edycja.zakres.launch {
+                            runCatching { Immich.osobaWOkresie(osoba.id, null, null, 500) }
+                                .onSuccess { l -> if (l.isNotEmpty()) Podreczne.nav?.bekijk(LijstBron(l), 0, Taal.s(R.string.persoon_bez_imienia), false, null) }
+                                .onFailure { Edycja.komunikat = Edycja.blad(it) }
+                        }
+                    }
                 }
             }
         }

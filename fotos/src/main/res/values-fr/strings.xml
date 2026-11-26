@@ -1126,4 +1126,8 @@
     <string name="menu_ukryto">"Masqué : %1$s (maintenir OK dans le menu → afficher)"</string>
     <string name="menu_edytuj">"Modifier le menu…"</string>
     <string name="menu_pokaz_ukryte">"Afficher les sections masquées (%1$d)"</string>
+    <string name="kto_poprzednia">"Précédente"</string>
+    <string name="kto_nastepna">"Suivante"</string>
+    <string name="kto_zdjecia">"Voir les photos"</string>
+    <string name="kto_zdjecia_sub">"Toutes les photos avec ce visage — plus facile à reconnaître"</string>
 </resources>

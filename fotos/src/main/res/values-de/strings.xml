@@ -1119,4 +1119,8 @@
     <string name="menu_ukryto">"Ausgeblendet: %1$s (OK im Menü halten → ausgeblendete zeigen)"</string>
     <string name="menu_edytuj">"Menü bearbeiten…"</string>
     <string name="menu_pokaz_ukryte">"Ausgeblendete Bereiche zeigen (%1$d)"</string>
+    <string name="kto_poprzednia">"Vorherige"</string>
+    <string name="kto_nastepna">"Nächste"</string>
+    <string name="kto_zdjecia">"Fotos zeigen"</string>
+    <string name="kto_zdjecia_sub">"Alle Fotos mit diesem Gesicht — leichter zu erkennen"</string>
 </resources>

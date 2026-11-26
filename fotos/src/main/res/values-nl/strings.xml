@@ -1119,4 +1119,8 @@
     <string name="menu_ukryto">"Verborgen: %1$s (OK vasthouden in menu → verborgen tonen)"</string>
     <string name="menu_edytuj">"Menu bewerken…"</string>
     <string name="menu_pokaz_ukryte">"Verborgen secties tonen (%1$d)"</string>
+    <string name="kto_poprzednia">"Vorige"</string>
+    <string name="kto_nastepna">"Volgende"</string>
+    <string name="kto_zdjecia">"Foto’s tonen"</string>
+    <string name="kto_zdjecia_sub">"Alle foto’s met dit gezicht — makkelijker herkennen"</string>
 </resources>

@@ -1169,4 +1169,8 @@
     <string name="menu_ukryto">"Ukryto: %1$s (przytrzymaj OK w menu → pokaż ukryte)"</string>
     <string name="menu_edytuj">"Edytuj menu…"</string>
     <string name="menu_pokaz_ukryte">"Pokaż ukryte sekcje (%1$d)"</string>
+    <string name="kto_poprzednia">"Poprzednia"</string>
+    <string name="kto_nastepna">"Następna"</string>
+    <string name="kto_zdjecia">"Pokaż zdjęcia"</string>
+    <string name="kto_zdjecia_sub">"Wszystkie zdjęcia z tą twarzą — łatwiej rozpoznać"</string>
 </resources>
