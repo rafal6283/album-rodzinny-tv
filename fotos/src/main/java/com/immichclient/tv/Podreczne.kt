@@ -52,10 +52,11 @@ object Podreczne {
 
     /** Odepnij osobę od zdjęcia (jej twarz dostaje nową osobę bez imienia); [potem] np. odśwież oś czasu. */
     fun odepnijOsobe(assetId: String, osobaId: String, potem: () -> Unit = {}) {
+        // potem() tylko, gdy odpięcie się udało (np. przyciemnienie kafelka)
         Edycja.zakres.launch {
             val f = runCatching { Immich.twarze(assetId).filter { it.osoba?.id == osobaId } }.getOrElse { Edycja.komunikat = Edycja.blad(it); return@launch }
             if (f.isEmpty()) { Edycja.komunikat = s(R.string.twarze_brak); return@launch }
-            Korekta.odepnij(f) { potem() }
+            Korekta.odepnij(f) { ok -> if (ok.isNotEmpty()) potem() }
         }
     }
 
@@ -268,7 +269,7 @@ fun PodreczneWarstwa() {
             Edycja.zakres.launch {
                 val f = runCatching { Immich.twarze(assetId).filter { it.osoba?.id == osobaId } }.getOrElse { Edycja.komunikat = Edycja.blad(it); return@launch }
                 if (f.isEmpty()) { Edycja.komunikat = ctx.getString(R.string.twarze_brak); return@launch }
-                Korekta.przypisz(f, id, naam) { Edycja.odpiete[assetId] = true }
+                Korekta.przypisz(f, id, naam) { ok -> if (ok.isNotEmpty()) Edycja.odpiete[assetId] = true }
             }
         }
     }

@@ -708,7 +708,8 @@ object Immich {
     }
 
     /** Przypisz twarz do osoby. */
-    suspend fun przypiszTwarz(twarzId: String, osobaId: String) { put("/faces/$twarzId", JSONObject().put("id", osobaId)) }
+    // Immich: PUT /faces/{id osoby} z treścią {"id": id twarzy} (odwrotnie, niż sugeruje adres) — wcześniej zamienione, stąd błąd 400
+    suspend fun przypiszTwarz(twarzId: String, osobaId: String) { put("/faces/$osobaId", JSONObject().put("id", twarzId)) }
 
     /** Usuń twarz (wykryta omyłkowo: zabawka, plakat…). */
     suspend fun usunTwarz(twarzId: String) { delete("/faces/$twarzId", JSONObject().put("force", false)) }
