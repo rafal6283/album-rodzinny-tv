@@ -141,6 +141,8 @@ fun FotoRaster(
     modifier: Modifier = Modifier,
     bovenAantal: Int = 1,
     onWacht: (String) -> Unit = {},
+    /** przytrzymanie OK → „Pokaz od tego miejsca” w menu podręcznym (null = bez tej pozycji) */
+    onPokaz: ((Asset) -> Unit)? = null,
     boven: LazyListScope.() -> Unit = {},
 ) {
     androidx.compose.runtime.LaunchedEffect(staat.terugNaar, rijen) {
@@ -158,7 +160,7 @@ fun FotoRaster(
         items(rijen, key = { it.sleutel }, contentType = { it::class }) { r ->
             when (r) {
                 is RijKop -> MaandKop(r)
-                is RijFotos -> FotoRegel(r.regel, staat, onKlik)
+                is RijFotos -> FotoRegel(r.regel, staat, onKlik, onPokaz)
                 is RijWacht -> WachtVak(r, onWacht)
             }
         }
@@ -197,7 +199,7 @@ fun miejscaTekst(assets: List<Asset>, ile: Int = 3): String? {
 }
 
 @Composable
-private fun FotoRegel(regel: Regel, staat: RasterStaat, onKlik: (Asset) -> Unit) {
+private fun FotoRegel(regel: Regel, staat: RasterStaat, onKlik: (Asset) -> Unit, onPokaz: ((Asset) -> Unit)? = null) {
     var focus by remember { mutableStateOf(false) }
     // vergrote focusfoto boven de volgende rij tekenen
     Row(
@@ -219,6 +221,7 @@ private fun FotoRegel(regel: Regel, staat: RasterStaat, onKlik: (Asset) -> Unit)
                             focusDoel = staat.focusDoel == v.asset.id,
                             onFocusDoelKlaar = { staat.focusDoel = null },
                             onFocus = { staat.laatsteFocus = v.asset },
+                            onDlugi = { Podreczne.zdjecie(v.asset, onPokaz) },
                         )
                     }
                 }

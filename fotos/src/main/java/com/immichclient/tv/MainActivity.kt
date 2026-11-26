@@ -145,6 +145,7 @@ sealed class Scherm {
     class Rosniecie(osobaId: String, imie: String, scope: CoroutineScope) : Scherm() { val staat = RosniecieStaat(osobaId, imie, scope) }
     class Podobni(osobaId: String, imie: String, scope: CoroutineScope) : Scherm() { val staat = PodobniStaat(osobaId, imie, scope) }
     class Kadr(scope: CoroutineScope) : Scherm() { val staat = KadrStaat(scope) }
+    class Popraw(osobaId: String, imie: String, scope: CoroutineScope) : Scherm() { val staat = PoprawStaat(osobaId, imie, scope) }
     class Powroty(scope: CoroutineScope) : Scherm() { val staat = PowrotyStaat(scope) }
     @Suppress("UNUSED_PARAMETER") class Kolory(scope: CoroutineScope) : Scherm()
     class Synology(scope: CoroutineScope) : Scherm() { val staat = SynologyStaat(scope) }
@@ -296,8 +297,13 @@ class MainActivity : ComponentActivity() {
                 return true
             }
             if (!okGezien) { Log.i("Fotos", "OK genegeerd (actie ${e.action}, herhaling ${e.repeatCount})"); return true }
-            // ingedrukt houden = key-repeat: geen tweede, derde, ... actie (viewer wisselde zo razendsnel de diashow)
-            if (e.action == KeyEvent.ACTION_DOWN && e.repeatCount > 0 && !Toetsen.okHerhaling) return true
+            // ingedrukt houden = key-repeat: geen tweede, derde, ... actie (viewer wisselde zo razendsnel de diashow).
+            // Pierwsze powtórzenie (ok. pół sekundy) = przytrzymanie OK: menu podręczne elementu z fokusem; resztę
+            // naciśnięcia (powtórzenia i puszczenie) połykamy, więc zwykłe kliknięcie się nie wykona.
+            if (e.action == KeyEvent.ACTION_DOWN && e.repeatCount > 0 && !Toetsen.okHerhaling) {
+                if (e.repeatCount == 1 && Podreczne.dlugieOk()) { Toetsen.okGeslikt = true; Log.i("Fotos", "OK przytrzymane: menu podręczne") }
+                return true
+            }
         }
         return super.dispatchKeyEvent(e)
     }
@@ -444,6 +450,9 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         }
         WejscieKanal.zadanie = null
     }
+    // menu podręczne (przytrzymanie OK): nawigacja i „Pokaż na mapie”
+    Podreczne.nav = nav
+    Podreczne.naMape = { a -> kijker = null; stapel.clear(); ZabawaPamiec.wybor = null; sectie = Sectie.KAART; (wortel(Sectie.KAART) as Scherm.Kaart).staat.toon(a) }
     // „Tego dnia” jako pokaz na start (Ustawienia → Oś czasu): raz na uruchomienie, tylko gdy są zdjęcia z tego dnia
     androidx.compose.runtime.LaunchedEffect(Unit) {
         // urodziny dziś: pokaz solenizanta (raz dziennie) ma pierwszeństwo przed „Tego dnia”
@@ -488,6 +497,8 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             else -> openLade()
         }
     }
+    // tryb zaznaczania: Wstecz najpierw go kończy (zaznaczenie zostaje)
+    BackHandler(enabled = Udostepnianie.tryb && kijker == null) { Udostepnianie.tryb = false; Edycja.komunikat = ctx.getString(R.string.zazn_tryb_koniec) }
     val langeTerug = Toetsen.langeTerug
     androidx.compose.runtime.LaunchedEffect(langeTerug) { if (langeTerug > 0 && kijker == null) openLade() }
     Box(
@@ -641,6 +652,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         is Scherm.Rosniecie -> RosniecieScherm(scherm.staat)
                         is Scherm.Podobni -> PodobniScherm(scherm.staat)
                         is Scherm.Kadr -> KadrScherm(scherm.staat)
+                        is Scherm.Popraw -> PoprawScherm(scherm.staat, nav)
                         is Scherm.Powroty -> PowrotyScherm(scherm.staat, nav)
                         is Scherm.Kolory -> KoloryScherm(nav)
                         is Scherm.Synology -> SynologyScherm(scherm.staat, nav)
@@ -690,6 +702,10 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         // ekran udostępniania na samym wierzchu (otwierany z przeglądarki); po zamknięciu fokus wraca do przeglądarki
         if (Udostepnianie.otwarte) UdostepnianieScherm()
         // komunikaty edycji (osoby, albumy) na samym wierzchu
+        // pasek zaznaczenia: ile zaznaczonych i co zrobić dalej (widać przy przeglądaniu siatki)
+        if (kijker == null && Udostepnianie.koszyk.isNotEmpty()) PasekZaznaczenia(Modifier.align(androidx.compose.ui.Alignment.BottomStart))
+        // menu podręczne (przytrzymanie OK) i okna z niego — nad wszystkim, także nad przeglądarką
+        PodreczneWarstwa()
         EdycjaKomunikat(Modifier.align(androidx.compose.ui.Alignment.BottomCenter))
     }
 }

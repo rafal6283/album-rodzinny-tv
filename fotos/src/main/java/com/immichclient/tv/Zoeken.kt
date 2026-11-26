@@ -584,6 +584,7 @@ fun LijstScherm(scherm: Scherm.Lijst, nav: Nav) {
         FotoRaster(
             rijen = rijen, staat = res.raster, bovenAantal = 1,
             onKlik = { a -> nav.bekijk(bron, res.assets.indexOf(a), scherm.titel, false, res.raster) },
+            onPokaz = { a -> nav.bekijk(bron, res.assets.indexOf(a), scherm.titel, true, res.raster) },
             modifier = Modifier.fillMaxSize(),
         ) {
             item(key = "boven") {

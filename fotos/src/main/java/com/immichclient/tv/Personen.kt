@@ -156,7 +156,8 @@ fun PersonenScherm(staat: PersonenStaat, nav: Nav) {
                     Card(
                         onClick = { nav.open(Scherm.Tijdlijn(p.naam.ifBlank { bezImienia }, persoon, Filter(persoonId = p.id), true, false, nav.scope)) },
                         modifier = (if (p.id == staat.laatsteFocus) Modifier.focusRequester(terug) else Modifier)
-                            .fillMaxWidth().aspectRatio(1f).onFocusChanged { if (it.isFocused) staat.laatsteFocus = p.id },
+                            .fillMaxWidth().aspectRatio(1f).onFocusChanged { if (it.isFocused) staat.laatsteFocus = p.id }
+                            .langeOk { Podreczne.osoba(p.id, Edycja.imie(p)) },
                         shape = CardDefaults.shape(CircleShape),
                         scale = CardDefaults.scale(focusedScale = 1.08f),
                     ) { AsyncImage(beeld(Immich.gezicht(p.id)), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }

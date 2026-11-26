@@ -64,6 +64,8 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.Wallpaper
+import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Videocam
@@ -161,6 +163,8 @@ class KijkerStaat(val bron: BeeldBron, start: Int, val titel: String?, diashow: 
     var komunikat by mutableStateOf<String?>(null)
     /** otwarty wybór albumu dla tych zdjęć (▼ → Do albumu) */
     var doAlbumu by mutableStateOf<List<String>?>(null)
+    /** „Osoby na tym zdjęciu” (korekta twarzy) otwarte */
+    var twarze by mutableStateOf(false)
     /** zdjęcia usunięte z albumu w tej przeglądarce (przycisk zmienia się na „Przywróć”) */
     val usunieteZAlbumu = androidx.compose.runtime.mutableStateMapOf<String, Boolean>()
     var speler: ExoPlayer? = null
@@ -249,7 +253,7 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     val ctx = LocalContext.current
     val fr = remember { FocusRequester() }
     val huidig = staat.bron.op(staat.index)
-    BackHandler(enabled = staat.doAlbumu == null) {
+    BackHandler(enabled = staat.doAlbumu == null && !staat.twarze) {
         when {
             staat.zoom > 1f -> { staat.zoom = 1f; staat.przesX = 0f; staat.przesY = 0f }
             staat.pasek -> staat.pasek = false
@@ -264,7 +268,7 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     LaunchedEffect(Unit) { fr.requestFocus() }
     // po zamknięciu ekranu udostępniania fokus wraca do przeglądarki
     LaunchedEffect(Udostepnianie.otwarte) { if (!Udostepnianie.otwarte) { delay(50); runCatching { fr.requestFocus() } } }
-    LaunchedEffect(staat.doAlbumu == null) { if (staat.doAlbumu == null) { delay(50); runCatching { fr.requestFocus() } } }
+    LaunchedEffect(staat.doAlbumu == null && !staat.twarze) { if (staat.doAlbumu == null && !staat.twarze) { delay(50); runCatching { fr.requestFocus() } } }
     // album, z którego coś usunięto: po zamknięciu przeglądarki jego oś czasu wczytuje się od nowa
     DisposableEffect(Unit) {
         onDispose { (staat.bron as? TijdlijnStaat)?.let { t -> t.filter.albumId?.let { if (Edycja.doOdswiezenia.remove(it)) t.herlaad() } } }
@@ -346,6 +350,8 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
                 // zaznaczone (koszyk z „Zaznacz”) razem z bieżącym; bez zaznaczenia samo bieżące zdjęcie
                 staat.doAlbumu = (Udostepnianie.koszyk.map { it.id } + huidig.id).distinct()
             }
+            Akcja.TWARZE -> if (huidig != null) { staat.diashow = false; staat.twarze = true }
+            Akcja.WYCZYSC -> { Udostepnianie.wyczysc(); staat.komunikat = ctx.getString(R.string.zazn_wyczyszczono) }
             // to zdjęcie jako okładka albumu (w Immich i w aplikacji)
             Akcja.OKLADKA -> if (huidig != null && albumZrodla != null) {
                 Edycja.zakres.launch {
@@ -375,8 +381,17 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     MuzykaPokazu(grac = staat.diashow && !staat.speeltVideo)
 
     BoxWithConstraints(
-        Modifier.fillMaxSize().background(Color.Black).focusRequester(fr).focusable().onPreviewKeyEvent { e ->
-            if (staat.doAlbumu != null) return@onPreviewKeyEvent false
+        Modifier.fillMaxSize().background(Color.Black).focusRequester(fr)
+            // przytrzymanie OK: szybko do ulubionych / z ulubionych (krótkie OK z początku naciśnięcia cofamy)
+            .langeOk {
+                val h = huidig
+                if (h == null || staat.pasek || staat.info || staat.zoom > 1f || Synology.jestSyno(h.id)) return@langeOk
+                val sp = staat.speler
+                if (h.video && sp != null && !staat.diashow) sp.playWhenReady = !sp.playWhenReady else staat.diashow = !staat.diashow
+                Edycja.zakres.launch { Ulubione.przelacz(h)?.let { staat.komunikat = ctx.getString(it) } }
+            }
+            .focusable().onPreviewKeyEvent { e ->
+            if (staat.doAlbumu != null || staat.twarze) return@onPreviewKeyEvent false
             val k = e.key.nativeKeyCode
             // --- film (poza pokazem slajdów): ◀ ▶ krótko = poprzedni / następny, przytrzymane = przewijanie. Działa dopiero
             // po własnym wciśnięciu w filmie (puszczenie strzałki, którą tu przyszliśmy ze zdjęcia, nic nie robi) ---
@@ -565,6 +580,7 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     }
     // wybór albumu (▼ → Do albumu): to zdjęcie albo wszystkie zaznaczone
     staat.doAlbumu?.let { ids -> AlbumWybor(ids, komunikat = { staat.komunikat = it }) { staat.doAlbumu = null } }
+    if (staat.twarze) staat.bron.op(staat.index)?.let { a -> TwarzeZdjecia(a) { staat.twarze = false } }
 }
 
 /** Ringetje dat in de diashow-tijd volloopt en bij elke foto opnieuw begint; staat stil zolang een video speelt. */
@@ -944,7 +960,7 @@ private fun OsobyRegel(osoby: List<Persoon>) {
 }
 
 /** Akcje dolnego paska przeglądarki (▼), jak okrągłe przyciski w Immichin. */
-enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, ALBUM, Z_ALBUMU, OKLADKA, MAPA }
+enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, WYCZYSC, ALBUM, Z_ALBUMU, OKLADKA, TWARZE, MAPA }
 
 fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false): List<Akcja> = if (a != null && Synology.jestSyno(a.id)) listOf(Akcja.POKAZ) else buildList {
     add(Akcja.POKAZ)
@@ -954,9 +970,11 @@ fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false): List<Akcja> =
     if (a?.live != null) add(Akcja.LIVE)
     if (a != null) add(Akcja.UDOSTEPNIJ)
     if (Udostepnianie.koszyk.isNotEmpty()) add(Akcja.KOD_QR)
+    if (Udostepnianie.koszyk.isNotEmpty()) add(Akcja.WYCZYSC)
     if (a != null && !Instellingen.trybDzieciecy) add(Akcja.ALBUM)
     if (a != null && zAlbumu && !Instellingen.trybDzieciecy) add(Akcja.Z_ALBUMU)
     if (a != null && zAlbumu && !Instellingen.trybDzieciecy) add(Akcja.OKLADKA)
+    if (a != null && !Instellingen.trybDzieciecy) add(Akcja.TWARZE)
     if (zMapa && a?.lat != null) add(Akcja.MAPA)
 }
 
@@ -1018,6 +1036,8 @@ private fun PasekAkcji(staat: KijkerStaat, akcje: List<Akcja>) {
                     Akcja.ALBUM -> Icons.Filled.LibraryAdd to
                         (if (Udostepnianie.koszyk.isNotEmpty()) stringResource(R.string.album_akcja_n, (Udostepnianie.koszyk.map { it.id } + listOfNotNull(staat.bron.op(staat.index)?.id)).distinct().size) else stringResource(R.string.album_akcja))
                     Akcja.OKLADKA -> Icons.Filled.Wallpaper to stringResource(R.string.album_okladka)
+                    Akcja.TWARZE -> Icons.Filled.Face to stringResource(R.string.twarze_akcja)
+                    Akcja.WYCZYSC -> Icons.Filled.DeleteSweep to stringResource(R.string.zazn_wyczysc_krotko)
                     Akcja.Z_ALBUMU -> {
                         val usuniete = staat.bron.op(staat.index)?.let { staat.usunieteZAlbumu[it.id] } == true
                         (if (usuniete) Icons.AutoMirrored.Filled.Undo else Icons.Filled.RemoveCircleOutline) to

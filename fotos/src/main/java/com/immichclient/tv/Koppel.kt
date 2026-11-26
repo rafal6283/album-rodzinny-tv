@@ -54,7 +54,7 @@ object Koppel {
     val RECHTEN = listOf(
         "asset.read", "asset.view", "album.read", "memory.read", "person.read", "map.read", "user.read", "folder.read", "asset.update",
         // edycja z telewizora: osoby (imię, data urodzenia, ukrywanie, łączenie) i albumy (tworzenie, dodawanie, usuwanie z albumu, nazwa)
-        "person.update", "person.merge", "album.create", "album.update", "albumAsset.create", "albumAsset.delete",
+        "person.update", "person.merge", "person.create", "face.read", "face.update", "face.delete", "album.create", "album.update", "album.delete", "albumAsset.create", "albumAsset.delete",
         // tryb imprezy: zdjęcia od gości do albumu „Impreza”
         "asset.upload",
     )

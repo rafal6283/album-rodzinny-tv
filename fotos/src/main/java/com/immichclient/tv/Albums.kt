@@ -167,7 +167,8 @@ private fun AlbumKaart(a: Album, modifier: Modifier, onFocus: () -> Unit, onKlik
         Card(
             onClick = onKlik,
             // poziome okładki 3:2 z dużym zaokrągleniem i białą ramką fokusu, jak w Immichin
-            modifier = modifier.fillMaxWidth().aspectRatio(1.45f).onFocusChanged { if (it.isFocused) onFocus() },
+            modifier = modifier.fillMaxWidth().aspectRatio(1.45f).onFocusChanged { if (it.isFocused) onFocus() }
+                .langeOk { Podreczne.album(a.id, Edycja.nazwyAlbumow[a.id] ?: a.naam) },
             shape = CardDefaults.shape(RoundedCornerShape(18.dp)),
             scale = CardDefaults.scale(focusedScale = 1.06f),
             border = CardDefaults.border(focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, Color.White), shape = RoundedCornerShape(18.dp))),

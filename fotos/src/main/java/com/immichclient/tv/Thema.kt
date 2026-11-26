@@ -1,5 +1,7 @@
 package com.immichclient.tv
 
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.MotionPhotosOn
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.foundation.Image
@@ -233,6 +235,8 @@ fun FotoVak(
     onFocusDoelKlaar: () -> Unit = {},
     onFocus: () -> Unit = {},
     vorm: Shape = RoundedCornerShape(12.dp),
+    /** przytrzymanie OK: menu podręczne zdjęcia */
+    onDlugi: (() -> Unit)? = null,
 ) {
     val fr = remember { FocusRequester() }
     if (focusDoel) LaunchedEffect(asset.id) {
@@ -250,7 +254,9 @@ fun FotoVak(
             .zIndex(if (focus) 1f else 0f)
             .focusRequester(fr)
             .onFocusChanged { focus = it.isFocused; if (it.isFocused) onFocus() }
-            .clickable(interactionSource = null, indication = null, onClick = onKlik)
+            .then(if (onDlugi != null) Modifier.langeOk(onDlugi) else Modifier)
+            // tryb zaznaczania: OK zaznacza / odznacza zamiast otwierać
+            .clickable(interactionSource = null, indication = null, onClick = { if (Udostepnianie.tryb && !Synology.jestSyno(asset.id)) Udostepnianie.przelacz(asset) else onKlik() })
             .graphicsLayer {
                 scaleX = schaal; scaleY = schaal; shape = vorm; clip = true
                 // zachte blauwe gloed rond de gekozen foto (schaduw van de laag: één RenderNode-eigenschap, geen extra tekenwerk)
@@ -269,6 +275,14 @@ fun FotoVak(
         )
         if (Ulubione.jest(asset)) Icon(
             Icons.Filled.Favorite, null, Modifier.align(Alignment.BottomStart).padding(6.dp).size(16.dp), tint = Color.White,
+        )
+        // zaznaczone: przyciemnienie, złota ramka i duży znaczek — widać z kanapy, także po wielu zdjęciach
+        if (Udostepnianie.zawiera(asset)) {
+            Box(Modifier.matchParentSize().background(Color(0x66000000)).border(4.dp, Color(0xFFF5B83D), vorm))
+            Icon(androidx.compose.material.icons.Icons.Filled.CheckCircle, null, Modifier.align(Alignment.TopStart).padding(6.dp).size(28.dp)
+                .background(Color(0xFF101018), androidx.compose.foundation.shape.CircleShape), tint = Color(0xFFF5B83D))
+        } else if (Udostepnianie.tryb) Icon(
+            androidx.compose.material.icons.Icons.Filled.RadioButtonUnchecked, null, Modifier.align(Alignment.TopStart).padding(6.dp).size(26.dp), tint = Color(0xCCFFFFFF),
         )
         if (focus) Box(Modifier.matchParentSize().border(3.dp, Color.White, vorm))
     }

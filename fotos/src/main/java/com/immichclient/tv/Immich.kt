@@ -597,6 +597,44 @@ object Immich {
         }
     }.onFailure { Log.w("Fotos", "faces $assetId: ${it.message}") }.getOrNull()
 
+    // ---- Korekty twarzy (face.read / face.update / face.delete / person.create) ----
+
+    /** Wszystkie twarze na zdjęciu z ramkami (ułamki) i przypisaną osobą (null = nieprzypisana). */
+    suspend fun twarze(assetId: String): List<Twarz> = withContext(Dispatchers.Default) {
+        val a = JSONArray(get("/faces?id=$assetId"))
+        (0 until a.length()).mapNotNull { i ->
+            val f = a.getJSONObject(i)
+            val w = f.optDouble("imageWidth"); val h = f.optDouble("imageHeight")
+            if (w.isNaN() || h.isNaN() || w <= 0 || h <= 0) return@mapNotNull null
+            val o = f.optJSONObject("person")
+            Twarz(
+                f.optString("id"), assetId,
+                (f.optDouble("boundingBoxX1") / w).toFloat(), (f.optDouble("boundingBoxY1") / h).toFloat(),
+                (f.optDouble("boundingBoxX2") / w).toFloat(), (f.optDouble("boundingBoxY2") / h).toFloat(),
+                o?.let { Persoon(it.optString("id"), it.optString("name"), it.optBoolean("isFavorite")) },
+            )
+        }
+    }
+
+    /** Przypisz twarz do osoby. */
+    suspend fun przypiszTwarz(twarzId: String, osobaId: String) { put("/faces/$twarzId", JSONObject().put("id", osobaId)) }
+
+    /** Usuń twarz (wykryta omyłkowo: zabawka, plakat…). */
+    suspend fun usunTwarz(twarzId: String) { delete("/faces/$twarzId", JSONObject().put("force", false)) }
+
+    /** Nowa osoba (puste imię = bez imienia); zwraca id. */
+    suspend fun nowaOsoba(imie: String): String =
+        JSONObject(post("/people", JSONObject().apply { if (imie.isNotBlank()) put("name", imie.trim()) })).getString("id")
+
+    /** Zdjęcia osoby, strona po [n] (od najstarszych), do przeglądu twarzy. */
+    suspend fun osobaStrona(osobaId: String, strona: Int, n: Int): Pair<List<Asset>, Boolean> = withContext(Dispatchers.Default) {
+        val body = JSONObject().put("size", n).put("page", strona).put("order", "asc").put("withExif", true)
+            .put("personIds", JSONArray(listOf(osobaId))).put("type", "IMAGE")
+        val o = JSONObject(post("/search/metadata", body)).getJSONObject("assets")
+        val a = o.getJSONArray("items")
+        List(a.length()) { asset(a.getJSONObject(it)) } to (!o.isNull("nextPage") && o.optString("nextPage").isNotBlank())
+    }
+
     /** Losowe zdjęcia z jednego miasta (Powroty: rozkład na lata). */
     suspend fun losoweZMiasta(miasto: String, n: Int): List<Asset> = withContext(Dispatchers.Default) {
         val q = JSONObject().put("size", n).put("type", "IMAGE").put("visibility", "timeline").put("withExif", true).put("city", miasto)
@@ -652,6 +690,9 @@ object Immich {
         val a = JSONArray(put("/albums/$albumId/assets", JSONObject().put("ids", JSONArray(ids))))
         return (0 until a.length()).count { a.getJSONObject(it).optBoolean("success") }
     }
+
+    /** Usuń album (uprawnienie album.delete); zdjęcia zostają w bibliotece. */
+    suspend fun usunAlbum(albumId: String) { haal(Request.Builder().url("$api/albums/$albumId").delete().build()) }
 
     /** Okładka albumu (uprawnienie album.update). */
     suspend fun ustawOkladke(albumId: String, assetId: String) { patch("/albums/$albumId", JSONObject().put("albumThumbnailAssetId", assetId)) }

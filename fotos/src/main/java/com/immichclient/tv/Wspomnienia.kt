@@ -95,7 +95,7 @@ fun RoczniceRij(nav: Nav) {
                 val ileLat = pluralStringResource(R.plurals.lat_temu, w.lat, w.lat)
                 Card(
                     onClick = { nav.open(Scherm.Tijdlijn(w.album.naam, ileLat, Filter(albumId = w.album.id), !w.album.oudsteEerst, false, nav.scope)) },
-                    modifier = Modifier.width(250.dp).height(140.dp),
+                    modifier = Modifier.width(250.dp).height(140.dp).langeOk { Podreczne.album(w.album.id, w.album.naam) },
                     shape = CardDefaults.shape(RoundedCornerShape(18.dp)),
                     scale = CardDefaults.scale(focusedScale = 1.06f),
                 ) {
@@ -338,6 +338,7 @@ fun KalendarzRij(nav: Nav, minione: Boolean = false) {
                         w.album?.let { nav.open(Scherm.Tijdlijn(it.naam, opis, Filter(albumId = it.id), !it.oudsteEerst, false, nav.scope)) }
                     },
                     modifier = Modifier.pamiecFokusu("rocznice", (w.osoba?.id ?: w.album?.id).orEmpty() + w.data, pierwszy = !minione && w === lista.first())
+                        .langeOk { w.osoba?.let { Podreczne.osoba(it.id, nazwa) }; w.album?.let { Podreczne.album(it.id, it.naam) } }
                         .width(260.dp).height(120.dp),
                     shape = CardDefaults.shape(RoundedCornerShape(18.dp)),
                     scale = CardDefaults.scale(focusedScale = 1.06f),

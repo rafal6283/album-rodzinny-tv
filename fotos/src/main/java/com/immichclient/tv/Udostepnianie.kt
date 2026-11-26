@@ -87,8 +87,18 @@ object Udostepnianie {
     @Volatile private var kod = ""
     @Volatile private var ostatnio = 0L
 
-    fun zawiera(a: Asset) = koszyk.any { it.id == a.id }
-    fun przelacz(a: Asset) { if (zawiera(a)) koszyk.removeAll { it.id == a.id } else koszyk.add(a) }
+    /** szybkie sprawdzanie na kafelkach (dziesiątki naraz): id zaznaczonych */
+    private val idy = androidx.compose.runtime.mutableStateMapOf<String, Boolean>()
+    /** tryb zaznaczania: krótkie OK na kafelku zaznacza / odznacza zamiast otwierać (Wstecz kończy) */
+    var tryb by mutableStateOf(false)
+
+    fun zawiera(a: Asset) = idy[a.id] == true
+    fun przelacz(a: Asset) {
+        if (zawiera(a)) { koszyk.removeAll { it.id == a.id }; idy.remove(a.id) } else { koszyk.add(a); idy[a.id] = true }
+        if (koszyk.isEmpty()) tryb = false
+    }
+    /** wyczyść całe zaznaczenie (i zakończ tryb zaznaczania) */
+    fun wyczysc() { koszyk.clear(); idy.clear(); tryb = false }
 
     /** Ekran z kodem QR; serwer startuje przy pierwszym otwarciu. */
     fun otworz(c: Context) { if (serwer == null) start(c); otwarte = true }
@@ -261,7 +271,7 @@ fun UdostepnianieScherm() {
                     }
                 }
                 Row(Modifier.padding(top = 18.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    Button(onClick = { Udostepnianie.koszyk.clear(); Udostepnianie.zatrzymaj() }, modifier = Modifier.focusRequester(pierwszy),
+                    Button(onClick = { Udostepnianie.wyczysc(); Udostepnianie.zatrzymaj() }, modifier = Modifier.focusRequester(pierwszy),
                         colors = ButtonDefaults.colors(containerColor = Color(0x22FFFFFF), contentColor = Color.White, focusedContainerColor = Color.White, focusedContentColor = Color(0xFF101018))) {
                         Icon(Icons.Filled.DeleteSweep, null, Modifier.size(18.dp)); Text("  " + stringResource(R.string.udost_wyczysc), color = androidx.tv.material3.LocalContentColor.current)
                     }

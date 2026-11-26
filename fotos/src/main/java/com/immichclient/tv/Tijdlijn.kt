@@ -2,6 +2,8 @@ package com.immichclient.tv
 
 import androidx.compose.foundation.border
 import androidx.compose.material.icons.filled.ChildCare
+import androidx.compose.material.icons.filled.FaceRetouchingNatural
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material.icons.filled.CompareArrows
@@ -314,6 +316,7 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                 staat = staat.raster,
                 onKlik = { a -> staat.indexVan(a).takeIf { it >= 0 }?.let { nav.bekijk(staat, it, titel, false, staat.raster) } },
                 onWacht = staat::laad,
+                onPokaz = { a -> staat.indexVan(a).takeIf { it >= 0 }?.let { nav.bekijk(staat, it, titel, true, staat.raster) } },
                 bovenAantal = boven,
                 modifier = Modifier.fillMaxSize(),
             ) {
@@ -367,6 +370,14 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                                     tekst = stringResource(R.string.rosla_przycisk),
                                 )
                             }
+                            // korekta dopasowań: siatka twarzy osoby, błędne zaznaczyć i przepisać
+                            staat.filter.persoonId?.let { id ->
+                                if (!Instellingen.trybDzieciecy) Keuze(
+                                    selected = false, onClick = { nav.open(Scherm.Popraw(id, scherm.titel, nav.scope)) },
+                                    leadingIcon = { Icon(androidx.compose.material.icons.Icons.Filled.FaceRetouchingNatural, null, Modifier.width(18.dp)) },
+                                    tekst = stringResource(R.string.popraw_przycisk),
+                                )
+                            }
                             // rok osoby: podsumowanie jej roku (jak „Rok w skrócie”), w styczniu i lutym poprzedni rok
                             staat.filter.persoonId?.let { id ->
                                 val rokOsoby = java.time.LocalDate.now().let { if (it.monthValue <= 2) it.year - 1 else it.year }
@@ -382,6 +393,15 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
                                 leadingIcon = { Icon(Icons.Filled.Edit, null, Modifier.width(18.dp)) },
                                 tekst = stringResource(if (staat.filter.persoonId != null) R.string.edytuj_osobe else R.string.album_zmien_nazwe),
                             )
+                            // usunięcie całego albumu (zdjęcia zostają w bibliotece), z potwierdzeniem
+                            staat.filter.albumId?.let { albumId ->
+                                if (!Instellingen.trybDzieciecy) Keuze(
+                                    selected = false,
+                                    onClick = { Podreczne.poUsunieciu = { nav.terug() }; Podreczne.usuwanie = albumId to scherm.titel },
+                                    leadingIcon = { Icon(androidx.compose.material.icons.Icons.Filled.DeleteOutline, null, Modifier.width(18.dp)) },
+                                    tekst = stringResource(R.string.album_usun_caly),
+                                )
+                            }
                             // album jako kanał na ekranie głównym Android TV
                             staat.filter.albumId?.let { albumId ->
                                 val naEkranie = Instellingen.kanalAlbum == albumId
@@ -722,7 +742,7 @@ fun HerinneringKaart(h: Herinnering, nav: Nav, breedte: Float = 200f, hoogte: Fl
     val omslag = h.assets.filter { !it.video }.let { f -> f.getOrNull(f.size / 2) } ?: h.assets[h.assets.size / 2]
     Card(
         onClick = { nav.bekijk(LijstBron(h.assets), 0, h.tytul ?: jarenGeleden(h.jarenGeleden), true, null) },
-        modifier = modifier.width(breedte.dp).height(hoogte.dp),
+        modifier = modifier.width(breedte.dp).height(hoogte.dp).langeOk { Podreczne.wspomnienie(h, h.tytul ?: jarenGeleden(h.jarenGeleden)) },
         shape = CardDefaults.shape(RoundedCornerShape(18.dp)),
         scale = CardDefaults.scale(focusedScale = 1.06f),
         border = CardDefaults.border(focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, Color.White), shape = RoundedCornerShape(18.dp))),
