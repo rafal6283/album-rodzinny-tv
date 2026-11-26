@@ -782,9 +782,9 @@ private fun Video(a: Asset, staat: KijkerStaat, zrodlo: String = a.id, live: Boo
         val pauza = !staat.speeltVideo && speler.playbackState == Player.STATE_READY && !speler.playWhenReady
         val pelny = !live && !staat.videoFout && !staat.pasek && !staat.info && (teraz - staat.actief < 4000 || pauza || staat.strzalkaPrzewija)
         if (!live) androidx.compose.animation.AnimatedContent(pelny, Modifier.align(Alignment.BottomStart).fillMaxWidth(), label = "pasekWideo") { duzy ->
-            if (!duzy) Box(Modifier.fillMaxWidth().height(4.dp).background(Color(0x33FFFFFF))) {
-                Box(Modifier.fillMaxHeight().fillMaxWidth(deel).background(Kleur.primair))
-            } else Column(
+            // poza chwilą po naciśnięciu klawisza (i pauzą) nic nie zasłania filmu — także cienki pasek postępu znika
+            if (!duzy) Box(Modifier.fillMaxWidth().height(1.dp))
+            else Column(
                 Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xD0000000))))
                     .padding(start = 40.dp, end = 40.dp, top = 56.dp, bottom = 26.dp),
             ) {
