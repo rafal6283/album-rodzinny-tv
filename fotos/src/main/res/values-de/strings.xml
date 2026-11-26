@@ -1123,4 +1123,8 @@
     <string name="kto_nastepna">"Nächste"</string>
     <string name="kto_zdjecia">"Fotos zeigen"</string>
     <string name="kto_zdjecia_sub">"Alle Fotos mit diesem Gesicht — leichter zu erkennen"</string>
+    <string name="osoba_nie_ta">"Das ist nicht %1$s (trennen)"</string>
+    <string name="osoba_inna">"Das ist jemand anderes…"</string>
+    <string name="osoba_nie_ta_krotko">"Nicht diese Person"</string>
+    <string name="osoba_inna_krotko">"Jemand anderes"</string>
 </resources>

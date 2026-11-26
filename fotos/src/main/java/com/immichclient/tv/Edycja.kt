@@ -74,6 +74,8 @@ object Edycja {
     }
     /** albumy, z których usunięto zdjęcie w przeglądarce: oś czasu albumu wczytuje się od nowa po jej zamknięciu */
     val doOdswiezenia = HashSet<String>()
+    /** zdjęcia odpięte od osoby / przepisane do innej: na siatce przyciemnione (oś czasu nie skacze na początek) */
+    val odpiete = mutableStateMapOf<String, Boolean>()
     /**
      * Zakres dla zapisów na serwerze (album, osoba): niezależny od okna, które je zleciło — okno zamyka się od razu,
      * a zapis trwa dalej (wcześniej zamknięcie okna przerywało zapis: „The coroutine scope left the composition”).

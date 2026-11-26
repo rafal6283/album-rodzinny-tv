@@ -1173,4 +1173,8 @@
     <string name="kto_nastepna">"Następna"</string>
     <string name="kto_zdjecia">"Pokaż zdjęcia"</string>
     <string name="kto_zdjecia_sub">"Wszystkie zdjęcia z tą twarzą — łatwiej rozpoznać"</string>
+    <string name="osoba_nie_ta">"To nie jest %1$s (odepnij)"</string>
+    <string name="osoba_inna">"To jest ktoś inny…"</string>
+    <string name="osoba_nie_ta_krotko">"Nie ta osoba"</string>
+    <string name="osoba_inna_krotko">"Ktoś inny"</string>
 </resources>

@@ -1130,4 +1130,8 @@
     <string name="kto_nastepna">"Siguiente"</string>
     <string name="kto_zdjecia">"Ver fotos"</string>
     <string name="kto_zdjecia_sub">"Todas las fotos con esta cara — más fácil de reconocer"</string>
+    <string name="osoba_nie_ta">"No es %1$s (desvincular)"</string>
+    <string name="osoba_inna">"Es otra persona…"</string>
+    <string name="osoba_nie_ta_krotko">"No es esta persona"</string>
+    <string name="osoba_inna_krotko">"Otra persona"</string>
 </resources>

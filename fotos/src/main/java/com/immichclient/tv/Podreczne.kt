@@ -45,6 +45,20 @@ object Podreczne {
     var zmianaNazwy by mutableStateOf<Pair<String, String>?>(null)
     var usuwanie by mutableStateOf<Pair<String, String>?>(null)
     var osobaEdycja by mutableStateOf<Pair<String, String>?>(null)
+    /** oś czasu osoby na ekranie (id, imię, stan): w menu zdjęcia „To nie jest …” i „To jest ktoś inny…” */
+    var osobaKontekst: Triple<String, String, TijdlijnStaat>? = null
+    /** zdjęcie (id) i osoba, której twarz przepisać do innej osoby (lista wyboru w [PodreczneWarstwa]) */
+    var przepisanie by mutableStateOf<Pair<String, String>?>(null)
+
+    /** Odepnij osobę od zdjęcia (jej twarz dostaje nową osobę bez imienia); [potem] np. odśwież oś czasu. */
+    fun odepnijOsobe(assetId: String, osobaId: String, potem: () -> Unit = {}) {
+        Edycja.zakres.launch {
+            val f = runCatching { Immich.twarze(assetId).filter { it.osoba?.id == osobaId } }.getOrElse { Edycja.komunikat = Edycja.blad(it); return@launch }
+            if (f.isEmpty()) { Edycja.komunikat = s(R.string.twarze_brak); return@launch }
+            Korekta.odepnij(f) { potem() }
+        }
+    }
+
     /** pełny edytor bocznego menu (kolejność, ukrywanie) */
     var edycjaMenu by mutableStateOf(false)
 
@@ -98,6 +112,11 @@ object Podreczne {
         }
         if (!Instellingen.trybDzieciecy) p += Pozycja(s(R.string.album_akcja)) { doAlbumu = (Udostepnianie.koszyk.map { it.id } + a.id).distinct() }
         if (a.lat != null) naMape?.let { m -> p += Pozycja(s(R.string.podreczne_na_mapie)) { m(a) } }
+        // oś czasu osoby: błędnie przypisane zdjęcie — odepnij albo przepisz do kogoś innego
+        osobaKontekst?.takeIf { !Instellingen.trybDzieciecy }?.let { (oid, imie, staat) ->
+            p += Pozycja(s(R.string.osoba_nie_ta, imie.ifBlank { "…" })) { odepnijOsobe(a.id, oid) { Edycja.odpiete[a.id] = true } }
+            p += Pozycja(s(R.string.osoba_inna)) { przepisanie = a.id to oid }
+        }
         // edycja: data, miejsce, opis, ocena, archiwum, „nie we wspomnieniach”, kosz
         if (!Instellingen.trybDzieciecy) p += Edytor.pozycjeZdjecia(a)
         pokaz?.let { f -> p += Pozycja(s(R.string.pokaz_od_tego)) { f(a) } }
@@ -192,7 +211,7 @@ fun PodreczneWarstwa() {
     val ctx = LocalContext.current
     // po zamknięciu menu i okien z niego: fokus z powrotem na element, na którym przytrzymano OK (nie do bocznego menu)
     val otwarte = Podreczne.menu != null || Podreczne.doAlbumu != null || Podreczne.zmianaNazwy != null || Podreczne.usuwanie != null ||
-        Podreczne.osobaEdycja != null || Podreczne.edycjaMenu || Edytor.data != null || Edytor.miejsce != null || Edytor.opis != null ||
+        Podreczne.osobaEdycja != null || Podreczne.edycjaMenu || Podreczne.przepisanie != null || Edytor.data != null || Edytor.miejsce != null || Edytor.opis != null ||
         Edytor.ocena != null || Edytor.link != null || Edytor.udostepnij != null
     androidx.compose.runtime.LaunchedEffect(otwarte) {
         if (otwarte) return@LaunchedEffect
@@ -243,6 +262,16 @@ fun PodreczneWarstwa() {
         }
     }
     if (Podreczne.edycjaMenu) KolejnoscSekcji { Podreczne.edycjaMenu = false }
+    Podreczne.przepisanie?.let { (assetId, osobaId) ->
+        KiesLijst(stringResource(R.string.twarz_to_jest), persoonKeuzes(), "", sluit = { Podreczne.przepisanie = null }) { id, naam ->
+            Podreczne.przepisanie = null
+            Edycja.zakres.launch {
+                val f = runCatching { Immich.twarze(assetId).filter { it.osoba?.id == osobaId } }.getOrElse { Edycja.komunikat = Edycja.blad(it); return@launch }
+                if (f.isEmpty()) { Edycja.komunikat = ctx.getString(R.string.twarze_brak); return@launch }
+                Korekta.przypisz(f, id, naam) { Edycja.odpiete[assetId] = true }
+            }
+        }
+    }
     Podreczne.osobaEdycja?.let { (id, nazwa) ->
         OsobaMenu(id, nazwa, ustawTytul = {}, poPolaczeniu = {}, komunikat = { Edycja.komunikat = it }, sluit = { Podreczne.osobaEdycja = null })
     }
