@@ -297,8 +297,8 @@ fun EdycjaKomunikat(modifier: Modifier) {
     val k = Edycja.komunikat
     LaunchedEffect(k) { if (k != null) { delay(4000); Edycja.komunikat = null } }
     androidx.compose.animation.AnimatedVisibility(k != null, modifier.padding(bottom = 60.dp), enter = androidx.compose.animation.fadeIn(), exit = androidx.compose.animation.fadeOut()) {
-        Text(k.orEmpty(), style = MaterialTheme.typography.titleMedium, color = Color.White,
-            modifier = Modifier.background(Color(0xF0181822), RoundedCornerShape(20.dp)).padding(horizontal = 24.dp, vertical = 12.dp))
+        Text(k.orEmpty(), style = MaterialTheme.typography.titleMedium, color = Color.White, maxLines = 3,
+            modifier = Modifier.widthIn(max = 900.dp).background(Color(0xF0181822), RoundedCornerShape(20.dp)).padding(horizontal = 24.dp, vertical = 12.dp))
     }
 }
 

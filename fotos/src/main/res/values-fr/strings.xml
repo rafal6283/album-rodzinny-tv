@@ -1134,6 +1134,6 @@
     <string name="osoba_inna">"C’est quelqu’un d’autre…"</string>
     <string name="osoba_nie_ta_krotko">"Pas cette personne"</string>
     <string name="osoba_inna_krotko">"Quelqu’un d’autre"</string>
-    <string name="info_biblioteka_zewn">"Bibliothèque externe (dossier du serveur/NAS monté dans Immich)"</string>
-    <string name="info_przeslane">"Envoyé dans Immich (dossier d’envoi sur le serveur)"</string>
+    <string name="info_biblioteka_zewn">"Bibliothèque externe"</string>
+    <string name="info_przeslane">"Envoyé dans Immich"</string>
 </resources>
