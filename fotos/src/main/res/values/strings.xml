@@ -1038,4 +1038,16 @@
     <string name="recht_face_read">"Reading faces (corrections, How they grew)"</string>
     <string name="recht_face_update">"Reassigning faces"</string>
     <string name="recht_face_delete">"Removing wrongly detected faces"</string>
+    <string name="zazn_pokaz">"Slideshow of selected (%1$d)"</string>
+    <string name="zazn_tytul">"Selected"</string>
+    <string name="zazn_udostepnij">"Share selected — QR code (%1$d)"</string>
+    <string name="zazn_koniec">"Stop selecting (OK opens again)"</string>
+    <string name="zazn_dalej">"Keep selecting with OK"</string>
+    <string name="zazn_wyczysc">"Clear selection (%1$d)"</string>
+    <string name="zazn_wyczysc_krotko">"Clear selection"</string>
+    <string name="zazn_wyczyszczono">"Selection cleared"</string>
+    <string name="zazn_tryb_koniec">"Selecting finished — the selection stays"</string>
+    <string name="zazn_licznik">"Selected: %1$d"</string>
+    <string name="zazn_hint_tryb">"OK selects / deselects · hold OK: menu (album, slideshow, clear) · Back: finish"</string>
+    <string name="zazn_hint">"hold OK on a photo: album, slideshow, clear selection"</string>
 </resources>

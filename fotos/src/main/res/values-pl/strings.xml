@@ -1066,4 +1066,16 @@
     <string name="recht_face_read">"Odczyt twarzy (korekty, Jak rosła)"</string>
     <string name="recht_face_update">"Przepisywanie twarzy"</string>
     <string name="recht_face_delete">"Usuwanie błędnie wykrytych twarzy"</string>
+    <string name="zazn_pokaz">"Pokaz zaznaczonych (%1$d)"</string>
+    <string name="zazn_tytul">"Zaznaczone"</string>
+    <string name="zazn_udostepnij">"Udostępnij zaznaczone — kod QR (%1$d)"</string>
+    <string name="zazn_koniec">"Zakończ zaznaczanie (OK znów otwiera)"</string>
+    <string name="zazn_dalej">"Zaznaczaj dalej przyciskiem OK"</string>
+    <string name="zazn_wyczysc">"Wyczyść zaznaczenie (%1$d)"</string>
+    <string name="zazn_wyczysc_krotko">"Wyczyść zazn."</string>
+    <string name="zazn_wyczyszczono">"Zaznaczenie wyczyszczone"</string>
+    <string name="zazn_tryb_koniec">"Koniec zaznaczania — zaznaczenie zostaje"</string>
+    <string name="zazn_licznik">"Zaznaczone: %1$d"</string>
+    <string name="zazn_hint_tryb">"OK zaznacza / odznacza · przytrzymaj OK: menu (album, pokaz, wyczyść) · Wstecz: koniec"</string>
+    <string name="zazn_hint">"przytrzymaj OK na zdjęciu: album, pokaz, wyczyść zaznaczenie"</string>
 </resources>

@@ -1016,4 +1016,16 @@
     <string name="recht_face_read">"Gesichter lesen (Korrekturen, Wie sie wuchsen)"</string>
     <string name="recht_face_update">"Gesichter neu zuordnen"</string>
     <string name="recht_face_delete">"Falsch erkannte Gesichter entfernen"</string>
+    <string name="zazn_pokaz">"Diashow der Auswahl (%1$d)"</string>
+    <string name="zazn_tytul">"Auswahl"</string>
+    <string name="zazn_udostepnij">"Auswahl teilen — QR-Code (%1$d)"</string>
+    <string name="zazn_koniec">"Auswahl beenden (OK öffnet wieder)"</string>
+    <string name="zazn_dalej">"Mit OK weiter auswählen"</string>
+    <string name="zazn_wyczysc">"Auswahl aufheben (%1$d)"</string>
+    <string name="zazn_wyczysc_krotko">"Auswahl weg"</string>
+    <string name="zazn_wyczyszczono">"Auswahl aufgehoben"</string>
+    <string name="zazn_tryb_koniec">"Auswahl beendet — sie bleibt erhalten"</string>
+    <string name="zazn_licznik">"Ausgewählt: %1$d"</string>
+    <string name="zazn_hint_tryb">"OK wählt / entfernt · OK halten: Menü (Album, Diashow, leeren) · Zurück: fertig"</string>
+    <string name="zazn_hint">"OK auf einem Foto halten: Album, Diashow, Auswahl leeren"</string>
 </resources>

@@ -1023,4 +1023,16 @@
     <string name="recht_face_read">"Leer caras (correcciones, Cómo creció)"</string>
     <string name="recht_face_update">"Reasignar caras"</string>
     <string name="recht_face_delete">"Eliminar caras mal detectadas"</string>
+    <string name="zazn_pokaz">"Presentación de seleccionadas (%1$d)"</string>
+    <string name="zazn_tytul">"Seleccionadas"</string>
+    <string name="zazn_udostepnij">"Compartir seleccionadas — código QR (%1$d)"</string>
+    <string name="zazn_koniec">"Terminar selección (OK vuelve a abrir)"</string>
+    <string name="zazn_dalej">"Seguir seleccionando con OK"</string>
+    <string name="zazn_wyczysc">"Borrar selección (%1$d)"</string>
+    <string name="zazn_wyczysc_krotko">"Borrar selección"</string>
+    <string name="zazn_wyczyszczono">"Selección borrada"</string>
+    <string name="zazn_tryb_koniec">"Selección terminada — se conserva"</string>
+    <string name="zazn_licznik">"Seleccionadas: %1$d"</string>
+    <string name="zazn_hint_tryb">"OK selecciona / deselecciona · mantener OK: menú (álbum, presentación, borrar) · Atrás: terminar"</string>
+    <string name="zazn_hint">"mantén OK en una foto: álbum, presentación, borrar selección"</string>
 </resources>

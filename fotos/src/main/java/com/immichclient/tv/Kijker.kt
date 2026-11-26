@@ -65,6 +65,7 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Videocam
@@ -350,6 +351,7 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
                 staat.doAlbumu = (Udostepnianie.koszyk.map { it.id } + huidig.id).distinct()
             }
             Akcja.TWARZE -> if (huidig != null) { staat.diashow = false; staat.twarze = true }
+            Akcja.WYCZYSC -> { Udostepnianie.wyczysc(); staat.komunikat = ctx.getString(R.string.zazn_wyczyszczono) }
             // to zdjęcie jako okładka albumu (w Immich i w aplikacji)
             Akcja.OKLADKA -> if (huidig != null && albumZrodla != null) {
                 Edycja.zakres.launch {
@@ -958,7 +960,7 @@ private fun OsobyRegel(osoby: List<Persoon>) {
 }
 
 /** Akcje dolnego paska przeglądarki (▼), jak okrągłe przyciski w Immichin. */
-enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, ALBUM, Z_ALBUMU, OKLADKA, TWARZE, MAPA }
+enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, WYCZYSC, ALBUM, Z_ALBUMU, OKLADKA, TWARZE, MAPA }
 
 fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false): List<Akcja> = if (a != null && Synology.jestSyno(a.id)) listOf(Akcja.POKAZ) else buildList {
     add(Akcja.POKAZ)
@@ -968,6 +970,7 @@ fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false): List<Akcja> =
     if (a?.live != null) add(Akcja.LIVE)
     if (a != null) add(Akcja.UDOSTEPNIJ)
     if (Udostepnianie.koszyk.isNotEmpty()) add(Akcja.KOD_QR)
+    if (Udostepnianie.koszyk.isNotEmpty()) add(Akcja.WYCZYSC)
     if (a != null && !Instellingen.trybDzieciecy) add(Akcja.ALBUM)
     if (a != null && zAlbumu && !Instellingen.trybDzieciecy) add(Akcja.Z_ALBUMU)
     if (a != null && zAlbumu && !Instellingen.trybDzieciecy) add(Akcja.OKLADKA)
@@ -1034,6 +1037,7 @@ private fun PasekAkcji(staat: KijkerStaat, akcje: List<Akcja>) {
                         (if (Udostepnianie.koszyk.isNotEmpty()) stringResource(R.string.album_akcja_n, (Udostepnianie.koszyk.map { it.id } + listOfNotNull(staat.bron.op(staat.index)?.id)).distinct().size) else stringResource(R.string.album_akcja))
                     Akcja.OKLADKA -> Icons.Filled.Wallpaper to stringResource(R.string.album_okladka)
                     Akcja.TWARZE -> Icons.Filled.Face to stringResource(R.string.twarze_akcja)
+                    Akcja.WYCZYSC -> Icons.Filled.DeleteSweep to stringResource(R.string.zazn_wyczysc_krotko)
                     Akcja.Z_ALBUMU -> {
                         val usuniete = staat.bron.op(staat.index)?.let { staat.usunieteZAlbumu[it.id] } == true
                         (if (usuniete) Icons.AutoMirrored.Filled.Undo else Icons.Filled.RemoveCircleOutline) to

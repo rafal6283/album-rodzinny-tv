@@ -1016,4 +1016,16 @@
     <string name="recht_face_read">"Gezichten lezen (correcties, Zo groeiden ze)"</string>
     <string name="recht_face_update">"Gezichten toewijzen"</string>
     <string name="recht_face_delete">"Verkeerd herkende gezichten verwijderen"</string>
+    <string name="zazn_pokaz">"Diashow van selectie (%1$d)"</string>
+    <string name="zazn_tytul">"Selectie"</string>
+    <string name="zazn_udostepnij">"Selectie delen — QR-code (%1$d)"</string>
+    <string name="zazn_koniec">"Stoppen met selecteren (OK opent weer)"</string>
+    <string name="zazn_dalej">"Verder selecteren met OK"</string>
+    <string name="zazn_wyczysc">"Selectie wissen (%1$d)"</string>
+    <string name="zazn_wyczysc_krotko">"Selectie wissen"</string>
+    <string name="zazn_wyczyszczono">"Selectie gewist"</string>
+    <string name="zazn_tryb_koniec">"Selecteren klaar — de selectie blijft"</string>
+    <string name="zazn_licznik">"Geselecteerd: %1$d"</string>
+    <string name="zazn_hint_tryb">"OK selecteert / deselecteert · OK vasthouden: menu (album, diashow, wissen) · Terug: klaar"</string>
+    <string name="zazn_hint">"OK vasthouden op een foto: album, diashow, selectie wissen"</string>
 </resources>

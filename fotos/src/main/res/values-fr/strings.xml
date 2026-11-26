@@ -1023,4 +1023,16 @@
     <string name="recht_face_read">"Lecture des visages (corrections, Comme il a grandi)"</string>
     <string name="recht_face_update">"Réattribution des visages"</string>
     <string name="recht_face_delete">"Suppression de faux visages"</string>
+    <string name="zazn_pokaz">"Diaporama de la sélection (%1$d)"</string>
+    <string name="zazn_tytul">"Sélection"</string>
+    <string name="zazn_udostepnij">"Partager la sélection — code QR (%1$d)"</string>
+    <string name="zazn_koniec">"Arrêter la sélection (OK ouvre à nouveau)"</string>
+    <string name="zazn_dalej">"Continuer la sélection avec OK"</string>
+    <string name="zazn_wyczysc">"Effacer la sélection (%1$d)"</string>
+    <string name="zazn_wyczysc_krotko">"Effacer sélection"</string>
+    <string name="zazn_wyczyszczono">"Sélection effacée"</string>
+    <string name="zazn_tryb_koniec">"Sélection terminée — elle est conservée"</string>
+    <string name="zazn_licznik">"Sélectionnés : %1$d"</string>
+    <string name="zazn_hint_tryb">"OK sélectionne / désélectionne · maintenir OK : menu (album, diaporama, effacer) · Retour : fin"</string>
+    <string name="zazn_hint">"maintenir OK sur une photo : album, diaporama, effacer"</string>
 </resources>

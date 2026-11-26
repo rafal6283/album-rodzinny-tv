@@ -13,6 +13,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.launch
 
 /**
@@ -61,11 +67,21 @@ object Podreczne {
         }
         p += Pozycja(s(if (Udostepnianie.zawiera(a)) R.string.podreczne_odznacz else R.string.podreczne_zaznacz)) {
             Udostepnianie.przelacz(a)
+            // dalej krótkie OK zaznacza kolejne (tryb zaznaczania, Wstecz kończy)
+            if (Udostepnianie.koszyk.isNotEmpty()) Udostepnianie.tryb = true
             komunikat(s(R.string.podreczne_zaznaczone, Udostepnianie.koszyk.size))
         }
         if (!Instellingen.trybDzieciecy) p += Pozycja(s(R.string.album_akcja)) { doAlbumu = (Udostepnianie.koszyk.map { it.id } + a.id).distinct() }
         if (a.lat != null) naMape?.let { m -> p += Pozycja(s(R.string.podreczne_na_mapie)) { m(a) } }
         pokaz?.let { f -> p += Pozycja(s(R.string.pokaz_od_tego)) { f(a) } }
+        // zaznaczenie: pokaz, udostępnienie, wyczyszczenie jednym ruchem, tryb zaznaczania
+        val ile = Udostepnianie.koszyk.size
+        if (ile > 0) {
+            p += Pozycja(s(R.string.zazn_pokaz, ile)) { nav?.bekijk(LijstBron(Udostepnianie.koszyk.sortedBy { it.datum }), 0, s(R.string.zazn_tytul), true, null) }
+            p += Pozycja(s(R.string.zazn_udostepnij, ile)) { Udostepnianie.otworz(Taal.ctx) }
+            p += Pozycja(s(if (Udostepnianie.tryb) R.string.zazn_koniec else R.string.zazn_dalej)) { Udostepnianie.tryb = !Udostepnianie.tryb }
+            p += Pozycja(s(R.string.zazn_wyczysc, ile)) { Udostepnianie.wyczysc(); komunikat(s(R.string.zazn_wyczyszczono)) }
+        }
         menu = listOfNotNull(a.datum.toLocalDate().format(Formaat.dagJaar), a.stad).joinToString("  ·  ") to p
     }
 
@@ -185,5 +201,25 @@ fun PodreczneWarstwa() {
     }
     Podreczne.osobaEdycja?.let { (id, nazwa) ->
         OsobaMenu(id, nazwa, ustawTytul = {}, poPolaczeniu = {}, komunikat = { Edycja.komunikat = it }, sluit = { Podreczne.osobaEdycja = null })
+    }
+}
+
+/** Pasek na dole: ile zaznaczonych i podpowiedź (bez fokusu — nie przeszkadza w nawigacji). */
+@Composable
+fun PasekZaznaczenia(modifier: Modifier) {
+    val ile = Udostepnianie.koszyk.size
+    androidx.compose.foundation.layout.Row(
+        modifier.padding(start = 110.dp, bottom = 24.dp)
+            .background(Color(0xF0181822), androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
+            .border(2.dp, Color(0xFFF5B83D), androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
+            .padding(horizontal = 20.dp, vertical = 10.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        androidx.tv.material3.Icon(androidx.compose.material.icons.Icons.Filled.CheckCircle, null, Modifier.size(22.dp), tint = Color(0xFFF5B83D))
+        androidx.tv.material3.Text("  " + stringResource(R.string.zazn_licznik, ile), style = androidx.tv.material3.MaterialTheme.typography.titleMedium, color = Color.White)
+        androidx.tv.material3.Text(
+            "   ·   " + stringResource(if (Udostepnianie.tryb) R.string.zazn_hint_tryb else R.string.zazn_hint),
+            style = androidx.tv.material3.MaterialTheme.typography.bodyMedium, color = Color(0xCCFFFFFF),
+        )
     }
 }

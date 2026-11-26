@@ -497,6 +497,8 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
             else -> openLade()
         }
     }
+    // tryb zaznaczania: Wstecz najpierw go kończy (zaznaczenie zostaje)
+    BackHandler(enabled = Udostepnianie.tryb && kijker == null) { Udostepnianie.tryb = false; Edycja.komunikat = ctx.getString(R.string.zazn_tryb_koniec) }
     val langeTerug = Toetsen.langeTerug
     androidx.compose.runtime.LaunchedEffect(langeTerug) { if (langeTerug > 0 && kijker == null) openLade() }
     Box(
@@ -700,6 +702,8 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         // ekran udostępniania na samym wierzchu (otwierany z przeglądarki); po zamknięciu fokus wraca do przeglądarki
         if (Udostepnianie.otwarte) UdostepnianieScherm()
         // komunikaty edycji (osoby, albumy) na samym wierzchu
+        // pasek zaznaczenia: ile zaznaczonych i co zrobić dalej (widać przy przeglądaniu siatki)
+        if (kijker == null && Udostepnianie.koszyk.isNotEmpty()) PasekZaznaczenia(Modifier.align(androidx.compose.ui.Alignment.BottomStart))
         // menu podręczne (przytrzymanie OK) i okna z niego — nad wszystkim, także nad przeglądarką
         PodreczneWarstwa()
         EdycjaKomunikat(Modifier.align(androidx.compose.ui.Alignment.BottomCenter))
