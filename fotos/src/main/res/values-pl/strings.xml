@@ -1177,6 +1177,6 @@
     <string name="osoba_inna">"To jest ktoś inny…"</string>
     <string name="osoba_nie_ta_krotko">"Nie ta osoba"</string>
     <string name="osoba_inna_krotko">"Ktoś inny"</string>
-    <string name="info_biblioteka_zewn">"Biblioteka zewnętrzna (folder na serwerze/NAS podpięty do Immich)"</string>
-    <string name="info_przeslane">"Przesłane do Immich (folder przesyłania na serwerze)"</string>
+    <string name="info_biblioteka_zewn">"Biblioteka zewnętrzna"</string>
+    <string name="info_przeslane">"Przesłane do Immich"</string>
 </resources>

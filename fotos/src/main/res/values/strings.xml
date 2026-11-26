@@ -1149,6 +1149,6 @@
     <string name="osoba_inna">"This is someone else…"</string>
     <string name="osoba_nie_ta_krotko">"Not this person"</string>
     <string name="osoba_inna_krotko">"Someone else"</string>
-    <string name="info_biblioteka_zewn">"External library (folder on the server/NAS mounted in Immich)"</string>
-    <string name="info_przeslane">"Uploaded to Immich (its upload folder on the server)"</string>
+    <string name="info_biblioteka_zewn">"External library"</string>
+    <string name="info_przeslane">"Uploaded to Immich"</string>
 </resources>
