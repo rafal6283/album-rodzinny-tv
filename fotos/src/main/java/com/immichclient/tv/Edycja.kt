@@ -60,6 +60,17 @@ object Edycja {
     val nazwyAlbumow = mutableStateMapOf<String, String>()
     var wersjaOsob by mutableIntStateOf(0)
     var wersjaAlbumow by mutableIntStateOf(0)
+    /** rośnie po zmianie zdjęcia głównego osoby (nowe adresy miniatur twarzy) */
+    var wersjaGlownych by mutableIntStateOf(0)
+
+    /** Ustaw zdjęcie główne osoby (jej twarz z tego zdjęcia) i odśwież miniatury. */
+    fun ustawGlowne(osobaId: String, assetId: String, poSukcesie: () -> Unit = {}) {
+        zakres.launch {
+            runCatching { Immich.ustawZdjecieOsoby(osobaId, assetId) }
+                .onSuccess { wersjaGlownych++; wersjaOsob++; komunikat = Taal.s(R.string.glowne_ustawione); poSukcesie() }
+                .onFailure { komunikat = blad(it) }
+        }
+    }
     /** albumy, z których usunięto zdjęcie w przeglądarce: oś czasu albumu wczytuje się od nowa po jej zamknięciu */
     val doOdswiezenia = HashSet<String>()
     /**

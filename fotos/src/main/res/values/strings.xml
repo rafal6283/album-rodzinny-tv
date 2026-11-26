@@ -1050,4 +1050,11 @@
     <string name="zazn_licznik">"Selected: %1$d"</string>
     <string name="zazn_hint_tryb">"OK selects / deselects · hold OK: menu (album, slideshow, clear) · Back: finish"</string>
     <string name="zazn_hint">"hold OK on a photo: album, slideshow, clear selection"</string>
+    <string name="glowne_ustawione">"Profile photo changed"</string>
+    <string name="glowne_tytul">"Profile photo: %1$s"</string>
+    <string name="glowne_hint">"OK on a face sets it as the profile photo"</string>
+    <string name="glowne_przycisk">"Set as profile photo"</string>
+    <string name="glowne_ta_twarz">"Profile photo of %1$s"</string>
+    <string name="glowne_zmien">"Change profile photo"</string>
+    <string name="glowne_krotko">"Profile photo"</string>
 </resources>

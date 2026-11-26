@@ -1028,4 +1028,11 @@
     <string name="zazn_licznik">"Geselecteerd: %1$d"</string>
     <string name="zazn_hint_tryb">"OK selecteert / deselecteert · OK vasthouden: menu (album, diashow, wissen) · Terug: klaar"</string>
     <string name="zazn_hint">"OK vasthouden op een foto: album, diashow, selectie wissen"</string>
+    <string name="glowne_ustawione">"Profielfoto gewijzigd"</string>
+    <string name="glowne_tytul">"Profielfoto: %1$s"</string>
+    <string name="glowne_hint">"OK op een gezicht maakt het de profielfoto"</string>
+    <string name="glowne_przycisk">"Als profielfoto instellen"</string>
+    <string name="glowne_ta_twarz">"Profielfoto van %1$s"</string>
+    <string name="glowne_zmien">"Profielfoto wijzigen"</string>
+    <string name="glowne_krotko">"Profielfoto"</string>
 </resources>

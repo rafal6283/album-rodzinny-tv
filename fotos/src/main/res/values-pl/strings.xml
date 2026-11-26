@@ -1078,4 +1078,11 @@
     <string name="zazn_licznik">"Zaznaczone: %1$d"</string>
     <string name="zazn_hint_tryb">"OK zaznacza / odznacza · przytrzymaj OK: menu (album, pokaz, wyczyść) · Wstecz: koniec"</string>
     <string name="zazn_hint">"przytrzymaj OK na zdjęciu: album, pokaz, wyczyść zaznaczenie"</string>
+    <string name="glowne_ustawione">"Zmieniono zdjęcie główne"</string>
+    <string name="glowne_tytul">"Zdjęcie główne: %1$s"</string>
+    <string name="glowne_hint">"OK na twarzy ustawia ją jako zdjęcie główne"</string>
+    <string name="glowne_przycisk">"Ustaw jako zdjęcie główne"</string>
+    <string name="glowne_ta_twarz">"Zdjęcie główne osoby %1$s"</string>
+    <string name="glowne_zmien">"Zmień zdjęcie główne"</string>
+    <string name="glowne_krotko">"Zdjęcie główne"</string>
 </resources>

@@ -1035,4 +1035,11 @@
     <string name="zazn_licznik">"Sélectionnés : %1$d"</string>
     <string name="zazn_hint_tryb">"OK sélectionne / désélectionne · maintenir OK : menu (album, diaporama, effacer) · Retour : fin"</string>
     <string name="zazn_hint">"maintenir OK sur une photo : album, diaporama, effacer"</string>
+    <string name="glowne_ustawione">"Photo principale modifiée"</string>
+    <string name="glowne_tytul">"Photo principale : %1$s"</string>
+    <string name="glowne_hint">"OK sur un visage le définit comme photo principale"</string>
+    <string name="glowne_przycisk">"Définir comme photo principale"</string>
+    <string name="glowne_ta_twarz">"Photo principale de %1$s"</string>
+    <string name="glowne_zmien">"Changer la photo principale"</string>
+    <string name="glowne_krotko">"Photo principale"</string>
 </resources>

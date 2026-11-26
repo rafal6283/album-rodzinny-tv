@@ -1035,4 +1035,11 @@
     <string name="zazn_licznik">"Seleccionadas: %1$d"</string>
     <string name="zazn_hint_tryb">"OK selecciona / deselecciona · mantener OK: menú (álbum, presentación, borrar) · Atrás: terminar"</string>
     <string name="zazn_hint">"mantén OK en una foto: álbum, presentación, borrar selección"</string>
+    <string name="glowne_ustawione">"Foto principal cambiada"</string>
+    <string name="glowne_tytul">"Foto principal: %1$s"</string>
+    <string name="glowne_hint">"OK en una cara la pone como foto principal"</string>
+    <string name="glowne_przycisk">"Usar como foto principal"</string>
+    <string name="glowne_ta_twarz">"Foto principal de %1$s"</string>
+    <string name="glowne_zmien">"Cambiar foto principal"</string>
+    <string name="glowne_krotko">"Foto principal"</string>
 </resources>

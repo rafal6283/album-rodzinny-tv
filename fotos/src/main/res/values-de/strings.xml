@@ -1028,4 +1028,11 @@
     <string name="zazn_licznik">"Ausgewählt: %1$d"</string>
     <string name="zazn_hint_tryb">"OK wählt / entfernt · OK halten: Menü (Album, Diashow, leeren) · Zurück: fertig"</string>
     <string name="zazn_hint">"OK auf einem Foto halten: Album, Diashow, Auswahl leeren"</string>
+    <string name="glowne_ustawione">"Profilfoto geändert"</string>
+    <string name="glowne_tytul">"Profilfoto: %1$s"</string>
+    <string name="glowne_hint">"OK auf einem Gesicht setzt es als Profilfoto"</string>
+    <string name="glowne_przycisk">"Als Profilfoto festlegen"</string>
+    <string name="glowne_ta_twarz">"Profilfoto von %1$s"</string>
+    <string name="glowne_zmien">"Profilfoto ändern"</string>
+    <string name="glowne_krotko">"Profilfoto"</string>
 </resources>

@@ -111,7 +111,8 @@ object Immich {
     /** pełna rozdzielczość (konwersja JPEG z Immich ≥ 1.133); wystarcza uprawnienie asset.view */
     fun pelny(id: String) = if (Synology.jestSyno(id)) Synology.miniatura(id, "xl") else "$api/assets/$id/thumbnail?size=fullsize"
     fun video(id: String) = if (Synology.jestSyno(id)) Synology.film(id) else "$api/assets/$id/video/playback"
-    fun gezicht(id: String) = "$api/people/$id/thumbnail"
+    /** miniatura twarzy osoby; po zmianie zdjęcia głównego inny adres (pamięć obrazków nie pokaże starego) */
+    fun gezicht(id: String) = "$api/people/$id/thumbnail" + (Edycja.wersjaGlownych.takeIf { it > 0 }?.let { "?w=$it" } ?: "")
 
     private suspend fun haal(req: Request): String = withContext(Dispatchers.IO) {
         http.newCall(req).execute().use { r ->
@@ -668,6 +669,9 @@ object Immich {
         val ur = o.optString("birthDate").take(10).let { runCatching { LocalDate.parse(it) }.getOrNull() }
         Persoon(o.getString("id"), o.optString("name").takeIf { it != "null" }.orEmpty(), o.optBoolean("isFavorite"), ur) to o.optBoolean("isHidden")
     }
+
+    /** Zdjęcie główne osoby = jej twarz z tego zdjęcia (uprawnienie person.update). */
+    suspend fun ustawZdjecieOsoby(osobaId: String, assetId: String) { put("/people/$osobaId", JSONObject().put("featureFaceAssetId", assetId)) }
 
     suspend fun zmienImie(id: String, imie: String) { put("/people/$id", JSONObject().put("name", imie.trim())) }
 
