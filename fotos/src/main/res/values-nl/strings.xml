@@ -1127,4 +1127,6 @@
     <string name="osoba_inna">"Dit is iemand anders…"</string>
     <string name="osoba_nie_ta_krotko">"Niet deze persoon"</string>
     <string name="osoba_inna_krotko">"Iemand anders"</string>
+    <string name="info_biblioteka_zewn">"Externe bibliotheek (map op server/NAS, gekoppeld aan Immich)"</string>
+    <string name="info_przeslane">"Geüpload naar Immich (uploadmap op de server)"</string>
 </resources>

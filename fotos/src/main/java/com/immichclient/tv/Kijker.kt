@@ -65,6 +65,7 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.AccountCircle
@@ -918,6 +919,8 @@ private fun InfoPaneel(a: Asset, staat: KijkerStaat, metKaartSprong: Boolean) {
                         if (d.wideo) Icons.Filled.Videocam else Icons.Filled.Image, d.bestand.ifEmpty { "—" },
                         listOfNotNull(d.dlugosc, d.plikSub ?: d.afmeting).joinToString("  ·  ").ifEmpty { null },
                     )
+                    // dokładne położenie pliku na serwerze (ścieżka widziana przez Immich) i skąd pochodzi
+                    d.sciezka?.let { InfoRegel(Icons.Filled.Folder, it, stringResource(if (d.zewnetrzna) R.string.info_biblioteka_zewn else R.string.info_przeslane), maxRegels = 3) }
                     d.camera?.let { InfoRegel(Icons.Filled.CameraAlt, it, listOfNotNull(d.instellingen, d.lens).joinToString("\n").ifEmpty { null }) }
                     (d.plaats ?: d.wspolrzedne)?.let { InfoRegel(Icons.Filled.Place, it, d.wspolrzedne.takeIf { d.plaats != null }) }
                     if (Ulubione.jest(a)) InfoRegel(Icons.Filled.Favorite, stringResource(R.string.w_ulubionych), null, kolorIkony = Color(0xFFFF5C8A))

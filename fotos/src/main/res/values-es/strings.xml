@@ -1134,4 +1134,6 @@
     <string name="osoba_inna">"Es otra persona…"</string>
     <string name="osoba_nie_ta_krotko">"No es esta persona"</string>
     <string name="osoba_inna_krotko">"Otra persona"</string>
+    <string name="info_biblioteka_zewn">"Biblioteca externa (carpeta del servidor/NAS montada en Immich)"</string>
+    <string name="info_przeslane">"Subido a Immich (carpeta de subida del servidor)"</string>
 </resources>

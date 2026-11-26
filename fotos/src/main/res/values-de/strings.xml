@@ -1127,4 +1127,6 @@
     <string name="osoba_inna">"Das ist jemand anderes…"</string>
     <string name="osoba_nie_ta_krotko">"Nicht diese Person"</string>
     <string name="osoba_inna_krotko">"Jemand anderes"</string>
+    <string name="info_biblioteka_zewn">"Externe Bibliothek (Ordner auf Server/NAS, in Immich eingebunden)"</string>
+    <string name="info_przeslane">"In Immich hochgeladen (Upload-Ordner auf dem Server)"</string>
 </resources>
