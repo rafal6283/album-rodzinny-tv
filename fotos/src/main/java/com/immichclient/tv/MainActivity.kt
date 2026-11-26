@@ -602,7 +602,9 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                                 .onFocusChanged { if (it.isFocused && !ladeBinnen.value) Log.i("Fotos", "lade: binnen op ${s.name} (huidig ${sectie.name})") }
                                 // w trakcie przejścia (zamknięcie przeglądarki, okna, zmiana ekranu) żadna pozycja menu nie może
                                 // przechwycić fokusu — inaczej menu na chwilę się rozwija i lista „skacze”
-                                .focusProperties { canFocus = !ladeDicht },
+                                .focusProperties { canFocus = !ladeDicht }
+                                // przytrzymanie OK: przesuń / ukryj sekcję, edycja całego menu
+                                .langeOk { Podreczne.sekcja(s, ctx.getString(if (s == Sectie.FOTOS) Instellingen.uiterlijk.label else s.label)) },
                             onClick = {
                                 stapel.clear(); ZabawaPamiec.wybor = null
                                 // Foldery: lista folderów z Immich wczytywana od nowa przy każdym wejściu (np. po usunięciu zdjęć)

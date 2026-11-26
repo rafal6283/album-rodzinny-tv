@@ -38,6 +38,23 @@ object Podreczne {
     var zmianaNazwy by mutableStateOf<Pair<String, String>?>(null)
     var usuwanie by mutableStateOf<Pair<String, String>?>(null)
     var osobaEdycja by mutableStateOf<Pair<String, String>?>(null)
+    /** pełny edytor bocznego menu (kolejność, ukrywanie) */
+    var edycjaMenu by mutableStateOf(false)
+
+    /** Przytrzymanie OK na pozycji bocznego menu: przesuń, ukryj, edytuj całe menu. */
+    fun sekcja(sec: Sectie, nazwa: String) {
+        val p = ArrayList<Pozycja>()
+        if (sec != Sectie.INSTELLINGEN) {
+            p += Pozycja(s(R.string.menu_wyzej)) { Sectie.przesun(sec, -1) }
+            p += Pozycja(s(R.string.menu_nizej)) { Sectie.przesun(sec, 1) }
+            p += Pozycja(s(R.string.menu_ukryj, nazwa)) { Sectie.ukryj(sec, true); komunikat(s(R.string.menu_ukryto, nazwa)) }
+        }
+        p += Pozycja(s(R.string.menu_edytuj)) { edycjaMenu = true }
+        val ukryte = Sectie.ukryte()
+        if (ukryte.isNotEmpty()) p += Pozycja(s(R.string.menu_pokaz_ukryte, ukryte.size)) { Instellingen.ukryteSekcje = "" }
+        menu = nazwa to p
+    }
+
     /** po usunięciu albumu (np. zamknij jego oś czasu) */
     var poUsunieciu: (() -> Unit)? = null
 
@@ -205,6 +222,7 @@ fun PodreczneWarstwa() {
             }
         }
     }
+    if (Podreczne.edycjaMenu) KolejnoscSekcji { Podreczne.edycjaMenu = false }
     Podreczne.osobaEdycja?.let { (id, nazwa) ->
         OsobaMenu(id, nazwa, ustawTytul = {}, poPolaczeniu = {}, komunikat = { Edycja.komunikat = it }, sluit = { Podreczne.osobaEdycja = null })
     }

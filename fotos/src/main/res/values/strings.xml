@@ -711,7 +711,7 @@
     </plurals>
     <string name="menu_kolejnosc">"Menu order"</string>
     <string name="menu_kolejnosc_uitleg">"Arrange the sections of the side menu"</string>
-    <string name="menu_kolejnosc_hint">"OK pick up / drop   ·   ▲▼ move the picked section   ·   Back close"</string>
+    <string name="menu_kolejnosc_hint">"OK pick up / drop   ·   ▲▼ move the picked section   ·   Back close · ▶ hide / show"</string>
     <string name="menu_domyslna">"Restore default order"</string>
     <string name="wideo_ok">"Play / pause"</string>
     <string name="wideo_poprz_nast">"Previous / next"</string>
@@ -1135,4 +1135,10 @@
     <string name="recht_duplicate_delete">"Duplicates (dismissing)"</string>
     <string name="recht_shared_link">"Album links with QR code"</string>
     <string name="recht_album_user">"Sharing albums with accounts"</string>
+    <string name="menu_wyzej">"Move up"</string>
+    <string name="menu_nizej">"Move down"</string>
+    <string name="menu_ukryj">"Hide “%1$s” from the menu"</string>
+    <string name="menu_ukryto">"Hidden: %1$s (hold OK on the menu → show hidden)"</string>
+    <string name="menu_edytuj">"Edit menu…"</string>
+    <string name="menu_pokaz_ukryte">"Show hidden sections (%1$d)"</string>
 </resources>

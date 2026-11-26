@@ -111,6 +111,8 @@ object Instellingen {
     var start by keuze("start", Sectie.FOTOS)
     /** kolejność sekcji w bocznym menu: nazwy po przecinku (pusty = domyślna, zob. Sectie.menu()); per urządzenie */
     var sekcje by tekst("sekcje", "", perApparaat = true)
+    /** sekcje ukryte w bocznym menu (nazwy po przecinku); per urządzenie */
+    var ukryteSekcje by tekst("ukryte_sekcje", "", perApparaat = true)
     var groet by keuze("groet", Groet.UIT)
     var groetTekst by tekst("groet_tekst", "")
 

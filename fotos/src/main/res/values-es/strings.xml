@@ -696,7 +696,7 @@
     </plurals>
     <string name="menu_kolejnosc">"Orden del menú"</string>
     <string name="menu_kolejnosc_uitleg">"Ordena las secciones del menú lateral"</string>
-    <string name="menu_kolejnosc_hint">"OK coger / soltar   ·   ▲▼ mover   ·   Atrás cerrar"</string>
+    <string name="menu_kolejnosc_hint">"OK coger / soltar   ·   ▲▼ mover   ·   Atrás cerrar · ▶ ocultar / mostrar"</string>
     <string name="menu_domyslna">"Restaurar el orden predeterminado"</string>
     <string name="wideo_ok">"Reproducir / pausa"</string>
     <string name="wideo_poprz_nast">"Anterior / siguiente"</string>
@@ -1120,4 +1120,10 @@
     <string name="recht_duplicate_delete">"Duplicados (descartar)"</string>
     <string name="recht_shared_link">"Enlaces de álbum con código QR"</string>
     <string name="recht_album_user">"Compartir álbumes con cuentas"</string>
+    <string name="menu_wyzej">"Subir"</string>
+    <string name="menu_nizej">"Bajar"</string>
+    <string name="menu_ukryj">"Ocultar «%1$s» del menú"</string>
+    <string name="menu_ukryto">"Oculto: %1$s (mantén OK en el menú → mostrar ocultas)"</string>
+    <string name="menu_edytuj">"Editar menú…"</string>
+    <string name="menu_pokaz_ukryte">"Mostrar secciones ocultas (%1$d)"</string>
 </resources>
