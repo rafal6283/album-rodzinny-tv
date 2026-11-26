@@ -969,4 +969,25 @@
     <string name="tailscale_start_uitleg">"Bittet Tailscale beim Start des TV und alle paar Stunden im Hintergrund zu verbinden — auch für andere Apps (z. B. Plex), selbst wenn diese App nicht geöffnet wird"</string>
     <string name="album_okladka">"Albumcover"</string>
     <string name="album_okladka_ustawiona">"Als Albumcover festgelegt"</string>
+    <string name="podreczne_ulub_dodaj">"Zu Favoriten hinzufügen"</string>
+    <string name="ulubione_usun">"Aus Favoriten entfernen"</string>
+    <string name="pokaz_od_tego">"Diashow ab hier"</string>
+    <string name="podreczne_zaznacz">"Auswählen"</string>
+    <string name="podreczne_odznacz">"Abwählen"</string>
+    <string name="podreczne_zaznaczone">"Ausgewählt: %1$d"</string>
+    <string name="podreczne_na_mapie">"Auf der Karte zeigen"</string>
+    <string name="podreczne_na_ekran">"Auf den TV-Startbildschirm"</string>
+    <string name="podreczne_z_ekranu">"Vom TV-Startbildschirm entfernen"</string>
+    <string name="podreczne_na_ekran_ok">"Album zum TV-Startbildschirm hinzugefügt"</string>
+    <string name="podreczne_z_ekranu_ok">"Album vom TV-Startbildschirm entfernt"</string>
+    <string name="album_usun_caly">"Album löschen"</string>
+    <string name="album_usun_pytanie">"Album „%1$s“ löschen?"</string>
+    <string name="album_usun_info">"Fotos und Videos bleiben in der Bibliothek — nur das Album wird entfernt."</string>
+    <string name="album_usun_tak">"Ja, Album löschen"</string>
+    <string name="album_usuniety">"Album „%1$s“ gelöscht"</string>
+    <string name="podreczne_ukryj">"Person ausblenden"</string>
+    <string name="podreczne_ukryto">"Ausgeblendet: %1$s"</string>
+    <string name="podreczne_wszystkie_do_albumu">"Alle (%1$d) zum Album hinzufügen"</string>
+    <string name="podreczne_sub">"OK auf einer Kachel gedrückt halten öffnet dieses Menü"</string>
+    <string name="recht_album_delete">"Alben löschen"</string>
 </resources>

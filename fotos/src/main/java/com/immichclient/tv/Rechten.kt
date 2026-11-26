@@ -72,6 +72,7 @@ object Rechten {
         Recht("person.merge", R.string.recht_person_merge),
         Recht("album.create", R.string.recht_album_create),
         Recht("album.update", R.string.recht_album_update),
+        Recht("album.delete", R.string.recht_album_delete),
         Recht("albumAsset.create", R.string.recht_album_asset_create),
         Recht("albumAsset.delete", R.string.recht_album_asset_delete),
         Recht("asset.upload", R.string.recht_asset_upload),

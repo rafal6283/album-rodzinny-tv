@@ -375,7 +375,16 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
     MuzykaPokazu(grac = staat.diashow && !staat.speeltVideo)
 
     BoxWithConstraints(
-        Modifier.fillMaxSize().background(Color.Black).focusRequester(fr).focusable().onPreviewKeyEvent { e ->
+        Modifier.fillMaxSize().background(Color.Black).focusRequester(fr)
+            // przytrzymanie OK: szybko do ulubionych / z ulubionych (krótkie OK z początku naciśnięcia cofamy)
+            .langeOk {
+                val h = huidig
+                if (h == null || staat.pasek || staat.info || staat.zoom > 1f || Synology.jestSyno(h.id)) return@langeOk
+                val sp = staat.speler
+                if (h.video && sp != null && !staat.diashow) sp.playWhenReady = !sp.playWhenReady else staat.diashow = !staat.diashow
+                Edycja.zakres.launch { Ulubione.przelacz(h)?.let { staat.komunikat = ctx.getString(it) } }
+            }
+            .focusable().onPreviewKeyEvent { e ->
             if (staat.doAlbumu != null) return@onPreviewKeyEvent false
             val k = e.key.nativeKeyCode
             // --- film (poza pokazem slajdów): ◀ ▶ krótko = poprzedni / następny, przytrzymane = przewijanie. Działa dopiero

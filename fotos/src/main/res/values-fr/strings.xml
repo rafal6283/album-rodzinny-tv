@@ -976,4 +976,25 @@
     <string name="tailscale_start_uitleg">"Demande à Tailscale de se connecter en arrière-plan au démarrage du téléviseur et toutes les quelques heures — aussi pour d’autres apps (ex. Plex), même si cette app n’est pas ouverte"</string>
     <string name="album_okladka">"Couverture"</string>
     <string name="album_okladka_ustawiona">"Définie comme couverture de l’album"</string>
+    <string name="podreczne_ulub_dodaj">"Ajouter aux favoris"</string>
+    <string name="ulubione_usun">"Retirer des favoris"</string>
+    <string name="pokaz_od_tego">"Diaporama à partir d’ici"</string>
+    <string name="podreczne_zaznacz">"Sélectionner"</string>
+    <string name="podreczne_odznacz">"Désélectionner"</string>
+    <string name="podreczne_zaznaczone">"Sélectionnés : %1$d"</string>
+    <string name="podreczne_na_mapie">"Voir sur la carte"</string>
+    <string name="podreczne_na_ekran">"Sur l’écran d’accueil du téléviseur"</string>
+    <string name="podreczne_z_ekranu">"Retirer de l’écran d’accueil"</string>
+    <string name="podreczne_na_ekran_ok">"Album ajouté à l’écran d’accueil"</string>
+    <string name="podreczne_z_ekranu_ok">"Album retiré de l’écran d’accueil"</string>
+    <string name="album_usun_caly">"Supprimer l’album"</string>
+    <string name="album_usun_pytanie">"Supprimer l’album « %1$s » ?"</string>
+    <string name="album_usun_info">"Les photos et vidéos restent dans la bibliothèque — seul l’album disparaît."</string>
+    <string name="album_usun_tak">"Oui, supprimer l’album"</string>
+    <string name="album_usuniety">"Album « %1$s » supprimé"</string>
+    <string name="podreczne_ukryj">"Masquer la personne"</string>
+    <string name="podreczne_ukryto">"Masqué : %1$s"</string>
+    <string name="podreczne_wszystkie_do_albumu">"Tout ajouter (%1$d) à un album"</string>
+    <string name="podreczne_sub">"Maintenez OK sur une vignette pour ouvrir ce menu"</string>
+    <string name="recht_album_delete">"Suppression d’albums"</string>
 </resources>

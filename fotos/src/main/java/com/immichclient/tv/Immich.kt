@@ -653,6 +653,9 @@ object Immich {
         return (0 until a.length()).count { a.getJSONObject(it).optBoolean("success") }
     }
 
+    /** Usuń album (uprawnienie album.delete); zdjęcia zostają w bibliotece. */
+    suspend fun usunAlbum(albumId: String) { haal(Request.Builder().url("$api/albums/$albumId").delete().build()) }
+
     /** Okładka albumu (uprawnienie album.update). */
     suspend fun ustawOkladke(albumId: String, assetId: String) { patch("/albums/$albumId", JSONObject().put("albumThumbnailAssetId", assetId)) }
 

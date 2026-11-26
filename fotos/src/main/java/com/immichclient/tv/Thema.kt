@@ -233,6 +233,8 @@ fun FotoVak(
     onFocusDoelKlaar: () -> Unit = {},
     onFocus: () -> Unit = {},
     vorm: Shape = RoundedCornerShape(12.dp),
+    /** przytrzymanie OK: menu podręczne zdjęcia */
+    onDlugi: (() -> Unit)? = null,
 ) {
     val fr = remember { FocusRequester() }
     if (focusDoel) LaunchedEffect(asset.id) {
@@ -250,6 +252,7 @@ fun FotoVak(
             .zIndex(if (focus) 1f else 0f)
             .focusRequester(fr)
             .onFocusChanged { focus = it.isFocused; if (it.isFocused) onFocus() }
+            .then(if (onDlugi != null) Modifier.langeOk(onDlugi) else Modifier)
             .clickable(interactionSource = null, indication = null, onClick = onKlik)
             .graphicsLayer {
                 scaleX = schaal; scaleY = schaal; shape = vorm; clip = true

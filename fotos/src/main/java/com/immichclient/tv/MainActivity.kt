@@ -296,8 +296,13 @@ class MainActivity : ComponentActivity() {
                 return true
             }
             if (!okGezien) { Log.i("Fotos", "OK genegeerd (actie ${e.action}, herhaling ${e.repeatCount})"); return true }
-            // ingedrukt houden = key-repeat: geen tweede, derde, ... actie (viewer wisselde zo razendsnel de diashow)
-            if (e.action == KeyEvent.ACTION_DOWN && e.repeatCount > 0 && !Toetsen.okHerhaling) return true
+            // ingedrukt houden = key-repeat: geen tweede, derde, ... actie (viewer wisselde zo razendsnel de diashow).
+            // Pierwsze powtórzenie (ok. pół sekundy) = przytrzymanie OK: menu podręczne elementu z fokusem; resztę
+            // naciśnięcia (powtórzenia i puszczenie) połykamy, więc zwykłe kliknięcie się nie wykona.
+            if (e.action == KeyEvent.ACTION_DOWN && e.repeatCount > 0 && !Toetsen.okHerhaling) {
+                if (e.repeatCount == 1 && Podreczne.dlugieOk()) { Toetsen.okGeslikt = true; Log.i("Fotos", "OK przytrzymane: menu podręczne") }
+                return true
+            }
         }
         return super.dispatchKeyEvent(e)
     }
@@ -444,6 +449,9 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         }
         WejscieKanal.zadanie = null
     }
+    // menu podręczne (przytrzymanie OK): nawigacja i „Pokaż na mapie”
+    Podreczne.nav = nav
+    Podreczne.naMape = { a -> kijker = null; stapel.clear(); ZabawaPamiec.wybor = null; sectie = Sectie.KAART; (wortel(Sectie.KAART) as Scherm.Kaart).staat.toon(a) }
     // „Tego dnia” jako pokaz na start (Ustawienia → Oś czasu): raz na uruchomienie, tylko gdy są zdjęcia z tego dnia
     androidx.compose.runtime.LaunchedEffect(Unit) {
         // urodziny dziś: pokaz solenizanta (raz dziennie) ma pierwszeństwo przed „Tego dnia”
@@ -690,6 +698,8 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
         // ekran udostępniania na samym wierzchu (otwierany z przeglądarki); po zamknięciu fokus wraca do przeglądarki
         if (Udostepnianie.otwarte) UdostepnianieScherm()
         // komunikaty edycji (osoby, albumy) na samym wierzchu
+        // menu podręczne (przytrzymanie OK) i okna z niego — nad wszystkim, także nad przeglądarką
+        PodreczneWarstwa()
         EdycjaKomunikat(Modifier.align(androidx.compose.ui.Alignment.BottomCenter))
     }
 }
