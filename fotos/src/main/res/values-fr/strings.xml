@@ -1136,4 +1136,15 @@
     <string name="osoba_inna_krotko">"Quelqu’un d’autre"</string>
     <string name="info_biblioteka_zewn">"Bibliothèque externe"</string>
     <string name="info_przeslane">"Envoyé dans Immich"</string>
+    <string name="podreczne_odznacz_to">"Désélectionner cette photo"</string>
+    <string name="podreczne_zaznacz_to">"Sélectionner aussi cette photo"</string>
+    <string name="podreczne_tylko_to">"Seulement cette photo…"</string>
+    <string name="edytor_ulubione_usun_akcja">"Tout retirer des favoris"</string>
+    <string name="edytor_ulubione_usunieto">"Retirées des favoris : %1$d"</string>
+    <string name="zbiorczo_nie_ta">"Ce n’est pas %1$s — détacher de toutes (%2$d)"</string>
+    <string name="zbiorczo_ktos_inny">"C’est quelqu’un d’autre… (%1$d)"</string>
+    <string name="zbiorczo_odepnij">"Détacher une personne de ces photos…"</string>
+    <string name="zbiorczo_przepisz">"Réattribuer une personne sur ces photos…"</string>
+    <string name="zbiorczo_odepnij_kogo">"Qui détacher de %1$d photos ?"</string>
+    <string name="zbiorczo_przepisz_kogo">"Qui est mal identifié sur %1$d photos ?"</string>
 </resources>

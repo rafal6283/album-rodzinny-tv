@@ -1129,4 +1129,15 @@
     <string name="osoba_inna_krotko">"Iemand anders"</string>
     <string name="info_biblioteka_zewn">"Externe bibliotheek"</string>
     <string name="info_przeslane">"Geüpload naar Immich"</string>
+    <string name="podreczne_odznacz_to">"Deze foto deselecteren"</string>
+    <string name="podreczne_zaznacz_to">"Deze foto ook selecteren"</string>
+    <string name="podreczne_tylko_to">"Alleen deze foto…"</string>
+    <string name="edytor_ulubione_usun_akcja">"Alle uit favorieten"</string>
+    <string name="edytor_ulubione_usunieto">"Uit favorieten: %1$d"</string>
+    <string name="zbiorczo_nie_ta">"Dit is niet %1$s — loskoppelen (%2$d)"</string>
+    <string name="zbiorczo_ktos_inny">"Dit is iemand anders… (%1$d)"</string>
+    <string name="zbiorczo_odepnij">"Persoon loskoppelen van deze foto’s…"</string>
+    <string name="zbiorczo_przepisz">"Persoon op deze foto’s wijzigen…"</string>
+    <string name="zbiorczo_odepnij_kogo">"Wie loskoppelen van %1$d foto’s?"</string>
+    <string name="zbiorczo_przepisz_kogo">"Wie staat verkeerd op %1$d foto’s?"</string>
 </resources>

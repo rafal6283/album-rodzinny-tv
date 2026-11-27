@@ -70,6 +70,12 @@ object Edytor {
             .onFailure { Edycja.komunikat = Edycja.blad(it) }
     }
 
+    fun ulubioneUsunWszystkie(l: List<Asset>) = Edycja.zakres.launch {
+        var n = 0
+        for (a in l) if (Ulubione.jest(a)) { Ulubione.przelacz(a); n++ }
+        Edycja.komunikat = s(R.string.edytor_ulubione_usunieto, n)
+    }
+
     fun ulubioneWszystkie(l: List<Asset>) = Edycja.zakres.launch {
         var n = 0
         for (a in l) if (!Ulubione.jest(a)) { Ulubione.przelacz(a); n++ }
@@ -96,17 +102,34 @@ object Edytor {
     fun menuZaznaczonych() {
         val l = Udostepnianie.koszyk.toList()
         if (l.isEmpty()) return
+        Podreczne.menu = s(R.string.edytor_zaznaczone_tytul, l.size) to pozycjeZaznaczonych(l)
+    }
+
+    /** Wszystkie operacje zbiorcze dla zdjęć [l] (zaznaczonych). */
+    fun pozycjeZaznaczonych(l: List<Asset>): List<Podreczne.Pozycja> {
         val ids = l.map { it.id }
-        Podreczne.menu = s(R.string.edytor_zaznaczone_tytul, l.size) to listOf(
-            Podreczne.Pozycja(s(R.string.edytor_ulubione_akcja)) { ulubioneWszystkie(l) },
-            Podreczne.Pozycja(s(R.string.album_akcja)) { Podreczne.doAlbumu = ids },
-            Podreczne.Pozycja(s(R.string.edytor_data)) { data = l },
-            Podreczne.Pozycja(s(R.string.edytor_miejsce)) { miejsce = ids },
-            Podreczne.Pozycja(s(R.string.edytor_ocena)) { ocena = ids },
-            Podreczne.Pozycja(s(R.string.edytor_archiwizuj)) { archiwizuj(ids) },
-            Podreczne.Pozycja(s(R.string.edytor_nie_wspomnienia_akcja)) { nieWeWspomnieniach(ids) },
-            Podreczne.Pozycja(s(R.string.edytor_kosz)) { doKosza(ids) },
-        )
+        val p = ArrayList<Podreczne.Pozycja>()
+        p += Podreczne.Pozycja(s(R.string.edytor_ulubione_akcja)) { ulubioneWszystkie(l) }
+        p += Podreczne.Pozycja(s(R.string.edytor_ulubione_usun_akcja)) { ulubioneUsunWszystkie(l) }
+        p += Podreczne.Pozycja(s(R.string.album_akcja)) { Podreczne.doAlbumu = ids }
+        // osoby: w osi czasu osoby — „to nie ona” / „to ktoś inny”; wszędzie — odepnij albo przepisz wybraną osobę
+        Podreczne.osobaKontekst?.let { (oid, imie, _) ->
+            p += Podreczne.Pozycja(s(R.string.zbiorczo_nie_ta, imie.ifBlank { "…" }, l.size)) { Podreczne.odepnijOsobeZ(ids, oid) }
+            p += Podreczne.Pozycja(s(R.string.zbiorczo_ktos_inny, l.size)) { Podreczne.przepisanie = ids to oid }
+        }
+        p += Podreczne.Pozycja(s(R.string.zbiorczo_odepnij)) { Podreczne.odpinanie = ids }
+        p += Podreczne.Pozycja(s(R.string.zbiorczo_przepisz)) { Podreczne.przepisanieZ = ids }
+        p += Podreczne.Pozycja(s(R.string.edytor_data)) { data = l }
+        p += Podreczne.Pozycja(s(R.string.edytor_miejsce)) { miejsce = ids }
+        p += Podreczne.Pozycja(s(R.string.edytor_ocena)) { ocena = ids }
+        p += Podreczne.Pozycja(s(R.string.edytor_archiwizuj)) { archiwizuj(ids) }
+        p += Podreczne.Pozycja(s(R.string.edytor_nie_wspomnienia_akcja)) { nieWeWspomnieniach(ids) }
+        p += Podreczne.Pozycja(s(R.string.edytor_kosz)) { doKosza(ids) }
+        p += Podreczne.Pozycja(s(R.string.zazn_pokaz, l.size)) { Podreczne.nav?.bekijk(LijstBron(l.sortedBy { it.datum }), 0, s(R.string.zazn_tytul), true, null) }
+        p += Podreczne.Pozycja(s(R.string.zazn_udostepnij, l.size)) { Udostepnianie.otworz(Taal.ctx) }
+        p += Podreczne.Pozycja(s(if (Udostepnianie.tryb) R.string.zazn_koniec else R.string.zazn_dalej)) { Udostepnianie.tryb = !Udostepnianie.tryb }
+        p += Podreczne.Pozycja(s(R.string.zazn_wyczysc, Udostepnianie.koszyk.size)) { Udostepnianie.wyczysc(); Edycja.komunikat = s(R.string.zazn_wyczyszczono) }
+        return p
     }
 }
 

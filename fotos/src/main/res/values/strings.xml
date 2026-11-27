@@ -1151,4 +1151,15 @@
     <string name="osoba_inna_krotko">"Someone else"</string>
     <string name="info_biblioteka_zewn">"External library"</string>
     <string name="info_przeslane">"Uploaded to Immich"</string>
+    <string name="podreczne_odznacz_to">"Deselect this photo"</string>
+    <string name="podreczne_zaznacz_to">"Select this photo too"</string>
+    <string name="podreczne_tylko_to">"Only this photo…"</string>
+    <string name="edytor_ulubione_usun_akcja">"Remove all from favorites"</string>
+    <string name="edytor_ulubione_usunieto">"Removed from favorites: %1$d"</string>
+    <string name="zbiorczo_nie_ta">"None of these is %1$s — unlink (%2$d)"</string>
+    <string name="zbiorczo_ktos_inny">"These show someone else… (%1$d)"</string>
+    <string name="zbiorczo_odepnij">"Unlink a person from these photos…"</string>
+    <string name="zbiorczo_przepisz">"Reassign a person on these photos…"</string>
+    <string name="zbiorczo_odepnij_kogo">"Who to unlink from %1$d photos?"</string>
+    <string name="zbiorczo_przepisz_kogo">"Who is wrongly tagged on %1$d photos?"</string>
 </resources>

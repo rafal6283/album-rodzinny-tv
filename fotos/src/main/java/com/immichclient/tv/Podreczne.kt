@@ -48,7 +48,32 @@ object Podreczne {
     /** oś czasu osoby na ekranie (id, imię, stan): w menu zdjęcia „To nie jest …” i „To jest ktoś inny…” */
     var osobaKontekst: Triple<String, String, TijdlijnStaat>? = null
     /** zdjęcie (id) i osoba, której twarz przepisać do innej osoby (lista wyboru w [PodreczneWarstwa]) */
-    var przepisanie by mutableStateOf<Pair<String, String>?>(null)
+    var przepisanie by mutableStateOf<Pair<List<String>, String>?>(null)
+    /** zaznaczone zdjęcia: wybór osoby do odpięcia / osoby, którą przepisać do innej */
+    var odpinanie by mutableStateOf<List<String>?>(null)
+    var przepisanieZ by mutableStateOf<List<String>?>(null)
+
+    /** Twarze osoby [osobaId] na zdjęciach [ids] (z każdego zdjęcia); para (zdjęcie, twarz). */
+    private suspend fun twarzeOsoby(ids: List<String>, osobaId: String): List<Pair<String, Twarz>> =
+        ids.flatMap { id -> runCatching { Immich.twarze(id) }.getOrDefault(emptyList()).filter { it.osoba?.id == osobaId }.map { id to it } }
+
+    /** Odepnij osobę od wielu zdjęć naraz; udane kafelki przyciemnione. */
+    fun odepnijOsobeZ(ids: List<String>, osobaId: String) {
+        Edycja.zakres.launch {
+            val pary = twarzeOsoby(ids, osobaId)
+            if (pary.isEmpty()) { Edycja.komunikat = s(R.string.twarze_brak); return@launch }
+            Korekta.odepnij(pary.map { it.second }) { ok -> val okIds = ok.map { it.id }.toSet(); pary.filter { it.second.id in okIds }.forEach { Edycja.odpiete[it.first] = true } }
+        }
+    }
+
+    /** Przepisz twarze osoby [z] na zdjęciach [ids] do osoby [doId]. */
+    fun przepiszOsobe(ids: List<String>, z: String, doId: String, nazwa: String) {
+        Edycja.zakres.launch {
+            val pary = twarzeOsoby(ids, z)
+            if (pary.isEmpty()) { Edycja.komunikat = s(R.string.twarze_brak); return@launch }
+            Korekta.przypisz(pary.map { it.second }, doId, nazwa) { ok -> val okIds = ok.map { it.id }.toSet(); pary.filter { it.second.id in okIds }.forEach { Edycja.odpiete[it.first] = true } }
+        }
+    }
 
     /** Odepnij osobę od zdjęcia (jej twarz dostaje nową osobę bez imienia); [potem] np. odśwież oś czasu. */
     fun odepnijOsobe(assetId: String, osobaId: String, potem: () -> Unit = {}) {
@@ -98,7 +123,22 @@ object Podreczne {
 
     // ---------------- menu dla rodzajów elementów ----------------
 
+    /** Przytrzymanie OK na zdjęciu: przy zaznaczonych najpierw operacje zbiorcze (to zdjęcie też się liczy), osobno „Tylko to zdjęcie…”. */
     fun zdjecie(a: Asset, pokaz: ((Asset) -> Unit)? = null) {
+        if (Udostepnianie.koszyk.isNotEmpty() && !Instellingen.trybDzieciecy && !Synology.jestSyno(a.id)) {
+            val p = ArrayList<Pozycja>()
+            p += Pozycja(s(if (Udostepnianie.zawiera(a)) R.string.podreczne_odznacz_to else R.string.podreczne_zaznacz_to)) {
+                Udostepnianie.przelacz(a); komunikat(s(R.string.podreczne_zaznaczone, Udostepnianie.koszyk.size))
+            }
+            p += Edytor.pozycjeZaznaczonych((Udostepnianie.koszyk.toList() + a).distinctBy { it.id })
+            p += Pozycja(s(R.string.podreczne_tylko_to)) { zdjecieJedno(a, pokaz) }
+            menu = s(R.string.edytor_zaznaczone_tytul, (Udostepnianie.koszyk.map { it.id } + a.id).distinct().size) to p
+            return
+        }
+        zdjecieJedno(a, pokaz)
+    }
+
+    fun zdjecieJedno(a: Asset, pokaz: ((Asset) -> Unit)? = null) {
         if (Synology.jestSyno(a.id)) { pokaz?.let { p -> menu = (a.datum.toLocalDate().format(Formaat.dagJaar)) to listOf(Pozycja(s(R.string.pokaz_od_tego)) { p(a) }) }; return }
         val p = ArrayList<Pozycja>()
         val ulub = Ulubione.jest(a)
@@ -116,7 +156,7 @@ object Podreczne {
         // oś czasu osoby: błędnie przypisane zdjęcie — odepnij albo przepisz do kogoś innego
         osobaKontekst?.takeIf { !Instellingen.trybDzieciecy }?.let { (oid, imie, staat) ->
             p += Pozycja(s(R.string.osoba_nie_ta, imie.ifBlank { "…" })) { odepnijOsobe(a.id, oid) { Edycja.odpiete[a.id] = true } }
-            p += Pozycja(s(R.string.osoba_inna)) { przepisanie = a.id to oid }
+            p += Pozycja(s(R.string.osoba_inna)) { przepisanie = listOf(a.id) to oid }
         }
         // edycja: data, miejsce, opis, ocena, archiwum, „nie we wspomnieniach”, kosz
         if (!Instellingen.trybDzieciecy) p += Edytor.pozycjeZdjecia(a)
@@ -212,7 +252,7 @@ fun PodreczneWarstwa() {
     val ctx = LocalContext.current
     // po zamknięciu menu i okien z niego: fokus z powrotem na element, na którym przytrzymano OK (nie do bocznego menu)
     val otwarte = Podreczne.menu != null || Podreczne.doAlbumu != null || Podreczne.zmianaNazwy != null || Podreczne.usuwanie != null ||
-        Podreczne.osobaEdycja != null || Podreczne.edycjaMenu || Podreczne.przepisanie != null || Edytor.data != null || Edytor.miejsce != null || Edytor.opis != null ||
+        Podreczne.osobaEdycja != null || Podreczne.edycjaMenu || Podreczne.przepisanie != null || Podreczne.odpinanie != null || Podreczne.przepisanieZ != null || Edytor.data != null || Edytor.miejsce != null || Edytor.opis != null ||
         Edytor.ocena != null || Edytor.link != null || Edytor.udostepnij != null
     androidx.compose.runtime.LaunchedEffect(otwarte) {
         if (otwarte) return@LaunchedEffect
@@ -221,10 +261,13 @@ fun PodreczneWarstwa() {
         if (Podreczne.wersjaEkranu != Podreczne.wersjaPrzyOtwarciu) return@LaunchedEffect
         repeat(5) { kotlinx.coroutines.delay(40); if (runCatching { z.requestFocus() }.isSuccess) return@LaunchedEffect }
     }
-    Podreczne.menu?.let { (tytul, pozycje) ->
-        MenuWarstwa(tytul, stringResource(R.string.podreczne_sub), { Podreczne.menu = null }) { pierwszy ->
-            pozycje.forEachIndexed { i, p ->
-                Knop(p.tekst, null, (if (i == 0) pierwszy else Modifier).width(560.dp)) { Podreczne.menu = null; p.akcja() }
+    Podreczne.menu?.let { m ->
+        // key: menu otwierane z menu (np. „Akcje dla zaznaczonych”) to nowa warstwa — dostaje fokus od nowa
+        androidx.compose.runtime.key(m) {
+            MenuWarstwa(m.first, stringResource(R.string.podreczne_sub), { Podreczne.menu = null }) { pierwszy ->
+                m.second.forEachIndexed { i, p ->
+                    Knop(p.tekst, null, (if (i == 0) pierwszy else Modifier).width(560.dp)) { Podreczne.menu = null; p.akcja() }
+                }
             }
         }
     }
@@ -263,14 +306,22 @@ fun PodreczneWarstwa() {
         }
     }
     if (Podreczne.edycjaMenu) KolejnoscSekcji { Podreczne.edycjaMenu = false }
-    Podreczne.przepisanie?.let { (assetId, osobaId) ->
+    Podreczne.przepisanie?.let { (ids, osobaId) ->
         KiesLijst(stringResource(R.string.twarz_to_jest), persoonKeuzes(), "", sluit = { Podreczne.przepisanie = null }) { id, naam ->
             Podreczne.przepisanie = null
-            Edycja.zakres.launch {
-                val f = runCatching { Immich.twarze(assetId).filter { it.osoba?.id == osobaId } }.getOrElse { Edycja.komunikat = Edycja.blad(it); return@launch }
-                if (f.isEmpty()) { Edycja.komunikat = ctx.getString(R.string.twarze_brak); return@launch }
-                Korekta.przypisz(f, id, naam) { ok -> if (ok.isNotEmpty()) Edycja.odpiete[assetId] = true }
-            }
+            Podreczne.przepiszOsobe(ids, osobaId, id, naam)
+        }
+    }
+    Podreczne.odpinanie?.let { ids ->
+        KiesLijst(stringResource(R.string.zbiorczo_odepnij_kogo, ids.size), persoonKeuzes(), "", sluit = { Podreczne.odpinanie = null }) { id, _ ->
+            Podreczne.odpinanie = null
+            Podreczne.odepnijOsobeZ(ids, id)
+        }
+    }
+    Podreczne.przepisanieZ?.let { ids ->
+        KiesLijst(stringResource(R.string.zbiorczo_przepisz_kogo, ids.size), persoonKeuzes(), "", sluit = { Podreczne.przepisanieZ = null }) { id, _ ->
+            Podreczne.przepisanieZ = null
+            Podreczne.przepisanie = ids to id
         }
     }
     Podreczne.osobaEdycja?.let { (id, nazwa) ->
