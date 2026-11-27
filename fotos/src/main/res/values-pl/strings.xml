@@ -1179,4 +1179,15 @@
     <string name="osoba_inna_krotko">"Ktoś inny"</string>
     <string name="info_biblioteka_zewn">"Biblioteka zewnętrzna"</string>
     <string name="info_przeslane">"Przesłane do Immich"</string>
+    <string name="podreczne_odznacz_to">"Odznacz to zdjęcie"</string>
+    <string name="podreczne_zaznacz_to">"Zaznacz też to zdjęcie"</string>
+    <string name="podreczne_tylko_to">"Tylko to zdjęcie…"</string>
+    <string name="edytor_ulubione_usun_akcja">"Wszystkie usuń z ulubionych"</string>
+    <string name="edytor_ulubione_usunieto">"Usunięto z ulubionych: %1$d"</string>
+    <string name="zbiorczo_nie_ta">"To nie jest %1$s — odepnij od wszystkich (%2$d)"</string>
+    <string name="zbiorczo_ktos_inny">"To jest ktoś inny… (%1$d)"</string>
+    <string name="zbiorczo_odepnij">"Odepnij osobę od tych zdjęć…"</string>
+    <string name="zbiorczo_przepisz">"Przepisz osobę na tych zdjęciach…"</string>
+    <string name="zbiorczo_odepnij_kogo">"Kogo odpiąć od %1$d zdjęć?"</string>
+    <string name="zbiorczo_przepisz_kogo">"Kto jest błędnie oznaczony na %1$d zdjęciach?"</string>
 </resources>

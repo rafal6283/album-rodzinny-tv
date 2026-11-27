@@ -1136,4 +1136,15 @@
     <string name="osoba_inna_krotko">"Otra persona"</string>
     <string name="info_biblioteka_zewn">"Biblioteca externa"</string>
     <string name="info_przeslane">"Subido a Immich"</string>
+    <string name="podreczne_odznacz_to">"Deseleccionar esta foto"</string>
+    <string name="podreczne_zaznacz_to">"Seleccionar también esta foto"</string>
+    <string name="podreczne_tylko_to">"Solo esta foto…"</string>
+    <string name="edytor_ulubione_usun_akcja">"Quitar todas de favoritos"</string>
+    <string name="edytor_ulubione_usunieto">"Quitadas de favoritos: %1$d"</string>
+    <string name="zbiorczo_nie_ta">"No es %1$s — desvincular de todas (%2$d)"</string>
+    <string name="zbiorczo_ktos_inny">"Es otra persona… (%1$d)"</string>
+    <string name="zbiorczo_odepnij">"Desvincular a una persona de estas fotos…"</string>
+    <string name="zbiorczo_przepisz">"Reasignar a una persona en estas fotos…"</string>
+    <string name="zbiorczo_odepnij_kogo">"¿A quién desvincular de %1$d fotos?"</string>
+    <string name="zbiorczo_przepisz_kogo">"¿Quién está mal etiquetado en %1$d fotos?"</string>
 </resources>

@@ -1129,4 +1129,15 @@
     <string name="osoba_inna_krotko">"Jemand anderes"</string>
     <string name="info_biblioteka_zewn">"Externe Bibliothek"</string>
     <string name="info_przeslane">"In Immich hochgeladen"</string>
+    <string name="podreczne_odznacz_to">"Dieses Foto abwählen"</string>
+    <string name="podreczne_zaznacz_to">"Dieses Foto auch auswählen"</string>
+    <string name="podreczne_tylko_to">"Nur dieses Foto…"</string>
+    <string name="edytor_ulubione_usun_akcja">"Alle aus Favoriten entfernen"</string>
+    <string name="edytor_ulubione_usunieto">"Aus Favoriten entfernt: %1$d"</string>
+    <string name="zbiorczo_nie_ta">"Das ist nicht %1$s — von allen trennen (%2$d)"</string>
+    <string name="zbiorczo_ktos_inny">"Das ist jemand anderes… (%1$d)"</string>
+    <string name="zbiorczo_odepnij">"Person von diesen Fotos trennen…"</string>
+    <string name="zbiorczo_przepisz">"Person auf diesen Fotos ändern…"</string>
+    <string name="zbiorczo_odepnij_kogo">"Wen von %1$d Fotos trennen?"</string>
+    <string name="zbiorczo_przepisz_kogo">"Wer ist auf %1$d Fotos falsch markiert?"</string>
 </resources>

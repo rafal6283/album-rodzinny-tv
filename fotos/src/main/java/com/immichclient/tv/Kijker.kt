@@ -360,7 +360,7 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
             Akcja.GLOWNE -> if (huidig != null && osobaZrodla != null) Edycja.ustawGlowne(osobaZrodla, huidig.id)
             // błędnie przypisane zdjęcie: odepnij tę osobę albo przepisz twarz do innej (oś czasu odświeży się po zamknięciu)
             Akcja.NIE_TA -> if (huidig != null && osobaZrodla != null) Podreczne.odepnijOsobe(huidig.id, osobaZrodla) { Edycja.odpiete[huidig.id] = true }
-            Akcja.INNA -> if (huidig != null && osobaZrodla != null) { staat.diashow = false; Podreczne.przepisanie = huidig.id to osobaZrodla }
+            Akcja.INNA -> if (huidig != null && osobaZrodla != null) { staat.diashow = false; Podreczne.przepisanie = listOf(huidig.id) to osobaZrodla }
             Akcja.WYCZYSC -> { Udostepnianie.wyczysc(); staat.komunikat = ctx.getString(R.string.zazn_wyczyszczono) }
             // to zdjęcie jako okładka albumu (w Immich i w aplikacji)
             Akcja.OKLADKA -> if (huidig != null && albumZrodla != null) {
