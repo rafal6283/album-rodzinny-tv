@@ -709,7 +709,14 @@ private fun Video(a: Asset, staat: KijkerStaat, zrodlo: String = a.id, live: Boo
         staat.videoFout = false; staat.videoFoutOpis = null
         verhouding = 0f; gedraaid = false
         var format: androidx.media3.common.Format? = null
-        speler.setMediaItem(MediaItem.fromUri(Immich.video(zrodlo)))
+        // oryginał (HDR / Dolby Vision zostają HDR) albo wersja z Immich; Immich zwykle przekodowuje HEVC do H.264 SDR
+        val hdrEkran = runCatching {
+            ctx.getSystemService(android.hardware.display.DisplayManager::class.java).getDisplay(android.view.Display.DEFAULT_DISPLAY).hdrCapabilities.supportedHdrTypes.isNotEmpty()
+        }.getOrDefault(false)
+        var oryginal = !live && !Synology.jestSyno(zrodlo) && Rechten.ontbreekt?.contains("asset.download") != true && when (Instellingen.wideoJakosc) {
+            WideoJakosc.ORYGINAL -> true; WideoJakosc.AUTO -> hdrEkran; WideoJakosc.SERWER -> false
+        }
+        speler.setMediaItem(MediaItem.fromUri(if (oryginal) Immich.videoOryginal(zrodlo) else Immich.video(zrodlo)))
         // wznawianie: przerwany wcześniej film zaczyna się tam, gdzie skończyłeś (nie w pokazie slajdów i nie w Live Photo)
         val wznow = if (!live && !staat.diashow) Wznawianie.pozycja(ctx, a.id) else 0L
         if (wznow > 0) { speler.seekTo(wznow); staat.komunikat = ctx.getString(R.string.wideo_wznowiono, czasFilmu(wznow)) }
@@ -735,6 +742,14 @@ private fun Video(a: Asset, staat: KijkerStaat, zrodlo: String = a.id, live: Boo
             }
             override fun onPlayerError(error: PlaybackException) {
                 Log.w("Fotos", "video ${a.id}", error)
+                // oryginał nie poszedł (kodek, brak prawa, format): po cichu wersja z Immich
+                if (oryginal) {
+                    oryginal = false
+                    val poz = speler.currentPosition
+                    speler.setMediaItem(MediaItem.fromUri(Immich.video(zrodlo)), poz)
+                    speler.prepare(); speler.playWhenReady = true
+                    return
+                }
                 staat.speeltVideo = false
                 if (live) { staat.liveGra = false; return } // Live Photo bez filmu: zostaje samo zdjęcie
                 staat.videoFout = true // diashow loopt dan na de diashow-tijd gewoon door

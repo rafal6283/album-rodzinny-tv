@@ -1190,4 +1190,11 @@
     <string name="zbiorczo_przepisz">"Przepisz osobę na tych zdjęciach…"</string>
     <string name="zbiorczo_odepnij_kogo">"Kogo odpiąć od %1$d zdjęć?"</string>
     <string name="zbiorczo_przepisz_kogo">"Kto jest błędnie oznaczony na %1$d zdjęciach?"</string>
+    <string name="toets_przytrzymaj">"Przytrzymaj OK na klawiszu: wielka litera, polskie znaki, cyfra"</string>
+    <string name="wideo_jakosc">"Jakość filmów"</string>
+    <string name="wideo_jakosc_uitleg">"Oryginał zachowuje HDR / Dolby Vision i pełną jakość; wersja z Immich jest lżejsza, ale SDR. Auto = oryginał, gdy telewizor obsługuje HDR"</string>
+    <string name="wideo_jakosc_auto">"Auto"</string>
+    <string name="wideo_jakosc_oryginal">"Oryginał (HDR)"</string>
+    <string name="wideo_jakosc_serwer">"Wersja z Immich"</string>
+    <string name="recht_asset_download">"Oryginalne pliki (filmy HDR / Dolby Vision)"</string>
 </resources>

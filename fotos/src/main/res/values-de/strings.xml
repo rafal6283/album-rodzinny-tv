@@ -1140,4 +1140,11 @@
     <string name="zbiorczo_przepisz">"Person auf diesen Fotos ändern…"</string>
     <string name="zbiorczo_odepnij_kogo">"Wen von %1$d Fotos trennen?"</string>
     <string name="zbiorczo_przepisz_kogo">"Wer ist auf %1$d Fotos falsch markiert?"</string>
+    <string name="toets_przytrzymaj">"OK auf einer Taste halten: Großbuchstabe, Sonderzeichen, Ziffer"</string>
+    <string name="wideo_jakosc">"Videoqualität"</string>
+    <string name="wideo_jakosc_uitleg">"Original behält HDR / Dolby Vision und volle Qualität; Immich-Version ist leichter, aber SDR. Auto = Original, wenn der TV HDR kann"</string>
+    <string name="wideo_jakosc_auto">"Auto"</string>
+    <string name="wideo_jakosc_oryginal">"Original (HDR)"</string>
+    <string name="wideo_jakosc_serwer">"Immich-Version"</string>
+    <string name="recht_asset_download">"Originaldateien (HDR / Dolby Vision)"</string>
 </resources>

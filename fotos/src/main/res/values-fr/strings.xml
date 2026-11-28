@@ -1147,4 +1147,11 @@
     <string name="zbiorczo_przepisz">"Réattribuer une personne sur ces photos…"</string>
     <string name="zbiorczo_odepnij_kogo">"Qui détacher de %1$d photos ?"</string>
     <string name="zbiorczo_przepisz_kogo">"Qui est mal identifié sur %1$d photos ?"</string>
+    <string name="toets_przytrzymaj">"Maintenez OK sur une touche : majuscule, accents, chiffre"</string>
+    <string name="wideo_jakosc">"Qualité vidéo"</string>
+    <string name="wideo_jakosc_uitleg">"L’original garde HDR / Dolby Vision et la pleine qualité ; la version Immich est plus légère mais SDR. Auto = original si le téléviseur gère le HDR"</string>
+    <string name="wideo_jakosc_auto">"Auto"</string>
+    <string name="wideo_jakosc_oryginal">"Original (HDR)"</string>
+    <string name="wideo_jakosc_serwer">"Version Immich"</string>
+    <string name="recht_asset_download">"Fichiers originaux (HDR / Dolby Vision)"</string>
 </resources>

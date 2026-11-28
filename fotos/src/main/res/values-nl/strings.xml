@@ -1140,4 +1140,11 @@
     <string name="zbiorczo_przepisz">"Persoon op deze foto’s wijzigen…"</string>
     <string name="zbiorczo_odepnij_kogo">"Wie loskoppelen van %1$d foto’s?"</string>
     <string name="zbiorczo_przepisz_kogo">"Wie staat verkeerd op %1$d foto’s?"</string>
+    <string name="toets_przytrzymaj">"OK vasthouden op een toets: hoofdletter, accenten, cijfer"</string>
+    <string name="wideo_jakosc">"Videokwaliteit"</string>
+    <string name="wideo_jakosc_uitleg">"Origineel behoudt HDR / Dolby Vision en volle kwaliteit; de Immich-versie is lichter maar SDR. Auto = origineel als de tv HDR heeft"</string>
+    <string name="wideo_jakosc_auto">"Auto"</string>
+    <string name="wideo_jakosc_oryginal">"Origineel (HDR)"</string>
+    <string name="wideo_jakosc_serwer">"Immich-versie"</string>
+    <string name="recht_asset_download">"Originele bestanden (HDR / Dolby Vision)"</string>
 </resources>
