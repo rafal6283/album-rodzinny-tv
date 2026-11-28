@@ -230,6 +230,7 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
             val labels = Instellingen.BALK_TIJDEN.map { if (it == 0) altijd else stringResource(R.string.seconden_s, (it / 1000.0).let { s -> if (s % 1 == 0.0) "%.0f".format(Taal.locale, s) else "%.1f".format(Taal.locale, s) }) }
             Keuzes(stringResource(R.string.datum_plaats), stringResource(R.string.datum_plaats_uitleg), labels, Instellingen.BALK_TIJDEN.indexOf(Instellingen.balkMs).coerceAtLeast(0)) { Instellingen.balkMs = Instellingen.BALK_TIJDEN[it] }
         }
+        item { Keuzes(stringResource(R.string.wideo_jakosc), stringResource(R.string.wideo_jakosc_uitleg), WideoJakosc.entries.map { stringResource(it.label) }, Instellingen.wideoJakosc.ordinal) { Instellingen.wideoJakosc = WideoJakosc.entries[it] } }
         schakel(R.string.mapa_szczegoly, R.string.mapa_szczegoly_uitleg, uitAan, Instellingen.mapaSzczegoly) { Instellingen.mapaSzczegoly = it }
         if (alles) item { Keuzes(stringResource(R.string.teller), stringResource(R.string.teller_uitleg, Taal.getal(12345)), uitAan, if (Instellingen.teller) 1 else 0) { Instellingen.teller = it == 1 } }
         if (alles) schakel(R.string.album_naam, R.string.album_naam_uitleg, uitAan, Instellingen.albumNaam) { Instellingen.albumNaam = it }

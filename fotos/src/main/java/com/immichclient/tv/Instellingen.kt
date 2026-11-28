@@ -82,6 +82,8 @@ object Instellingen {
 
     // ---- Tijdlijn ----
     var rijMaat by keuze("rij", RijMaat.NORMAAL)
+    /** filmy: oryginalny plik (HDR, Dolby Vision, pełna jakość) albo wersja przekodowana przez Immich */
+    var wideoJakosc by keuze("wideo_jakosc", WideoJakosc.AUTO)
     /** kanały na ekranie głównym Android TV (najnowsze, losowe, tego dnia) */
     var kanaly by bool("kanaly", true)
     /** album pokazywany jako własny kanał na ekranie głównym (pusty = brak) */
@@ -212,6 +214,8 @@ object Instellingen {
 
 // Labels zijn string-resources (vertaald); de UI haalt ze op met stringResource(x.label).
 enum class KaartMaat(@StringRes val label: Int, val schaal: Float) { UIT(R.string.uit, 0f), KLEIN(R.string.klein, 0.62f), GROOT(R.string.groot, 1f) }
+/** AUTO = oryginał, gdy telewizor ma HDR; ORYGINAL = zawsze oryginał; SERWER = zawsze wersja z Immich (lżejsza, SDR) */
+enum class WideoJakosc(@StringRes val label: Int) { AUTO(R.string.wideo_jakosc_auto), ORYGINAL(R.string.wideo_jakosc_oryginal), SERWER(R.string.wideo_jakosc_serwer) }
 enum class RijMaat(@StringRes val label: Int, val hoogte: Float) { KLEIN(R.string.klein, 104f), NORMAAL(R.string.normaal, 138f), GROOT(R.string.groot, 186f) }
 enum class Groet(@StringRes val label: Int) { UIT(R.string.uit), AUTO(R.string.automatisch), EIGEN(R.string.eigen_tekst) }
 enum class KaartStart(@StringRes val label: Int) { WERELD(R.string.hele_wereld), EUROPA(R.string.europa), HOOFDLAND(R.string.land_meeste), LAATST(R.string.laatst_bekeken) }

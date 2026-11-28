@@ -111,6 +111,8 @@ object Immich {
     /** pełna rozdzielczość (konwersja JPEG z Immich ≥ 1.133); wystarcza uprawnienie asset.view */
     fun pelny(id: String) = if (Synology.jestSyno(id)) Synology.miniatura(id, "xl") else "$api/assets/$id/thumbnail?size=fullsize"
     fun video(id: String) = if (Synology.jestSyno(id)) Synology.film(id) else "$api/assets/$id/video/playback"
+    /** oryginalny plik filmu (HDR10 / HLG / Dolby Vision zachowane; uprawnienie asset.download) */
+    fun videoOryginal(id: String) = "$api/assets/$id/original"
     /** miniatura twarzy osoby; po zmianie zdjęcia głównego inny adres (pamięć obrazków nie pokaże starego) */
     fun gezicht(id: String) = "$api/people/$id/thumbnail" + (Edycja.wersjaGlownych.takeIf { it > 0 }?.let { "?w=$it" } ?: "")
 

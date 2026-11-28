@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -292,6 +293,22 @@ fun ZoekScherm(staat: ZoekStaat, nav: Nav) {
                             shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(28.dp)),
                             colors = ClickableSurfaceDefaults.colors(containerColor = Kleur.vlakHoog, focusedContainerColor = Kleur.primair, focusedContentColor = Kleur.opPrimair),
                         ) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Mic, stringResource(R.string.spraak)) } }
+                        // wyczyść: tekst, filtry, rodzaj i wyniki — od nowa jednym przyciskiem
+                        if (staat.tekst.isNotEmpty() || !staat.filtr.pusty || staat.type != ZoekType.ALLES || staat.res.gezocht) Surface(
+                            onClick = {
+                                staat.tekst = ""; staat.filtr = ZoekFiltr(); staat.type = ZoekType.ALLES; staat.volgorde = ZoekVolgorde.RELEVANTIE
+                                staat.res.wis()
+                                runCatching { veld.requestFocus() }
+                            },
+                            modifier = Modifier.height(56.dp),
+                            shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(28.dp)),
+                            colors = ClickableSurfaceDefaults.colors(containerColor = Kleur.vlakHoog, focusedContainerColor = Kleur.primair, focusedContentColor = Kleur.opPrimair),
+                        ) {
+                            Row(Modifier.fillMaxHeight().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Filled.Close, null)
+                                Text("  " + stringResource(R.string.toets_wissen).replaceFirstChar { it.titlecase(Taal.locale) }, style = MaterialTheme.typography.titleMedium, color = androidx.tv.material3.LocalContentColor.current)
+                            }
+                        }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         for (m in ZoekModus.entries) Keuze(selected = staat.modus == m, onClick = { staat.modus = m; staat.zoek(ctx) }, tekst = stringResource(m.label))
@@ -445,6 +462,23 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
     val duze = shift > 0 || (wielkie && poczatekSlowa)
     fun litera(c: Char) = if (duze && c.isLetter()) c.uppercaseChar() else c
     fun pisz(c: Char) { wstaw(litera(c).toString()); if (shift == 1) shift = 0 }
+    /** przytrzymanie OK na klawiszu: warianty (wielka litera, znaki narodowe, cyfra / symbol z tego klawisza) */
+    var warianty by remember { mutableStateOf<List<String>?>(null) }
+    fun wariantyDla(c: Char): List<String> {
+        val narodowe = mapOf(
+            'a' to "ąäàáâ", 'c' to "ćç", 'e' to "ęéèêë", 'l' to "ł", 'n' to "ńñ", 'o' to "óöôò", 's' to "śß", 'z' to "żź", 'u' to "üúùû", 'i' to "íîï", 'y' to "ý",
+        )
+        val cyfry = "qwertyuiop".zip("1234567890").toMap()
+        val symbole = "1234567890".zip("!@#$%^&*()").toMap()
+        return buildList {
+            if (c.isLetter()) { add(c.uppercaseChar().toString()); add(c.lowercaseChar().toString()) }
+            narodowe[c.lowercaseChar()]?.forEach { n -> add(n.toString()); if (n.isLetter() && n.uppercaseChar() != n) add(n.uppercaseChar().toString()) }
+            cyfry[c.lowercaseChar()]?.let { add(it.toString()) }
+            symbole[c]?.let { add(it.toString()) }
+            if (c == '.') addAll(listOf(",", "?", "!", ":", ";", "…"))
+            if (c == '-') addAll(listOf("_", "–", "/"))
+        }.distinct()
+    }
     val ctxT = LocalContext.current
     val spraakT = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         val t = r.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
@@ -501,13 +535,31 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
                 Box(Modifier.width(2.dp).height(26.dp).background(Kleur.primair))
                 Text(po, style = MaterialTheme.typography.titleLarge, maxLines = 1, softWrap = false, color = Kleur.tekst)
             }
+            // warianty klawisza (po przytrzymaniu OK): wybór wstawia znak; Wstecz zamyka
+            warianty?.let { w ->
+                val frW = remember(w) { FocusRequester() }
+                LaunchedEffect(w) { delay(30); repeat(6) { if (runCatching { frW.requestFocus() }.isSuccess) return@LaunchedEffect; delay(30) } }
+                BackHandler { warianty = null; (Podreczne.zrodlo ?: eerste).let { f -> runCatching { f.requestFocus() } }; Podreczne.zrodlo = null }
+                Row(Modifier.background(Kleur.vlakHoog, RoundedCornerShape(14.dp)).padding(6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    w.forEachIndexed { i, z ->
+                        Toets(z, Modifier.width(54.dp).then(if (i == 0) Modifier.focusRequester(frW) else Modifier), hoofd = true) {
+                            wstaw(z); warianty = null; if (shift == 1) shift = 0
+                            // fokus z powrotem na klawisz, który przytrzymano
+                            (Podreczne.zrodlo ?: eerste).let { f -> runCatching { f.requestFocus() } }; Podreczne.zrodlo = null
+                        }
+                    }
+                }
+            }
+            Text(stringResource(R.string.toets_przytrzymaj), style = MaterialTheme.typography.labelSmall, color = Kleur.zacht)
             Spacer(Modifier.height(4.dp))
             @Composable
             fun rzad(znakiRzedu: String, przed: (@Composable androidx.compose.foundation.layout.RowScope.() -> Unit)? = null, po: (@Composable androidx.compose.foundation.layout.RowScope.() -> Unit)? = null, pierwszy: Boolean = false) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     przed?.invoke(this)
                     znakiRzedu.forEachIndexed { i, c ->
-                        Toets(litera(c).toString(), Modifier.weight(1f).then(if (pierwszy && i == 0) Modifier.focusRequester(eerste) else Modifier)) { pisz(c) }
+                        val w = wariantyDla(c)
+                        Toets(litera(c).toString(), Modifier.weight(1f).then(if (pierwszy && i == 0) Modifier.focusRequester(eerste) else Modifier),
+                            dlugi = if (w.size > 1) ({ warianty = w }) else null) { pisz(c) }
                     }
                     po?.invoke(this)
                 }
@@ -553,9 +605,9 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
 }
 
 @Composable
-private fun Toets(label: String, modifier: Modifier, hoofd: Boolean = false, onKlik: () -> Unit) {
+private fun Toets(label: String, modifier: Modifier, hoofd: Boolean = false, dlugi: (() -> Unit)? = null, onKlik: () -> Unit) {
     Surface(
-        onClick = onKlik, modifier = modifier.height(46.dp),
+        onClick = onKlik, modifier = modifier.then(if (dlugi != null) Modifier.langeOk(dlugi) else Modifier).height(46.dp),
         shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(10.dp)),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1.08f),
         colors = ClickableSurfaceDefaults.colors(

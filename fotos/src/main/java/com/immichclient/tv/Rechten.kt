@@ -79,6 +79,7 @@ object Rechten {
         Recht("album.update", R.string.recht_album_update),
         Recht("album.delete", R.string.recht_album_delete),
         Recht("asset.delete", R.string.recht_asset_delete),
+        Recht("asset.download", R.string.recht_asset_download),
         Recht("duplicate.read", R.string.recht_duplicate_read),
         Recht("duplicate.delete", R.string.recht_duplicate_delete),
         Recht("sharedLink.create", R.string.recht_shared_link),

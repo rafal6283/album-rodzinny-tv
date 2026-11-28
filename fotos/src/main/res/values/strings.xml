@@ -1162,4 +1162,11 @@
     <string name="zbiorczo_przepisz">"Reassign a person on these photos…"</string>
     <string name="zbiorczo_odepnij_kogo">"Who to unlink from %1$d photos?"</string>
     <string name="zbiorczo_przepisz_kogo">"Who is wrongly tagged on %1$d photos?"</string>
+    <string name="toets_przytrzymaj">"Hold OK on a key: capital letter, accented letters, digit"</string>
+    <string name="wideo_jakosc">"Video quality"</string>
+    <string name="wideo_jakosc_uitleg">"Original keeps HDR / Dolby Vision and full quality; Immich’s version is lighter but SDR. Auto = original when the TV supports HDR"</string>
+    <string name="wideo_jakosc_auto">"Auto"</string>
+    <string name="wideo_jakosc_oryginal">"Original (HDR)"</string>
+    <string name="wideo_jakosc_serwer">"Immich version"</string>
+    <string name="recht_asset_download">"Original files (HDR / Dolby Vision videos)"</string>
 </resources>
