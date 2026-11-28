@@ -262,6 +262,12 @@ fun InstellingenScherm(opnieuwKoppelen: () -> Unit, ontkoppeld: () -> Unit, toet
         groep(R.string.groep_ekran_glowny)
         schakel(R.string.kanaly, R.string.kanaly_uitleg, uitAan, Instellingen.kanaly) { Instellingen.kanaly = it }
         if (Instellingen.kanaly) item {
+            Keuzes(stringResource(R.string.kanaly_kolejnosc), stringResource(R.string.kanaly_kolejnosc_uitleg), KanalyKolejnosc.entries.map { stringResource(it.label) }, Instellingen.kanalyKolejnosc.ordinal) {
+                Instellingen.kanalyKolejnosc = KanalyKolejnosc.entries[it]
+                Kanaly.odswiezWTle(ctx)
+            }
+        }
+        if (Instellingen.kanaly) item {
             Actie(stringResource(R.string.kanaly_pokaz), stringResource(R.string.kanaly_pokaz_uitleg)) {
                 val akt = ctx as? android.app.Activity
                 for (i in Kanaly.prosbyOWidocznosc(ctx)) runCatching { akt?.startActivityForResult(i, 0) }

@@ -1229,4 +1229,9 @@
     <string name="dodaj_osobe_gotowe">"Gotowe"</string>
     <string name="dodaj_osobe_gotowe_sub">"Po każdej osobie lista wraca — możesz dodać kilka"</string>
     <string name="dodaj_osobe_juz_jest">"%1$s już jest na tym zdjęciu"</string>
+    <string name="kanaly_kolejnosc">"Kolejność w kanałach"</string>
+    <string name="kanaly_kolejnosc_uitleg">"Tego dnia, Najnowsze i kanał albumu na ekranie głównym"</string>
+    <string name="kanaly_kol_app">"Jak w aplikacji"</string>
+    <string name="kanaly_kol_nowe">"Od najnowszych"</string>
+    <string name="kanaly_kol_stare">"Od najstarszych"</string>
 </resources>

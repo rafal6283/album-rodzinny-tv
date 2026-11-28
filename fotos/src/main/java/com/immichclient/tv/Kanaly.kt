@@ -92,19 +92,27 @@ object Kanaly {
     private suspend fun odswiezTeraz(c: Context) {
         if (Immich.sleutel.isBlank()) return
         if (!Instellingen.kanaly) { usunWszystkie(c); return }
+        val kol = Instellingen.kanalyKolejnosc
+        // kolejność jak w aplikacji, albo wymuszona w ustawieniach (od najnowszych / od najstarszych)
+        fun uloz(l: List<Asset>): List<Asset> = when (kol) {
+            KanalyKolejnosc.JAK_W_APLIKACJI -> l
+            KanalyKolejnosc.NAJNOWSZE -> l.sortedByDescending { it.datum }
+            KanalyKolejnosc.NAJSTARSZE -> l.sortedBy { it.datum }
+        }
         val zestawy = mapOf(
-            Rodzaj.NAJNOWSZE to runCatching { Immich.najnowsze(20) }.getOrElse { Log.w(TAG, "najnowsze", it); null },
+            Rodzaj.NAJNOWSZE to runCatching { uloz(Immich.najnowsze(20)) }.getOrElse { Log.w(TAG, "najnowsze", it); null },
             Rodzaj.LOSOWE to runCatching { Immich.willekeurig(20) }.getOrElse { Log.w(TAG, "losowe", it); null },
             Rodzaj.WSPOMNIENIA to runCatching {
                 // dzisiejsze urodziny na początku kanału „Tego dnia”: kafelek z ostatnim zdjęciem osoby z okolic urodzin
-                urodzinyDzis().map { it.first } + Immich.herinneringen(java.time.LocalDate.now()).sortedBy { it.jaar }.flatMap { it.assets }.take(30)
+                // jak w rzędzie „Tego dnia” w aplikacji: od najbliższego roku (rok temu, dwa lata temu…)
+                urodzinyDzis().map { it.first } + uloz(Immich.herinneringen(java.time.LocalDate.now()).sortedByDescending { it.jaar }.flatMap { it.assets }.take(30))
             }.getOrElse { Log.w(TAG, "wspomnienia", it); null },
             Rodzaj.DZIEN to runCatching { zdjecieDnia(c) }.getOrElse { Log.w(TAG, "zdjęcie dnia", it); null },
         )
         // kanał albumu: tylko gdy album jest wybrany; inaczej usuwamy go z ekranu głównego
         val album = Instellingen.kanalAlbum
         val zAlbumu = if (album.isBlank()) { usunKanal(c, Rodzaj.ALBUM); null }
-            else runCatching { Immich.zAlbumu(album, 30) }.getOrElse { Log.w(TAG, "album", it); null }
+            else runCatching { uloz(Immich.zAlbumu(album, 30, wgAlbumu = true)) }.getOrElse { Log.w(TAG, "album", it); null }
         var pierwszy = true
         for ((r, lista) in zestawy) {
             if (lista == null) continue // błąd sieci: zostaw stary stan kanału

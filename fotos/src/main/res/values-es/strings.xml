@@ -1186,4 +1186,9 @@
     <string name="dodaj_osobe_gotowe">"Listo"</string>
     <string name="dodaj_osobe_gotowe_sub">"La lista vuelve tras cada persona — puedes añadir varias"</string>
     <string name="dodaj_osobe_juz_jest">"%1$s ya está en esta foto"</string>
+    <string name="kanaly_kolejnosc">"Orden en los canales"</string>
+    <string name="kanaly_kolejnosc_uitleg">"Tal día como hoy, Recientes y el canal del álbum en la pantalla de inicio"</string>
+    <string name="kanaly_kol_app">"Como en la app"</string>
+    <string name="kanaly_kol_nowe">"Más recientes primero"</string>
+    <string name="kanaly_kol_stare">"Más antiguas primero"</string>
 </resources>

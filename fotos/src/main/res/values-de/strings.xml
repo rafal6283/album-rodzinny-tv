@@ -1179,4 +1179,9 @@
     <string name="dodaj_osobe_gotowe">"Fertig"</string>
     <string name="dodaj_osobe_gotowe_sub">"Nach jeder Person erscheint die Liste wieder — du kannst mehrere hinzufügen"</string>
     <string name="dodaj_osobe_juz_jest">"%1$s ist bereits auf diesem Foto"</string>
+    <string name="kanaly_kolejnosc">"Reihenfolge in Kanälen"</string>
+    <string name="kanaly_kolejnosc_uitleg">"An diesem Tag, Neueste und der Albumkanal auf dem Startbildschirm"</string>
+    <string name="kanaly_kol_app">"Wie in der App"</string>
+    <string name="kanaly_kol_nowe">"Neueste zuerst"</string>
+    <string name="kanaly_kol_stare">"Älteste zuerst"</string>
 </resources>

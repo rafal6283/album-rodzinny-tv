@@ -1201,4 +1201,9 @@
     <string name="dodaj_osobe_gotowe">"Done"</string>
     <string name="dodaj_osobe_gotowe_sub">"The list comes back after each person — you can add several"</string>
     <string name="dodaj_osobe_juz_jest">"%1$s is already in this photo"</string>
+    <string name="kanaly_kolejnosc">"Order in channels"</string>
+    <string name="kanaly_kolejnosc_uitleg">"On this day, Latest and the album channel on the home screen"</string>
+    <string name="kanaly_kol_app">"Same as in the app"</string>
+    <string name="kanaly_kol_nowe">"Newest first"</string>
+    <string name="kanaly_kol_stare">"Oldest first"</string>
 </resources>
