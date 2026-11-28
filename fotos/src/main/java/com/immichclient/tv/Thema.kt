@@ -2,6 +2,7 @@ package com.immichclient.tv
 
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PersonOff
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.MotionPhotosOn
 import androidx.compose.ui.graphics.drawscope.rotate
@@ -277,6 +278,12 @@ fun FotoVak(
         if (Ulubione.jest(asset)) Icon(
             Icons.Filled.Favorite, null, Modifier.align(Alignment.BottomStart).padding(6.dp).size(16.dp), tint = Color.White,
         )
+        // oś czasu osoby: zdjęcie sprzed jej urodzenia — prawie na pewno błędne rozpoznanie (albo zła data zdjęcia)
+        if (asset.przedUrodzeniem(Podreczne.osobaUr) && Edycja.odpiete[asset.id] != true) {
+            Box(Modifier.matchParentSize().background(Color(0x59000000)))
+            Icon(androidx.compose.material.icons.Icons.Filled.Warning, null, Modifier.align(Alignment.BottomEnd).padding(6.dp).size(22.dp)
+                .background(Color(0xCC101018), androidx.compose.foundation.shape.CircleShape).padding(3.dp), tint = Color(0xFFF5B83D))
+        }
         // odpięte od osoby (korekta z osi czasu osoby): mocno przyciemnione z ikoną
         if (Edycja.odpiete[asset.id] == true) {
             Box(Modifier.matchParentSize().background(Color(0xB3000000)))

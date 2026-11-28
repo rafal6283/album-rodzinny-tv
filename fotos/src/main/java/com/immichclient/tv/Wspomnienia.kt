@@ -136,7 +136,7 @@ object UrodzinyStart {
                 runCatching { Immich.osobaWDniach(o.id, d.minusDays(3), d.plusDays(3), 40) }.getOrDefault(emptyList())
                     .filter { !it.video }.let { Pokazane.wybierz(it, 5) { a -> a.id } }
             }
-            val losowe = runCatching { Immich.osobaLosowo(o.id, null, null, 30) }.getOrDefault(emptyList())
+            val losowe = runCatching { Immich.osobaLosowo(o.id, ur, null, 30) }.getOrDefault(emptyList()).filter { !it.przedUrodzeniem(ur) }
             (zUrodzin + Pokazane.wybierz(losowe, 15) { it.id }).distinctBy { it.id }
         }.sortedBy { it.datum }.take(150)
         if (zdjecia.isEmpty()) return null
@@ -183,10 +183,11 @@ fun KiedysIDzis(osobaId: String, imie: String, sluit: () -> Unit) {
     val wtedy by produceState<Pair<Boolean, Asset?>>(false to null, osobaId, lat) {
         value = false to null
         val srodek = dzis.minusYears(lat.toLong())
+        val ur = DatyUrodzin.dla(osobaId)
         val a = runCatching {
-            // losowo (nie zawsze to samo zdjęcie), najpierw jeszcze niepokazane
-            (Immich.osobaLosowo(osobaId, srodek.minusDays(45), srodek.plusDays(45), 20).takeIf { it.isNotEmpty() }
-                ?: Immich.osobaLosowo(osobaId, LocalDate.of(srodek.year, 1, 1), LocalDate.of(srodek.year, 12, 31), 20))
+            // losowo (nie zawsze to samo zdjęcie), najpierw jeszcze niepokazane; bez zdjęć sprzed urodzenia (błędne rozpoznanie)
+            (Immich.osobaLosowo(osobaId, srodek.minusDays(45), srodek.plusDays(45), 20).filter { !it.przedUrodzeniem(ur) }.takeIf { it.isNotEmpty() }
+                ?: Immich.osobaLosowo(osobaId, LocalDate.of(srodek.year, 1, 1), LocalDate.of(srodek.year, 12, 31), 20).filter { !it.przedUrodzeniem(ur) })
                 .let { Pokazane.wybierz(it, 1) { x -> x.id }.firstOrNull() }?.also { Pokazane.zapamietaj(listOf(it.id)) }
         }.getOrNull()
         value = true to a

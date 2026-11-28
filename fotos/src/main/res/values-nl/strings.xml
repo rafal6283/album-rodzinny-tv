@@ -1153,4 +1153,17 @@
     <string name="obrot_ustawiony">"%1$d° gedraaid"</string>
     <string name="obrot_brak">"Oorspronkelijke stand"</string>
     <string name="data_cyfry">"Cijfers op de afstandsbediening typen de waarde direct (bijv. 1987)"</string>
+    <string name="przed_ur_tytul">"Van vóór de geboorte"</string>
+    <string name="przed_ur_opis">"Foto’s van mensen van vóór hun geboortedatum — meestal een fout in de gezichtsherkenning"</string>
+    <string name="przed_ur_sub">"Immich gebruikt geboortedata niet bij gezichtsherkenning. Kies een persoon om de foto’s te corrigeren."</string>
+    <string name="przed_ur_sprawdzam">"Personen met geboortedatum controleren… %1$d / %2$d"</string>
+    <string name="przed_ur_brak">"Niemand heeft foto’s van vóór de geboortedatum. Alleen personen met een geboortedatum worden gecontroleerd."</string>
+    <string name="przed_ur_data">"geb. %1$s"</string>
+    <string name="przed_ur_lista">"%1$s · vóór de geboorte"</string>
+    <string name="przed_ur_lista_sub">"Gemaakt vóór %1$s · OK ingedrukt houden: niet deze persoon, iemand anders, datum wijzigen"</string>
+    <string name="przed_ur_zaznacz">"Alles selecteren"</string>
+    <string name="przed_ur_odepnij">"Alles loskoppelen"</string>
+    <string name="przed_ur_odepnij_tytul">"%1$s loskoppelen van %2$d foto’s?"</string>
+    <string name="przed_ur_odepnij_tak">"Ja, %1$d loskoppelen"</string>
+    <string name="przed_ur_podpowiedz">"Suggestie · geb. %1$s"</string>
 </resources>

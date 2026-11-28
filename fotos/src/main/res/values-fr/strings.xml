@@ -1160,4 +1160,17 @@
     <string name="obrot_ustawiony">"Pivoté de %1$d°"</string>
     <string name="obrot_brak">"Orientation d’origine"</string>
     <string name="data_cyfry">"Les chiffres de la télécommande saisissent la valeur directement (ex. 1987)"</string>
+    <string name="przed_ur_tytul">"Avant la naissance"</string>
+    <string name="przed_ur_opis">"Photos de personnes prises avant leur date de naissance — généralement une erreur de reconnaissance"</string>
+    <string name="przed_ur_sub">"Immich n’utilise pas la date de naissance pour reconnaître les visages. Choisissez une personne pour corriger ses photos."</string>
+    <string name="przed_ur_sprawdzam">"Vérification des personnes avec date de naissance… %1$d / %2$d"</string>
+    <string name="przed_ur_brak">"Personne n’a de photos antérieures à sa date de naissance. Seules les personnes avec une date de naissance sont vérifiées."</string>
+    <string name="przed_ur_data">"née/né le %1$s"</string>
+    <string name="przed_ur_lista">"%1$s · avant la naissance"</string>
+    <string name="przed_ur_lista_sub">"Prises avant le %1$s · maintenir OK : pas cette personne, quelqu’un d’autre, changer la date"</string>
+    <string name="przed_ur_zaznacz">"Tout sélectionner"</string>
+    <string name="przed_ur_odepnij">"Tout détacher"</string>
+    <string name="przed_ur_odepnij_tytul">"Détacher %1$s de %2$d photos ?"</string>
+    <string name="przed_ur_odepnij_tak">"Oui, détacher %1$d"</string>
+    <string name="przed_ur_podpowiedz">"Suggestion · née/né en %1$s"</string>
 </resources>

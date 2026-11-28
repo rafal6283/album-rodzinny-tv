@@ -46,7 +46,9 @@ object Podreczne {
     var usuwanie by mutableStateOf<Pair<String, String>?>(null)
     var osobaEdycja by mutableStateOf<Pair<String, String>?>(null)
     /** oś czasu osoby na ekranie (id, imię, stan): w menu zdjęcia „To nie jest …” i „To jest ktoś inny…” */
-    var osobaKontekst: Triple<String, String, TijdlijnStaat>? = null
+    var osobaKontekst: Triple<String, String, Any>? = null
+    /** data urodzenia osoby z osi czasu na ekranie: kafelki sprzed niej mają znacznik, podpowiedzi przy „ktoś inny” */
+    var osobaUr by mutableStateOf<java.time.LocalDate?>(null)
     /** zdjęcie (id) i osoba, której twarz przepisać do innej osoby (lista wyboru w [PodreczneWarstwa]) */
     var przepisanie by mutableStateOf<Pair<List<String>, String>?>(null)
     /** zaznaczone zdjęcia: wybór osoby do odpięcia / osoby, którą przepisać do innej */
@@ -308,7 +310,7 @@ fun PodreczneWarstwa() {
     }
     if (Podreczne.edycjaMenu) KolejnoscSekcji { Podreczne.edycjaMenu = false }
     Podreczne.przepisanie?.let { (ids, osobaId) ->
-        KiesLijst(stringResource(R.string.twarz_to_jest), persoonKeuzes(), "", sluit = { Podreczne.przepisanie = null }) { id, naam ->
+        KiesLijst(stringResource(R.string.twarz_to_jest), persoonKeuzesZPodpowiedzia(Podreczne.osobaUr, osobaId), "", sluit = { Podreczne.przepisanie = null }) { id, naam ->
             Podreczne.przepisanie = null
             Podreczne.przepiszOsobe(ids, osobaId, id, naam)
         }

@@ -151,6 +151,7 @@ sealed class Scherm {
     data object Porzadki : Scherm()
     class Przeglad(scope: CoroutineScope) : Scherm() { val staat = PrzegladStaat(scope) }
     class Duplikaty(scope: CoroutineScope) : Scherm() { val staat = DuplikatyStaat(scope) }
+    class PrzedUrodzeniem(scope: CoroutineScope) : Scherm() { val staat = PrzedUrodzeniemStaat(scope) }
     class Kosz(scope: CoroutineScope) : Scherm() { val res = Resultaten(scope).also { it.start { s -> Immich.kosz(s) } } }
     class Popraw(osobaId: String, imie: String, scope: CoroutineScope, val wyborGlownego: Boolean = false) : Scherm() { val staat = PoprawStaat(osobaId, imie, scope) }
     class Powroty(scope: CoroutineScope) : Scherm() { val staat = PowrotyStaat(scope) }
@@ -160,7 +161,8 @@ sealed class Scherm {
     class Rok(rok: Int, scope: CoroutineScope, osobaId: String? = null, imie: String? = null) : Scherm() { val staat = RokStaat(scope, rok, osobaId, imie) }
     /** sekcja Filmy: kolejność, przejście do daty, losowo */
     class Filmy(scope: CoroutineScope) : Scherm() { val staat = FilmyStaat(scope) }
-    class Lijst(val titel: String, val sub: String?, val perDag: Boolean, scope: CoroutineScope, val losowyPokaz: Boolean = false, laad: suspend (Int) -> Pagina) : Scherm() {
+    class Lijst(val titel: String, val sub: String?, val perDag: Boolean, scope: CoroutineScope, val losowyPokaz: Boolean = false,
+                val osoba: Pair<String, String>? = null, laad: suspend (Int) -> Pagina) : Scherm() {
         val res = Resultaten(scope).also { it.start(laad) }
     }
 }
@@ -671,6 +673,7 @@ private fun FotosApp(finish: () -> Unit, herstart: () -> Unit, testIndex: Int = 
                         is Scherm.Porzadki -> PorzadkiScherm(nav)
                         is Scherm.Przeglad -> PrzegladScherm(scherm.staat, nav)
                         is Scherm.Duplikaty -> DuplikatyScherm(scherm.staat)
+                        is Scherm.PrzedUrodzeniem -> PrzedUrodzeniemScherm(scherm.staat, nav)
                         is Scherm.Kosz -> KoszScherm(scherm, nav)
                         is Scherm.Powroty -> PowrotyScherm(scherm.staat, nav)
                         is Scherm.Kolory -> KoloryScherm(nav)

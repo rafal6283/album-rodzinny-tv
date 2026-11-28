@@ -218,8 +218,9 @@ fun TijdlijnScherm(scherm: Scherm.Tijdlijn, nav: Nav) {
     scherm.staat.filter.persoonId?.let { oid ->
         androidx.compose.runtime.DisposableEffect(oid) {
             Podreczne.osobaKontekst = Triple(oid, scherm.titel, scherm.staat)
-            onDispose { if (Podreczne.osobaKontekst?.third === scherm.staat) Podreczne.osobaKontekst = null }
+            onDispose { if (Podreczne.osobaKontekst?.third === scherm.staat) { Podreczne.osobaKontekst = null; Podreczne.osobaUr = null } }
         }
+        androidx.compose.runtime.LaunchedEffect(oid) { Podreczne.osobaUr = DatyUrodzin.dla(oid) }
     }
     val staat = scherm.staat
     val scope = rememberCoroutineScope()

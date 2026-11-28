@@ -1,6 +1,8 @@
 package com.immichclient.tv
 
 import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.PersonOff
 import androidx.compose.material.icons.filled.PlayArrow
 import android.app.Activity
 import android.content.Context
@@ -625,6 +627,14 @@ private fun Toets(label: String, modifier: Modifier, hoofd: Boolean = false, dlu
 @Composable
 fun LijstScherm(scherm: Scherm.Lijst, nav: Nav) {
     val res = scherm.res
+    // lista zdjęć jednej osoby (np. sprzed urodzenia): w menu zdjęcia „To nie jest …”, „To jest ktoś inny…”
+    scherm.osoba?.let { (oid, imie) ->
+        androidx.compose.runtime.DisposableEffect(oid) {
+            Podreczne.osobaKontekst = Triple(oid, imie, scherm)
+            onDispose { if (Podreczne.osobaKontekst?.third === scherm) { Podreczne.osobaKontekst = null; Podreczne.osobaUr = null } }
+        }
+        LaunchedEffect(oid) { Podreczne.osobaUr = DatyUrodzin.dla(oid) }
+    }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val breedte = breedteVoor(maxWidth.value)
         val rijHoogte = Instellingen.rijMaat.hoogte
@@ -656,6 +666,31 @@ fun LijstScherm(scherm: Scherm.Lijst, nav: Nav) {
                         leadingIcon = { androidx.tv.material3.Icon(androidx.compose.material.icons.Icons.Filled.Shuffle, null, Modifier.size(18.dp)) },
                         tekst = stringResource(R.string.pokaz_losowo),
                     )
+                    scherm.osoba?.takeIf { res.assets.isNotEmpty() && !Instellingen.trybDzieciecy }?.let { (oid, imie) ->
+                        // wszystkie naraz: zaznacz (potem przytrzymanie OK = operacje zbiorcze) albo odepnij od razu
+                        Keuze(
+                            selected = false,
+                            onClick = {
+                                res.assets.filter { !Udostepnianie.zawiera(it) && Edycja.odpiete[it.id] != true }.forEach { Udostepnianie.przelacz(it) }
+                                if (Udostepnianie.koszyk.isNotEmpty()) Udostepnianie.tryb = true
+                                Edycja.komunikat = Taal.s(R.string.podreczne_zaznaczone, Udostepnianie.koszyk.size)
+                            },
+                            leadingIcon = { androidx.tv.material3.Icon(androidx.compose.material.icons.Icons.Filled.DoneAll, null, Modifier.size(18.dp)) },
+                            tekst = stringResource(R.string.przed_ur_zaznacz),
+                        )
+                        Keuze(
+                            selected = false,
+                            onClick = {
+                                val ids = res.assets.filter { Edycja.odpiete[it.id] != true }.map { it.id }
+                                if (ids.isNotEmpty()) Podreczne.menu = Taal.s(R.string.przed_ur_odepnij_tytul, imie, ids.size) to listOf(
+                                    Podreczne.Pozycja(Taal.s(R.string.przed_ur_odepnij_tak, ids.size)) { Podreczne.odepnijOsobeZ(ids, oid) },
+                                    Podreczne.Pozycja(Taal.s(R.string.anuluj)) {},
+                                )
+                            },
+                            leadingIcon = { androidx.tv.material3.Icon(androidx.compose.material.icons.Icons.Filled.PersonOff, null, Modifier.size(18.dp)) },
+                            tekst = stringResource(R.string.przed_ur_odepnij),
+                        )
+                    }
                 }
                 if (res.fout != null && res.assets.isEmpty()) Text(stringResource(R.string.laden_mislukt, res.fout.orEmpty()), color = Kleur.zacht)
             }

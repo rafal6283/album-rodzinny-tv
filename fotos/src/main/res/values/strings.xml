@@ -1175,4 +1175,17 @@
     <string name="obrot_ustawiony">"Rotated %1$d°"</string>
     <string name="obrot_brak">"Original orientation"</string>
     <string name="data_cyfry">"Digits on the remote type the value directly (e.g. 1987)"</string>
+    <string name="przed_ur_tytul">"Before birth"</string>
+    <string name="przed_ur_opis">"Photos of people taken before their birth date — usually a face recognition mistake"</string>
+    <string name="przed_ur_sub">"Immich does not use birth dates when recognising faces. Pick a person to fix their photos."</string>
+    <string name="przed_ur_sprawdzam">"Checking people with a birth date… %1$d / %2$d"</string>
+    <string name="przed_ur_brak">"Nobody has photos from before their birth date. People with a birth date are checked."</string>
+    <string name="przed_ur_data">"born %1$s"</string>
+    <string name="przed_ur_lista">"%1$s · before birth"</string>
+    <string name="przed_ur_lista_sub">"Taken before %1$s · hold OK: not this person, someone else, change date"</string>
+    <string name="przed_ur_zaznacz">"Select all"</string>
+    <string name="przed_ur_odepnij">"Unassign all"</string>
+    <string name="przed_ur_odepnij_tytul">"Unassign %1$s from %2$d photos?"</string>
+    <string name="przed_ur_odepnij_tak">"Yes, unassign %1$d"</string>
+    <string name="przed_ur_podpowiedz">"Suggestion · born %1$s"</string>
 </resources>

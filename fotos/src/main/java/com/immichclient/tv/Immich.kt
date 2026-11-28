@@ -486,6 +486,13 @@ object Immich {
     /** Pierwsza strona twarzy bez imienia (ekran „Kto to jest?”), w kolejności Immich (najczęstsze najpierw). */
     suspend fun osobyBezImienia(): List<Persoon> = wszystkieOsoby().filter { it.naam.isBlank() }
 
+    /** Zdjęcia i filmy osoby zrobione przed jej datą urodzenia (zwykle błędne rozpoznanie twarzy), od najstarszych. */
+    suspend fun przedUrodzeniem(osobaId: String, ur: LocalDate, pagina: Int, n: Int = 250): Pagina {
+        val body = JSONObject().put("size", n).put("page", pagina).put("order", "asc").put("withExif", true)
+            .put("personIds", JSONArray(listOf(osobaId))).put("takenBefore", "${ur}T00:00:00.000Z")
+        return pagina(JSONObject(post("/search/metadata", body)))
+    }
+
     /** Filmy z osi czasu (sekcja Filmy): od najnowszych albo najstarszych, opcjonalnie od wybranego miesiąca. */
     suspend fun filmy(pagina: Int, nieuwsteEerst: Boolean, odMiesiaca: java.time.YearMonth?): Pagina {
         val body = JSONObject().put("size", 250).put("page", pagina).put("order", if (nieuwsteEerst) "desc" else "asc")

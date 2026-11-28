@@ -1153,4 +1153,17 @@
     <string name="obrot_ustawiony">"Um %1$d° gedreht"</string>
     <string name="obrot_brak">"Ursprüngliche Ausrichtung"</string>
     <string name="data_cyfry">"Ziffern auf der Fernbedienung geben den Wert direkt ein (z. B. 1987)"</string>
+    <string name="przed_ur_tytul">"Vor der Geburt"</string>
+    <string name="przed_ur_opis">"Fotos von Personen vor ihrem Geburtsdatum — meist ein Fehler der Gesichtserkennung"</string>
+    <string name="przed_ur_sub">"Immich berücksichtigt das Geburtsdatum bei der Gesichtserkennung nicht. Wähle eine Person, um ihre Fotos zu korrigieren."</string>
+    <string name="przed_ur_sprawdzam">"Prüfe Personen mit Geburtsdatum… %1$d / %2$d"</string>
+    <string name="przed_ur_brak">"Niemand hat Fotos von vor dem Geburtsdatum. Geprüft werden Personen mit Geburtsdatum."</string>
+    <string name="przed_ur_data">"geb. %1$s"</string>
+    <string name="przed_ur_lista">"%1$s · vor der Geburt"</string>
+    <string name="przed_ur_lista_sub">"Aufgenommen vor %1$s · OK halten: nicht diese Person, jemand anderes, Datum ändern"</string>
+    <string name="przed_ur_zaznacz">"Alle auswählen"</string>
+    <string name="przed_ur_odepnij">"Alle lösen"</string>
+    <string name="przed_ur_odepnij_tytul">"%1$s von %2$d Fotos lösen?"</string>
+    <string name="przed_ur_odepnij_tak">"Ja, %1$d lösen"</string>
+    <string name="przed_ur_podpowiedz">"Vorschlag · geb. %1$s"</string>
 </resources>
