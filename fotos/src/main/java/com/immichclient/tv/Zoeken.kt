@@ -341,7 +341,7 @@ fun ZoekScherm(staat: ZoekStaat, nav: Nav) {
                         staat.res.fout != null && staat.res.assets.isEmpty() -> Text(stringResource(R.string.zoeken_mislukt, staat.res.fout.orEmpty()), color = Kleur.zacht)
                         staat.res.gezocht && staat.res.assets.isEmpty() -> Text(stringResource(R.string.niets_gevonden), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht)
                         staat.res.gezocht -> Text(pluralStringResource(R.plurals.resultaten, gesorteerd.size, Taal.getal(gesorteerd.size) + if (staat.res.bezig) "+" else ""), style = MaterialTheme.typography.bodySmall)
-                        else -> Suggesties(staat, nav) { staat.tekst = it; staat.zoek(ctx) }
+                        else -> Suggesties(staat, nav) { runCatching { veld.requestFocus() }; staat.tekst = it; staat.zoek(ctx) } // fokus na pole: podpowiedzi znikają (inaczej fokus spadał do bocznego menu), potem na pierwszy wynik
                     }
                 }
             }
