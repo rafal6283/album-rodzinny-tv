@@ -1147,4 +1147,6 @@
     <string name="wideo_jakosc_oryginal">"Original (HDR)"</string>
     <string name="wideo_jakosc_serwer">"Immich-Version"</string>
     <string name="recht_asset_download">"Originaldateien (HDR / Dolby Vision)"</string>
+    <string name="pionowe_hdr">"Hochkant-HDR-Videos in HDR"</string>
+    <string name="pionowe_hdr_uitleg">"Ausschalten, wenn Hochkant-Videos auf diesem TV seitlich erscheinen (dann richtig, aber in SDR)"</string>
 </resources>

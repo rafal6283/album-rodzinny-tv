@@ -84,6 +84,8 @@ object Instellingen {
     var rijMaat by keuze("rij", RijMaat.NORMAAL)
     /** filmy: oryginalny plik (HDR, Dolby Vision, pełna jakość) albo wersja przekodowana przez Immich */
     var wideoJakosc by keuze("wideo_jakosc", WideoJakosc.AUTO)
+    /** pionowe filmy HDR przez SurfaceView (zachowują HDR); wyłączyć, jeśli telewizor pokazuje je obrócone na bok */
+    var pionoweHdr by bool("pionowe_hdr", true)
     /** kanały na ekranie głównym Android TV (najnowsze, losowe, tego dnia) */
     var kanaly by bool("kanaly", true)
     /** album pokazywany jako własny kanał na ekranie głównym (pusty = brak) */

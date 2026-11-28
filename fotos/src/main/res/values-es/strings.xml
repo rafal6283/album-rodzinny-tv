@@ -1154,4 +1154,6 @@
     <string name="wideo_jakosc_oryginal">"Original (HDR)"</string>
     <string name="wideo_jakosc_serwer">"Versión de Immich"</string>
     <string name="recht_asset_download">"Archivos originales (HDR / Dolby Vision)"</string>
+    <string name="pionowe_hdr">"Vídeos HDR verticales en HDR"</string>
+    <string name="pionowe_hdr_uitleg">"Desactívalo si los vídeos verticales aparecen de lado en este televisor (se verán bien, pero en SDR)"</string>
 </resources>
