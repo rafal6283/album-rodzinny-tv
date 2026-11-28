@@ -1199,4 +1199,7 @@
     <string name="recht_asset_download">"Oryginalne pliki (filmy HDR / Dolby Vision)"</string>
     <string name="pionowe_hdr">"Pionowe filmy HDR w HDR"</string>
     <string name="pionowe_hdr_uitleg">"Wyłącz, jeśli pionowe filmy z telefonu wyświetlają się na tym telewizorze obrócone na bok (wtedy odtworzą się poprawnie, ale w SDR)"</string>
+    <string name="obrot_akcja">"Obróć"</string>
+    <string name="obrot_ustawiony">"Obrócono o %1$d°"</string>
+    <string name="obrot_brak">"Oryginalna orientacja"</string>
 </resources>

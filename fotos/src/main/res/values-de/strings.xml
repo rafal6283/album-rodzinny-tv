@@ -1149,4 +1149,7 @@
     <string name="recht_asset_download">"Originaldateien (HDR / Dolby Vision)"</string>
     <string name="pionowe_hdr">"Hochkant-HDR-Videos in HDR"</string>
     <string name="pionowe_hdr_uitleg">"Ausschalten, wenn Hochkant-Videos auf diesem TV seitlich erscheinen (dann richtig, aber in SDR)"</string>
+    <string name="obrot_akcja">"Drehen"</string>
+    <string name="obrot_ustawiony">"Um %1$d° gedreht"</string>
+    <string name="obrot_brak">"Ursprüngliche Ausrichtung"</string>
 </resources>

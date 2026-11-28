@@ -1156,4 +1156,7 @@
     <string name="recht_asset_download">"Fichiers originaux (HDR / Dolby Vision)"</string>
     <string name="pionowe_hdr">"Vidéos HDR verticales en HDR"</string>
     <string name="pionowe_hdr_uitleg">"Désactivez si les vidéos verticales s’affichent couchées sur ce téléviseur (elles seront alors correctes, mais en SDR)"</string>
+    <string name="obrot_akcja">"Pivoter"</string>
+    <string name="obrot_ustawiony">"Pivoté de %1$d°"</string>
+    <string name="obrot_brak">"Orientation d’origine"</string>
 </resources>

@@ -1171,4 +1171,7 @@
     <string name="recht_asset_download">"Original files (HDR / Dolby Vision videos)"</string>
     <string name="pionowe_hdr">"Vertical HDR videos in HDR"</string>
     <string name="pionowe_hdr_uitleg">"Turn off if vertical phone videos appear sideways on this TV (then they play correctly, but in SDR)"</string>
+    <string name="obrot_akcja">"Rotate"</string>
+    <string name="obrot_ustawiony">"Rotated %1$d°"</string>
+    <string name="obrot_brak">"Original orientation"</string>
 </resources>

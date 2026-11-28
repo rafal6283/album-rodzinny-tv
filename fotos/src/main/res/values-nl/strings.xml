@@ -1149,4 +1149,7 @@
     <string name="recht_asset_download">"Originele bestanden (HDR / Dolby Vision)"</string>
     <string name="pionowe_hdr">"Staande HDR-video’s in HDR"</string>
     <string name="pionowe_hdr_uitleg">"Uitzetten als staande video’s op deze tv op hun kant staan (dan kloppen ze, maar in SDR)"</string>
+    <string name="obrot_akcja">"Draaien"</string>
+    <string name="obrot_ustawiony">"%1$d° gedraaid"</string>
+    <string name="obrot_brak">"Oorspronkelijke stand"</string>
 </resources>
