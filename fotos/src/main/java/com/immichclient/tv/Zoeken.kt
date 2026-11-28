@@ -472,13 +472,12 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
         val narodowe = mapOf(
             'a' to "ąäàáâ", 'c' to "ćç", 'e' to "ęéèêë", 'l' to "ł", 'n' to "ńñ", 'o' to "óöôò", 's' to "śß", 'z' to "żź", 'u' to "üúùû", 'i' to "íîï", 'y' to "ý",
         )
-        val cyfry = "qwertyuiop".zip("1234567890").toMap()
-        val symbole = "1234567890".zip("!@#$%^&*()").toMap()
         return buildList {
             if (c.isLetter()) { add(c.uppercaseChar().toString()); add(c.lowercaseChar().toString()) }
             narodowe[c.lowercaseChar()]?.forEach { n -> add(n.toString()); if (n.isLetter() && n.uppercaseChar() != n) add(n.uppercaseChar().toString()) }
-            cyfry[c.lowercaseChar()]?.let { add(it.toString()) }
-            symbole[c]?.let { add(it.toString()) }
+            KLAW_CYFRY[c.lowercaseChar()]?.let { add(it.toString()) }
+            KLAW_SYMBOLE[c]?.let { add(it.toString()) }
+            KLAW_SYMBOLE_LITER[c.lowercaseChar()]?.let { add(it.toString()) }
             if (c == '.') addAll(listOf(",", "?", "!", ":", ";", "…"))
             if (c == '-') addAll(listOf("_", "–", "/"))
         }.distinct()
@@ -563,7 +562,7 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
                     znakiRzedu.forEachIndexed { i, c ->
                         val w = wariantyDla(c)
                         Toets(litera(c).toString(), Modifier.weight(1f).then(if (pierwszy && i == 0) Modifier.focusRequester(eerste) else Modifier),
-                            dlugi = if (w.size > 1) ({ warianty = w }) else null) { pisz(c) }
+                            dlugi = if (w.size > 1) ({ warianty = w }) else null, podpis = podpisKlawisza(c, extra)) { pisz(c) }
                     }
                     po?.invoke(this)
                 }
@@ -609,7 +608,7 @@ fun TekstInvoer(titel: String, begin: String, live: ((String) -> Unit)? = null, 
 }
 
 @Composable
-private fun Toets(label: String, modifier: Modifier, hoofd: Boolean = false, dlugi: (() -> Unit)? = null, onKlik: () -> Unit) {
+private fun Toets(label: String, modifier: Modifier, hoofd: Boolean = false, dlugi: (() -> Unit)? = null, podpis: String? = null, onKlik: () -> Unit) {
     Surface(
         onClick = onKlik, modifier = modifier.then(if (dlugi != null) Modifier.langeOk(dlugi) else Modifier).height(46.dp),
         shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(10.dp)),
@@ -619,8 +618,27 @@ private fun Toets(label: String, modifier: Modifier, hoofd: Boolean = false, dlu
             focusedContainerColor = Kleur.primair, focusedContentColor = Kleur.opPrimair,
         ),
     ) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(label, style = MaterialTheme.typography.titleMedium) }
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(label, style = MaterialTheme.typography.titleMedium)
+            // znak pod przytrzymaniem OK (jak na klawiaturze telefonu: 1 → !, q → 1, a → @)
+            podpis?.let {
+                Text(it, style = MaterialTheme.typography.labelSmall, color = androidx.tv.material3.LocalContentColor.current.copy(alpha = 0.7f),
+                    modifier = Modifier.align(Alignment.TopEnd).padding(top = 2.dp, end = 5.dp))
+            }
+        }
     }
+}
+
+/** Znaki pod przytrzymaniem OK: rząd cyfr → symbole, qwerty → cyfry, pozostałe litery → symbole (jak w Gboard). */
+private val KLAW_SYMBOLE = "1234567890".zip("!@#$%^&*()").toMap()
+private val KLAW_CYFRY = "qwertyuiop".zip("1234567890").toMap()
+private val KLAW_SYMBOLE_LITER = ("asdfghjkl".zip("@#&*-+=()") + "zxcvbnm".zip("'\":;!?/")).toMap()
+
+/** Mały znak w rogu klawisza: co da przytrzymanie (litery narodowe języka aplikacji przed symbolem). */
+private fun podpisKlawisza(c: Char, narodowe: String): String? {
+    val l = c.lowercaseChar()
+    val nar = mapOf('a' to 'ą', 'c' to 'ć', 'e' to 'ę', 'l' to 'ł', 'n' to 'ń', 'o' to 'ó', 's' to 'ś', 'z' to 'ż', 'u' to 'ü', 'i' to 'í', 'y' to 'ý')[l]?.takeIf { it in narodowe }
+    return (KLAW_SYMBOLE[c] ?: KLAW_CYFRY[l] ?: nar ?: KLAW_SYMBOLE_LITER[l])?.toString()
 }
 
 /** Platte lijst met pagina's (bijv. alle foto's uit één plaats), per dag met jaartal. */
