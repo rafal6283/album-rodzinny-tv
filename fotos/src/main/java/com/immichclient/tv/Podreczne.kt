@@ -154,6 +154,7 @@ object Podreczne {
             komunikat(s(R.string.podreczne_zaznaczone, Udostepnianie.koszyk.size))
         }
         if (!Instellingen.trybDzieciecy) p += Pozycja(s(R.string.album_akcja)) { doAlbumu = (Udostepnianie.koszyk.map { it.id } + a.id).distinct() }
+        if (!Instellingen.trybDzieciecy) p += Pozycja(s(R.string.dodaj_osobe_akcja)) { DodajOsobe.zdjecia = listOf(a) }
         if (a.lat != null) naMape?.let { m -> p += Pozycja(s(R.string.podreczne_na_mapie)) { m(a) } }
         // oś czasu osoby: błędnie przypisane zdjęcie — odepnij albo przepisz do kogoś innego
         osobaKontekst?.takeIf { !Instellingen.trybDzieciecy }?.let { (oid, imie, staat) ->
@@ -256,7 +257,7 @@ fun PodreczneWarstwa() {
     // po zamknięciu menu i okien z niego: fokus z powrotem na element, na którym przytrzymano OK (nie do bocznego menu)
     val otwarte = Podreczne.menu != null || Podreczne.doAlbumu != null || Podreczne.zmianaNazwy != null || Podreczne.usuwanie != null ||
         Podreczne.osobaEdycja != null || Podreczne.edycjaMenu || Podreczne.przepisanie != null || Podreczne.odpinanie != null || Podreczne.przepisanieZ != null || Edytor.data != null || Edytor.miejsce != null || Edytor.opis != null ||
-        Edytor.ocena != null || Edytor.link != null || Edytor.udostepnij != null
+        Edytor.ocena != null || Edytor.link != null || Edytor.udostepnij != null || DodajOsobe.otwarte
     androidx.compose.runtime.LaunchedEffect(otwarte) {
         if (otwarte) return@LaunchedEffect
         val z = Podreczne.zrodlo ?: return@LaunchedEffect
@@ -309,6 +310,7 @@ fun PodreczneWarstwa() {
         }
     }
     if (Podreczne.edycjaMenu) KolejnoscSekcji { Podreczne.edycjaMenu = false }
+    DodajOsobeWarstwa()
     Podreczne.przepisanie?.let { (ids, osobaId) ->
         KiesLijst(stringResource(R.string.twarz_to_jest), persoonKeuzesZPodpowiedzia(Podreczne.osobaUr, osobaId), "", sluit = { Podreczne.przepisanie = null }) { id, naam ->
             Podreczne.przepisanie = null

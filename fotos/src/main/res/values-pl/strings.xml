@@ -1216,4 +1216,14 @@
     <string name="przed_ur_odepnij_tytul">"Odepnąć osobę %1$s od %2$d zdjęć?"</string>
     <string name="przed_ur_odepnij_tak">"Tak, odepnij %1$d"</string>
     <string name="przed_ur_podpowiedz">"Podpowiedź · ur. %1$s"</string>
+    <string name="recht_face_create">"Dodawanie twarzy ręcznie"</string>
+    <string name="dodaj_osobe_akcja">"Dodaj osobę…"</string>
+    <string name="dodaj_osobe_zbiorczo">"Dodaj osobę do zaznaczonych (%1$d)…"</string>
+    <string name="dodaj_osobe_tytul">"Kto jest na zdjęciu? (%1$d)"</string>
+    <string name="dodaj_osobe_ok">"%1$s: dodano do %2$d zdjęć"</string>
+    <string name="dodaj_osobe_juz">"już było: %1$d"</string>
+    <string name="dodaj_osobe_pominiete">"pominięto %1$d (kilka twarzy — dodaj pojedynczo)"</string>
+    <string name="dodaj_osobe_ktora">"Która twarz to %1$s?"</string>
+    <string name="dodaj_osobe_ktora_sub">"Immich wykrył na zdjęciu kilka twarzy bez imienia"</string>
+    <string name="dodaj_osobe_bez_twarzy">"Żadna z nich — dodaj osobę do zdjęcia"</string>
 </resources>

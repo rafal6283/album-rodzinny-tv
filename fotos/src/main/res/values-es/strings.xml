@@ -1173,4 +1173,14 @@
     <string name="przed_ur_odepnij_tytul">"¿Desasignar a %1$s de %2$d fotos?"</string>
     <string name="przed_ur_odepnij_tak">"Sí, desasignar %1$d"</string>
     <string name="przed_ur_podpowiedz">"Sugerencia · nac. %1$s"</string>
+    <string name="recht_face_create">"Añadir caras manualmente"</string>
+    <string name="dodaj_osobe_akcja">"Añadir persona…"</string>
+    <string name="dodaj_osobe_zbiorczo">"Añadir persona a la selección (%1$d)…"</string>
+    <string name="dodaj_osobe_tytul">"¿Quién está en la foto? (%1$d)"</string>
+    <string name="dodaj_osobe_ok">"%1$s: añadida a %2$d fotos"</string>
+    <string name="dodaj_osobe_juz">"ya estaba: %1$d"</string>
+    <string name="dodaj_osobe_pominiete">"%1$d omitidas (varias caras — añadir una a una)"</string>
+    <string name="dodaj_osobe_ktora">"¿Qué cara es %1$s?"</string>
+    <string name="dodaj_osobe_ktora_sub">"Immich encontró varias caras sin nombre en esta foto"</string>
+    <string name="dodaj_osobe_bez_twarzy">"Ninguna — añadir la persona a la foto"</string>
 </resources>

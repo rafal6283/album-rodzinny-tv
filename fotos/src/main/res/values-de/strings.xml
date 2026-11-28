@@ -1166,4 +1166,14 @@
     <string name="przed_ur_odepnij_tytul">"%1$s von %2$d Fotos lösen?"</string>
     <string name="przed_ur_odepnij_tak">"Ja, %1$d lösen"</string>
     <string name="przed_ur_podpowiedz">"Vorschlag · geb. %1$s"</string>
+    <string name="recht_face_create">"Gesichter manuell hinzufügen"</string>
+    <string name="dodaj_osobe_akcja">"Person hinzufügen…"</string>
+    <string name="dodaj_osobe_zbiorczo">"Person zu Auswahl hinzufügen (%1$d)…"</string>
+    <string name="dodaj_osobe_tytul">"Wer ist auf dem Foto? (%1$d)"</string>
+    <string name="dodaj_osobe_ok">"%1$s: zu %2$d Fotos hinzugefügt"</string>
+    <string name="dodaj_osobe_juz">"bereits vorhanden: %1$d"</string>
+    <string name="dodaj_osobe_pominiete">"%1$d übersprungen (mehrere Gesichter — einzeln hinzufügen)"</string>
+    <string name="dodaj_osobe_ktora">"Welches Gesicht ist %1$s?"</string>
+    <string name="dodaj_osobe_ktora_sub">"Immich hat mehrere unbenannte Gesichter auf diesem Foto gefunden"</string>
+    <string name="dodaj_osobe_bez_twarzy">"Keines davon — Person zum Foto hinzufügen"</string>
 </resources>
