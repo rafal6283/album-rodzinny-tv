@@ -146,7 +146,7 @@ class QuizStaat(private val scope: CoroutineScope) {
                 .let { l -> Pokazane.nowePierwsze(l) } // najpierw zdjęcia, których w quizie jeszcze nie było
             // daty urodzenia: pytanie „Ile lat miała Ola na tym zdjęciu?”
             val urodziny = runCatching { Immich.osobyZUrodzinami() }.getOrDefault(emptyList()).mapNotNull { p -> p.urodziny?.let { p.id to it } }.toMap()
-            fun wiek(a: Asset, id: String): Int? = urodziny[id]?.let { u -> java.time.temporal.ChronoUnit.YEARS.between(u, a.datum.toLocalDate()).toInt() }?.takeIf { it in 0..100 }
+            fun wiek(a: Asset, id: String): Int? = urodziny[id]?.takeIf { u -> !a.przedUrodzeniem(u) }?.let { u -> java.time.temporal.ChronoUnit.YEARS.between(u, a.datum.toLocalDate()).toInt() }?.takeIf { it in 0..100 }
             fun lat(n: Int) = Taal.ctx.resources.getQuantityString(R.plurals.lat, n, n)
             val miasta = probka.mapNotNull { it.stad }.distinct()
             val osoby = probka.flatMap { it.osoby }.filter { it.naam.isNotBlank() && !Instellingen.osobaUkryta(it.id) }.distinctBy { it.id }

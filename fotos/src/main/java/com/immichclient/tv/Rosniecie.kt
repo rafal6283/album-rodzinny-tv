@@ -86,6 +86,7 @@ class RosniecieStaat(val osobaId: String, val imie: String, scope: CoroutineScop
                 val zRoku = runCatching { Immich.osobaLosowo(osobaId, LocalDate.of(r, 1, 1), LocalDate.of(r, 12, 31), 40) }
                     .recoverCatching { Immich.osobaWOkresie(osobaId, LocalDate.of(r, 1, 1), LocalDate.of(r, 12, 31), 60, rosnaco = true) }
                     .onFailure { blad = it.message }.getOrDefault(emptyList())
+                    .filter { !it.przedUrodzeniem(urodziny) } // sprzed urodzenia = błędne rozpoznanie, nie psuje filmu
                 if (zRoku.isEmpty()) continue
                 zdjec += zRoku.size
                 // kandydaci: po jednym z różnych miesięcy (najpierw jeszcze niepokazane), do 7 na rok

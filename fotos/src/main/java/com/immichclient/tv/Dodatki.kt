@@ -42,7 +42,7 @@ object Urodziny {
     private var pobrano: LocalDate? = null
 
     /** Po zmianie daty urodzenia w aplikacji: przy następnym laduj() pobierz od nowa. */
-    fun uniewaznij() { pobrano = null }
+    fun uniewaznij() { pobrano = null; DatyUrodzin.uniewaznij() }
 
     suspend fun laduj() {
         val dzis = LocalDate.now()

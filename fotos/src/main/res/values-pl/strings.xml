@@ -1203,4 +1203,17 @@
     <string name="obrot_ustawiony">"Obrócono o %1$d°"</string>
     <string name="obrot_brak">"Oryginalna orientacja"</string>
     <string name="data_cyfry">"Cyfry na pilocie wpisują wartość wprost (np. 1987)"</string>
+    <string name="przed_ur_tytul">"Sprzed urodzenia"</string>
+    <string name="przed_ur_opis">"Zdjęcia osób zrobione przed ich datą urodzenia — zwykle pomyłka rozpoznawania twarzy"</string>
+    <string name="przed_ur_sub">"Immich nie bierze daty urodzenia pod uwagę przy rozpoznawaniu twarzy. Wybierz osobę, żeby poprawić jej zdjęcia."</string>
+    <string name="przed_ur_sprawdzam">"Sprawdzam osoby z datą urodzenia… %1$d / %2$d"</string>
+    <string name="przed_ur_brak">"Nikt nie ma zdjęć sprzed swojej daty urodzenia. Sprawdzane są osoby z datą urodzenia."</string>
+    <string name="przed_ur_data">"ur. %1$s"</string>
+    <string name="przed_ur_lista">"%1$s · sprzed urodzenia"</string>
+    <string name="przed_ur_lista_sub">"Zrobione przed %1$s · przytrzymaj OK: nie ta osoba, ktoś inny, zmiana daty"</string>
+    <string name="przed_ur_zaznacz">"Zaznacz wszystkie"</string>
+    <string name="przed_ur_odepnij">"Odepnij wszystkie"</string>
+    <string name="przed_ur_odepnij_tytul">"Odepnąć osobę %1$s od %2$d zdjęć?"</string>
+    <string name="przed_ur_odepnij_tak">"Tak, odepnij %1$d"</string>
+    <string name="przed_ur_podpowiedz">"Podpowiedź · ur. %1$s"</string>
 </resources>

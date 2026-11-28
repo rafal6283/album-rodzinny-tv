@@ -92,6 +92,10 @@ fun AlbumsScherm(staat: AlbumsStaat, nav: Nav) {
     val lijst = remember(staat.albums, staat.volgorde, staat.alleenGedeeld, staat.zoek) { staat.zichtbaar() }
     val eerste = remember { FocusRequester() }
     val terug = remember { FocusRequester() }
+    var skok by remember { mutableStateOf<String?>(null) }
+    val skokFr = remember { FocusRequester() }
+    val skokScope = androidx.compose.runtime.rememberCoroutineScope()
+    LaunchedEffect(skok) { if (skok != null) { delay(60); runCatching { skokFr.requestFocus() }; skok = null } }
     var zoekOpen by remember { mutableStateOf(false) }
     val zoekKnop = remember { FocusRequester() }
     var wasOpen by remember { mutableStateOf(false) }
@@ -127,7 +131,7 @@ fun AlbumsScherm(staat: AlbumsStaat, nav: Nav) {
         if (staat.fout != null && staat.albums.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) { Melding(stringResource(R.string.albums_niet_geladen), staat.fout) }
         items(lijst, key = { it.id }) { a ->
             AlbumKaart(
-                a, if (a.id == staat.laatsteFocus) Modifier.focusRequester(terug) else Modifier,
+                a, (if (a.id == staat.laatsteFocus) Modifier.focusRequester(terug) else Modifier).then(if (a.id == skok) Modifier.focusRequester(skokFr) else Modifier),
                 onFocus = { staat.laatsteFocus = a.id },
             ) {
                 nav.open(Scherm.Tijdlijn(a.naam, albumSub(a), Filter(albumId = a.id), !a.oudsteEerst, false, nav.scope))
@@ -141,6 +145,20 @@ fun AlbumsScherm(staat: AlbumsStaat, nav: Nav) {
         label = { null },
         sub = { "${Taal.getal((staat.grid.firstVisibleItemIndex - 1).coerceAtLeast(0) + 1)} / ${Taal.getal(lijst.size)}" },
         modifier = Modifier.align(Alignment.CenterEnd),
+        stappen = remember(lijst) {
+            val n = lijst.size
+            val ankers = (0 until 20).map { it * n / 20 }.distinct()
+            BalkStappen(
+                aantal = ankers.size,
+                fractie = { i -> ankers[i].toFloat() / (n - 1).coerceAtLeast(1) },
+                label = { i -> lijst.getOrNull(ankers[i])?.naam },
+                sub = { i -> "${Taal.getal(ankers[i] + 1)} / ${Taal.getal(n)}" },
+                groot = grootPer(4, ankers.size),
+                huidige = { ankers.indexOfLast { it <= (staat.grid.firstVisibleItemIndex - 1).coerceAtLeast(0) }.coerceAtLeast(0) },
+                ga = { i -> skokScope.launch { staat.grid.scrollToItem(ankers[i] + 1); skok = lijst.getOrNull(ankers[i])?.id } },
+                terug = { runCatching { terug.requestFocus() } },
+            )
+        },
     )
     }
     LaunchedEffect(Unit) {

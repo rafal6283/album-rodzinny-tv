@@ -107,6 +107,11 @@ fun PersonenScherm(staat: PersonenStaat, nav: Nav) {
     var ktoBylo by remember { mutableStateOf(false) }
     val zoekKnop = remember { FocusRequester() }
     val terug = remember { FocusRequester() }
+    // skok z paska przewijania: osoba, na którą przenieść fokus po przewinięciu
+    var skok by remember { mutableStateOf<String?>(null) }
+    val skokFr = remember { FocusRequester() }
+    val skokScope = androidx.compose.runtime.rememberCoroutineScope()
+    LaunchedEffect(skok) { if (skok != null) { delay(60); runCatching { skokFr.requestFocus() }; skok = null } }
     var wasOpen by remember { mutableStateOf(false) }
     LaunchedEffect(zoekOpen) { if (wasOpen && !zoekOpen) { delay(16); runCatching { zoekKnop.requestFocus() } }; wasOpen = zoekOpen }
     Box(Modifier.fillMaxSize()) {
@@ -156,6 +161,7 @@ fun PersonenScherm(staat: PersonenStaat, nav: Nav) {
                     Card(
                         onClick = { nav.open(Scherm.Tijdlijn(p.naam.ifBlank { bezImienia }, persoon, Filter(persoonId = p.id), true, false, nav.scope)) },
                         modifier = (if (p.id == staat.laatsteFocus) Modifier.focusRequester(terug) else Modifier)
+                            .then(if (p.id == skok) Modifier.focusRequester(skokFr) else Modifier)
                             .fillMaxWidth().aspectRatio(1f).onFocusChanged { if (it.isFocused) staat.laatsteFocus = p.id }
                             .langeOk { Podreczne.osoba(p.id, Edycja.imie(p)) },
                         shape = CardDefaults.shape(CircleShape),
@@ -178,6 +184,23 @@ fun PersonenScherm(staat: PersonenStaat, nav: Nav) {
             label = { lijst.getOrNull((staat.grid.firstVisibleItemIndex - 1).coerceAtLeast(0))?.naam?.take(1)?.uppercase()?.takeIf { staat.opNaam && it.isNotEmpty() } },
             sub = { "${Taal.getal((staat.grid.firstVisibleItemIndex - 1).coerceAtLeast(0) + 1)} / ${Taal.getal(lijst.size)}" },
             modifier = Modifier.align(Alignment.CenterEnd),
+            stappen = remember(lijst, staat.opNaam) {
+                val n = lijst.size
+                // na imieniu: pierwsza osoba na każdą literę (bez imienia na końcu); inaczej co ~5 % listy
+                val ankers = if (staat.opNaam) lijst.indices.filter { i -> i == 0 || lijst[i].naam.take(1).uppercase() != lijst[i - 1].naam.take(1).uppercase() }
+                    else (0 until 20).map { it * n / 20 / 8 * 8 }.distinct()
+                fun etykieta(i: Int) = lijst.getOrNull(i)?.naam?.take(1)?.uppercase()?.ifEmpty { null }?.takeIf { staat.opNaam } ?: lijst.getOrNull(i)?.naam?.ifBlank { null }
+                BalkStappen(
+                    aantal = ankers.size,
+                    fractie = { i -> ankers[i].toFloat() / (n - 1).coerceAtLeast(1) },
+                    label = { i -> etykieta(ankers[i]) },
+                    sub = { i -> "${Taal.getal(ankers[i] + 1)} / ${Taal.getal(n)}" },
+                    groot = grootPer(if (staat.opNaam) 5 else 4, ankers.size),
+                    huidige = { ankers.indexOfLast { it <= (staat.grid.firstVisibleItemIndex - 1).coerceAtLeast(0) }.coerceAtLeast(0) },
+                    ga = { i -> skokScope.launch { staat.grid.scrollToItem(ankers[i] + 1); skok = lijst.getOrNull(ankers[i])?.id } },
+                    terug = { runCatching { terug.requestFocus() } },
+                )
+            },
         )
     }
     LaunchedEffect(Unit) {

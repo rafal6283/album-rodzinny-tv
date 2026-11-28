@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.ChildCare
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
@@ -70,6 +71,7 @@ fun PorzadkiScherm(nav: Nav) {
     class Poz(val klucz: String, val ikona: ImageVector, val tytul: Int, val opis: Int, val kolor: Color)
     val pozycje = listOf(
         Poz("przeglad", Icons.Filled.FiberNew, R.string.przeglad_tytul, R.string.przeglad_opis, Color(0xFF1F4A3A)),
+        Poz("przedur", Icons.Filled.ChildCare, R.string.przed_ur_tytul, R.string.przed_ur_opis, Color(0xFF4A3A1F)),
         Poz("duplikaty", Icons.Filled.ContentCopy, R.string.duplikaty_tytul, R.string.duplikaty_opis, Color(0xFF3E3358)),
         Poz("kosz", Icons.Filled.Delete, R.string.kosz_tytul, R.string.kosz_opis, Color(0xFF5A2230)),
         Poz("archiwum", Icons.Filled.Archive, R.string.archiwum_tytul, R.string.archiwum_opis, Color(0xFF2C3E58)),
@@ -89,6 +91,7 @@ fun PorzadkiScherm(nav: Nav) {
                     when (p.klucz) {
                         "przeglad" -> nav.open(Scherm.Przeglad(nav.scope))
                         "duplikaty" -> nav.open(Scherm.Duplikaty(nav.scope))
+                        "przedur" -> nav.open(Scherm.PrzedUrodzeniem(nav.scope))
                         "kosz" -> nav.open(Scherm.Kosz(nav.scope))
                         "archiwum" -> nav.open(Scherm.Lijst(Taal.s(R.string.archiwum_tytul), Taal.s(R.string.archiwum_sub), true, nav.scope) { s -> Immich.archiwum(s) })
                         "gwiazdki" -> nav.open(Scherm.Lijst(Taal.s(R.string.gwiazdki_tytul), null, true, nav.scope, losowyPokaz = true) { s -> Immich.zOcena(4, s) })

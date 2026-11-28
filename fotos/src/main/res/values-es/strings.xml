@@ -1160,4 +1160,17 @@
     <string name="obrot_ustawiony">"Girado %1$d°"</string>
     <string name="obrot_brak">"Orientación original"</string>
     <string name="data_cyfry">"Los números del mando escriben el valor directamente (p. ej. 1987)"</string>
+    <string name="przed_ur_tytul">"Antes del nacimiento"</string>
+    <string name="przed_ur_opis">"Fotos de personas tomadas antes de su fecha de nacimiento — normalmente un error de reconocimiento"</string>
+    <string name="przed_ur_sub">"Immich no usa la fecha de nacimiento al reconocer caras. Elige una persona para corregir sus fotos."</string>
+    <string name="przed_ur_sprawdzam">"Comprobando personas con fecha de nacimiento… %1$d / %2$d"</string>
+    <string name="przed_ur_brak">"Nadie tiene fotos anteriores a su fecha de nacimiento. Se comprueban las personas con fecha de nacimiento."</string>
+    <string name="przed_ur_data">"nac. %1$s"</string>
+    <string name="przed_ur_lista">"%1$s · antes del nacimiento"</string>
+    <string name="przed_ur_lista_sub">"Tomadas antes del %1$s · mantén OK: no es esta persona, otra persona, cambiar fecha"</string>
+    <string name="przed_ur_zaznacz">"Seleccionar todo"</string>
+    <string name="przed_ur_odepnij">"Desasignar todo"</string>
+    <string name="przed_ur_odepnij_tytul">"¿Desasignar a %1$s de %2$d fotos?"</string>
+    <string name="przed_ur_odepnij_tak">"Sí, desasignar %1$d"</string>
+    <string name="przed_ur_podpowiedz">"Sugerencia · nac. %1$s"</string>
 </resources>
