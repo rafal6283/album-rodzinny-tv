@@ -1176,4 +1176,7 @@
     <string name="dodaj_osobe_ktora">"Welches Gesicht ist %1$s?"</string>
     <string name="dodaj_osobe_ktora_sub">"Immich hat mehrere unbenannte Gesichter auf diesem Foto gefunden"</string>
     <string name="dodaj_osobe_bez_twarzy">"Keines davon — Person zum Foto hinzufügen"</string>
+    <string name="dodaj_osobe_gotowe">"Fertig"</string>
+    <string name="dodaj_osobe_gotowe_sub">"Nach jeder Person erscheint die Liste wieder — du kannst mehrere hinzufügen"</string>
+    <string name="dodaj_osobe_juz_jest">"%1$s ist bereits auf diesem Foto"</string>
 </resources>

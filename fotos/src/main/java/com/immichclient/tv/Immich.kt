@@ -724,10 +724,12 @@ object Immich {
      * Nowa twarz dodana ręcznie (Immich jej nie wykrył): ramka na środku kadru, przypisana do osoby — zdjęcie pojawia się
      * u tej osoby w sekcji Ludzie (uprawnienie face.create). Współrzędne względem podanego rozmiaru obrazu.
      */
-    suspend fun dodajTwarz(assetId: String, osobaId: String, ratio: Float) {
+    suspend fun dodajTwarz(assetId: String, osobaId: String, ratio: Float, x: Float = 0.4f) {
         val w = 1000; val h = (1000 / ratio.coerceIn(0.2f, 5f)).toInt().coerceAtLeast(1)
+        // ramka 20 % szerokości, w poziomie od [x]; kolejne ręczne twarze w innych miejscach (nie nachodzą na siebie)
+        val bok = minOf(w / 5, h * 3 / 5)
         post("/faces", JSONObject().put("assetId", assetId).put("personId", osobaId).put("imageWidth", w).put("imageHeight", h)
-            .put("x", w / 4).put("y", h / 5).put("width", w / 2).put("height", h * 3 / 5))
+            .put("x", (x * w).toInt().coerceIn(0, w - bok)).put("y", (h - bok) / 2).put("width", bok).put("height", bok))
     }
 
     /** Usuń twarz (wykryta omyłkowo: zabawka, plakat…). */

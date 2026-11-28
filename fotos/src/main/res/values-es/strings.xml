@@ -1183,4 +1183,7 @@
     <string name="dodaj_osobe_ktora">"¿Qué cara es %1$s?"</string>
     <string name="dodaj_osobe_ktora_sub">"Immich encontró varias caras sin nombre en esta foto"</string>
     <string name="dodaj_osobe_bez_twarzy">"Ninguna — añadir la persona a la foto"</string>
+    <string name="dodaj_osobe_gotowe">"Listo"</string>
+    <string name="dodaj_osobe_gotowe_sub">"La lista vuelve tras cada persona — puedes añadir varias"</string>
+    <string name="dodaj_osobe_juz_jest">"%1$s ya está en esta foto"</string>
 </resources>

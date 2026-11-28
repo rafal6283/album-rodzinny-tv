@@ -24,17 +24,34 @@ import androidx.tv.material3.Text
 import kotlinx.coroutines.launch
 
 /**
- * „Dodaj osobę…” z menu zdjęcia (oś czasu, Filmy, wszędzie): zdjęcie trafia do wybranej osoby z sekcji Ludzie.
- * Na zdjęciu jedna nieprzypisana twarz → ta twarz; kilka → wybór twarzy (przy jednym zdjęciu; zbiorczo pomijane);
- * brak wolnej twarzy (Immich jej nie wykrył) → nowa twarz dodana ręcznie na środku kadru (uprawnienie face.create).
+ * „Dodaj osobę…” z menu zdjęcia (oś czasu, Filmy, wszędzie): zdjęcie trafia do osób z sekcji Ludzie — także kilku
+ * naraz (po każdej osobie lista wraca, osoby już na zdjęciu mają ✓, „Gotowe” kończy).
+ * Jedno zdjęcie: przy wolnych (nieopisanych) twarzach zawsze wybór, która to twarz — żeby pierwsza dodana osoba nie
+ * zajęła twarzy kogoś innego; „Żadna z nich” albo brak wolnych twarzy → twarz dodana ręcznie (face.create), każda
+ * kolejna w innym miejscu kadru. Zbiorczo: jedna wolna twarz → przypisana, brak → ręczna, kilka → pominięte.
  */
 object DodajOsobe {
-    /** zdjęcia, do których dodać osobę (otwiera wybór osoby) */
+    const val GOTOWE = "__gotowe"
+    /** zdjęcia, do których dodawać osoby (otwiera listę osób) */
     var zdjecia by mutableStateOf<List<Asset>?>(null)
-    /** jedno zdjęcie z kilkoma wolnymi twarzami: którą przypisać (osoba id, imię) */
+    /** jedno zdjęcie z wolnymi twarzami: którą przypisać (osoba id, imię) */
     var wyborTwarzy by mutableStateOf<Triple<Asset, List<Twarz>, Pair<String, String>>?>(null)
+    /** osoby dodane w tym oknie albo już opisane na zdjęciu (✓ na liście) */
+    val obecne = androidx.compose.runtime.mutableStateMapOf<String, Boolean>()
 
     val otwarte get() = zdjecia != null || wyborTwarzy != null
+
+    fun otworz(l: List<Asset>) {
+        obecne.clear(); wyborTwarzy = null; zdjecia = l
+        // jedno zdjęcie: kto już jest na nim opisany
+        if (l.size == 1) Edycja.zakres.launch {
+            runCatching { Immich.twarze(l[0].id) }.getOrNull()?.mapNotNull { it.osoba?.id }?.forEach { obecne[it] = true }
+        }
+    }
+    fun zamknij() { zdjecia = null; wyborTwarzy = null; obecne.clear() }
+
+    /** miejsce ręcznej twarzy: kolejne obok siebie (środek, lewo, prawo, …), by nie nachodziły na siebie */
+    private fun miejsce(k: Int): Float = listOf(0.4f, 0.12f, 0.68f, 0.26f, 0.54f)[k % 5]
 
     fun dodaj(lista: List<Asset>, osobaId: String, imie: String) {
         Edycja.zakres.launch {
@@ -46,13 +63,14 @@ object DodajOsobe {
                     if (twarze.any { it.osoba?.id == osobaId }) { juz++; return@runCatching }
                     val wolne = twarze.filter { it.osoba == null }
                     when {
+                        lista.size == 1 && wolne.isNotEmpty() -> { wyborTwarzy = Triple(a, wolne, osobaId to imie); return@launch }
                         wolne.size == 1 -> { Immich.przypiszTwarz(wolne[0].id, osobaId); dodane++ }
-                        wolne.isEmpty() -> { Immich.dodajTwarz(a.id, osobaId, a.ratio); dodane++ }
-                        lista.size == 1 -> { wyborTwarzy = Triple(a, wolne, osobaId to imie); return@launch }
+                        wolne.isEmpty() -> { Immich.dodajTwarz(a.id, osobaId, a.ratio, miejsce(twarze.size)); dodane++ }
                         else -> pominiete++
                     }
                 }.onFailure { blad = it; android.util.Log.w("Fotos", "dodaj osobę", it) }
             }
+            if (dodane > 0 || juz > 0) obecne[osobaId] = true
             Edycja.wersjaOsob++
             Edycja.komunikat = blad?.takeIf { dodane == 0 }?.let { Edycja.blad(it) } ?: buildList {
                 add(Taal.s(R.string.dodaj_osobe_ok, imie, dodane))
@@ -62,10 +80,14 @@ object DodajOsobe {
         }
     }
 
+    /** wybór z okna twarzy: ta twarz albo (null) nowa ręczna twarz; potem z powrotem lista osób */
     fun przypiszTwarz(t: Twarz?, a: Asset, osobaId: String, imie: String) {
         Edycja.zakres.launch {
-            runCatching { if (t != null) Immich.przypiszTwarz(t.id, osobaId) else Immich.dodajTwarz(a.id, osobaId, a.ratio) }
-                .onSuccess { Edycja.wersjaOsob++; Edycja.komunikat = Taal.s(R.string.dodaj_osobe_ok, imie, 1) }
+            runCatching {
+                if (t != null) Immich.przypiszTwarz(t.id, osobaId)
+                else Immich.dodajTwarz(a.id, osobaId, a.ratio, miejsce(runCatching { Immich.twarze(a.id).size }.getOrDefault(0)))
+            }
+                .onSuccess { obecne[osobaId] = true; Edycja.wersjaOsob++; Edycja.komunikat = Taal.s(R.string.dodaj_osobe_ok, imie, 1) }
                 .onFailure { Edycja.komunikat = Edycja.blad(it) }
         }
     }
@@ -73,11 +95,20 @@ object DodajOsobe {
 
 @Composable
 fun DodajOsobeWarstwa() {
-    DodajOsobe.zdjecia?.let { l ->
-        KiesLijst(stringResource(R.string.dodaj_osobe_tytul, l.size), persoonKeuzes(), "", sluit = { DodajOsobe.zdjecia = null }) { id, naam ->
-            DodajOsobe.zdjecia = null
-            DodajOsobe.dodaj(l, id, naam)
+    val l = DodajOsobe.zdjecia
+    if (l != null) androidx.compose.runtime.key(l) {
+      // lista osób wczytywana przy każdym otwarciu (nowe imiona z „Kto to jest?” od razu widoczne)
+      val osoby = persoonKeuzes()
+      if (DodajOsobe.wyborTwarzy == null) {
+        val gotowe = stringResource(R.string.dodaj_osobe_gotowe)
+        val podpis = stringResource(R.string.dodaj_osobe_gotowe_sub)
+        val items = androidx.compose.runtime.remember(osoby) { osoby?.let { listOf(KiesItem(DodajOsobe.GOTOWE, "✓  $gotowe", podpis, null)) + it } }
+        KiesLijst(stringResource(R.string.dodaj_osobe_tytul, l.size), items, DodajOsobe.obecne.keys.joinToString(","), sluit = { DodajOsobe.zamknij() }) { id, naam ->
+            if (id == DodajOsobe.GOTOWE) DodajOsobe.zamknij()
+            else if (DodajOsobe.obecne[id] == true && l.size == 1) Edycja.komunikat = Taal.s(R.string.dodaj_osobe_juz_jest, naam)
+            else DodajOsobe.dodaj(l, id, naam)
         }
+      }
     }
     DodajOsobe.wyborTwarzy?.let { (a, twarze, osoba) ->
         val (oid, imie) = osoba

@@ -1176,4 +1176,7 @@
     <string name="dodaj_osobe_ktora">"Welk gezicht is %1$s?"</string>
     <string name="dodaj_osobe_ktora_sub">"Immich vond meerdere naamloze gezichten op deze foto"</string>
     <string name="dodaj_osobe_bez_twarzy">"Geen van deze — persoon aan de foto toevoegen"</string>
+    <string name="dodaj_osobe_gotowe">"Klaar"</string>
+    <string name="dodaj_osobe_gotowe_sub">"Na elke persoon komt de lijst terug — je kunt er meerdere toevoegen"</string>
+    <string name="dodaj_osobe_juz_jest">"%1$s staat al op deze foto"</string>
 </resources>

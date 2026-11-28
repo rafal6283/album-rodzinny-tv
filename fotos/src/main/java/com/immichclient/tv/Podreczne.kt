@@ -154,7 +154,7 @@ object Podreczne {
             komunikat(s(R.string.podreczne_zaznaczone, Udostepnianie.koszyk.size))
         }
         if (!Instellingen.trybDzieciecy) p += Pozycja(s(R.string.album_akcja)) { doAlbumu = (Udostepnianie.koszyk.map { it.id } + a.id).distinct() }
-        if (!Instellingen.trybDzieciecy) p += Pozycja(s(R.string.dodaj_osobe_akcja)) { DodajOsobe.zdjecia = listOf(a) }
+        if (!Instellingen.trybDzieciecy) p += Pozycja(s(R.string.dodaj_osobe_akcja)) { DodajOsobe.otworz(listOf(a)) }
         if (a.lat != null) naMape?.let { m -> p += Pozycja(s(R.string.podreczne_na_mapie)) { m(a) } }
         // oś czasu osoby: błędnie przypisane zdjęcie — odepnij albo przepisz do kogoś innego
         osobaKontekst?.takeIf { !Instellingen.trybDzieciecy }?.let { (oid, imie, staat) ->

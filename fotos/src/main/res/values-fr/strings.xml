@@ -1183,4 +1183,7 @@
     <string name="dodaj_osobe_ktora">"Quel visage est %1$s ?"</string>
     <string name="dodaj_osobe_ktora_sub">"Immich a trouvé plusieurs visages sans nom sur cette photo"</string>
     <string name="dodaj_osobe_bez_twarzy">"Aucun — ajouter la personne à la photo"</string>
+    <string name="dodaj_osobe_gotowe">"Terminé"</string>
+    <string name="dodaj_osobe_gotowe_sub">"La liste revient après chaque personne — vous pouvez en ajouter plusieurs"</string>
+    <string name="dodaj_osobe_juz_jest">"%1$s est déjà sur cette photo"</string>
 </resources>
