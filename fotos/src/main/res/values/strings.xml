@@ -748,7 +748,7 @@
     <string name="zapisz">"Save"</string>
     <string name="anuluj">"Cancel"</string>
     <string name="zapisano">"Saved"</string>
-    <string name="data_hint">"◀ ▶ field   ·   ▲ ▼ change   ·   OK save"</string>
+    <string name="data_hint">"◀ ▶ field   ·   ▲ ▼ change   ·   OK save   ·   ▶ from the year: buttons"</string>
     <string name="album_nowy">"New album…"</string>
     <string name="album_ile">"%1$s items"</string>
     <string name="album_dodaj_jedno">"Add to album"</string>
@@ -1112,7 +1112,7 @@
     <string name="edytor_dzien">"Day"</string>
     <string name="edytor_godzina">"Hour"</string>
     <string name="edytor_minuta">"Minute"</string>
-    <string name="edytor_data_klawisze">"◀ ▶ field · ▲ ▼ change · OK save · Back cancel"</string>
+    <string name="edytor_data_klawisze">"◀ ▶ field · ▲ ▼ change · OK save · Back cancel · 0–9"</string>
     <string name="edytor_data_ok">"Date changed: %1$d"</string>
     <string name="edytor_miejsce_tytul">"Place for %1$d — like the photos from:"</string>
     <string name="edytor_miejsce_ok">"Place set: %1$s (%2$d)"</string>
@@ -1171,4 +1171,8 @@
     <string name="recht_asset_download">"Original files (HDR / Dolby Vision videos)"</string>
     <string name="pionowe_hdr">"Vertical HDR videos in HDR"</string>
     <string name="pionowe_hdr_uitleg">"Turn off if vertical phone videos appear sideways on this TV (then they play correctly, but in SDR)"</string>
+    <string name="obrot_akcja">"Rotate"</string>
+    <string name="obrot_ustawiony">"Rotated %1$d°"</string>
+    <string name="obrot_brak">"Original orientation"</string>
+    <string name="data_cyfry">"Digits on the remote type the value directly (e.g. 1987)"</string>
 </resources>

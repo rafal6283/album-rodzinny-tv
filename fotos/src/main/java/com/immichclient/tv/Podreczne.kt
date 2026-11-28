@@ -155,6 +155,7 @@ object Podreczne {
         if (a.lat != null) naMape?.let { m -> p += Pozycja(s(R.string.podreczne_na_mapie)) { m(a) } }
         // oś czasu osoby: błędnie przypisane zdjęcie — odepnij albo przepisz do kogoś innego
         osobaKontekst?.takeIf { !Instellingen.trybDzieciecy }?.let { (oid, imie, staat) ->
+            p += Pozycja(s(R.string.glowne_ta_twarz, imie.ifBlank { "…" })) { Edycja.ustawGlowne(oid, a.id) }
             p += Pozycja(s(R.string.osoba_nie_ta, imie.ifBlank { "…" })) { odepnijOsobe(a.id, oid) { Edycja.odpiete[a.id] = true } }
             p += Pozycja(s(R.string.osoba_inna)) { przepisanie = listOf(a.id) to oid }
         }

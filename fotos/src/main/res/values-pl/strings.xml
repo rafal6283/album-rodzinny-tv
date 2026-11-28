@@ -772,7 +772,7 @@
     <string name="zapisz">"Zapisz"</string>
     <string name="anuluj">"Anuluj"</string>
     <string name="zapisano">"Zapisano"</string>
-    <string name="data_hint">"◀ ▶ pole   ·   ▲ ▼ zmień   ·   OK zapisz"</string>
+    <string name="data_hint">"◀ ▶ pole   ·   ▲ ▼ zmień   ·   OK zapisz   ·   ▶ z roku: przyciski"</string>
     <string name="album_nowy">"Nowy album…"</string>
     <string name="album_ile">"%1$s el."</string>
     <string name="album_dodaj_jedno">"Dodaj do albumu"</string>
@@ -1140,7 +1140,7 @@
     <string name="edytor_dzien">"Dzień"</string>
     <string name="edytor_godzina">"Godzina"</string>
     <string name="edytor_minuta">"Minuta"</string>
-    <string name="edytor_data_klawisze">"◀ ▶ pole · ▲ ▼ zmiana · OK zapisz · Wstecz anuluj"</string>
+    <string name="edytor_data_klawisze">"◀ ▶ pole · ▲ ▼ zmiana · OK zapisz · Wstecz anuluj · 0–9"</string>
     <string name="edytor_data_ok">"Zmieniono datę: %1$d"</string>
     <string name="edytor_miejsce_tytul">"Miejsce dla %1$d — jak na zdjęciach z:"</string>
     <string name="edytor_miejsce_ok">"Ustawiono miejsce: %1$s (%2$d)"</string>
@@ -1199,4 +1199,8 @@
     <string name="recht_asset_download">"Oryginalne pliki (filmy HDR / Dolby Vision)"</string>
     <string name="pionowe_hdr">"Pionowe filmy HDR w HDR"</string>
     <string name="pionowe_hdr_uitleg">"Wyłącz, jeśli pionowe filmy z telefonu wyświetlają się na tym telewizorze obrócone na bok (wtedy odtworzą się poprawnie, ale w SDR)"</string>
+    <string name="obrot_akcja">"Obróć"</string>
+    <string name="obrot_ustawiony">"Obrócono o %1$d°"</string>
+    <string name="obrot_brak">"Oryginalna orientacja"</string>
+    <string name="data_cyfry">"Cyfry na pilocie wpisują wartość wprost (np. 1987)"</string>
 </resources>

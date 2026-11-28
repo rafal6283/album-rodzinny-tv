@@ -81,6 +81,8 @@ class Resultaten(private val scope: CoroutineScope) {
     var fout by mutableStateOf<String?>(null)
     var gezocht by mutableStateOf(false)
     private var volgende: Int? = null
+    /** są jeszcze kolejne strony do wczytania */
+    val jestWiecej get() = volgende != null && fout == null
     private var laad: (suspend (Int) -> Pagina)? = null
     private var job: Job? = null
     val raster = RasterStaat()

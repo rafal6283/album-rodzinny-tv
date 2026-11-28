@@ -51,6 +51,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -70,6 +71,7 @@ import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Videocam
@@ -361,6 +363,10 @@ fun Kijker(staat: KijkerStaat, opKaart: ((Asset) -> Unit)? = null, sluit: (Asset
             // błędnie przypisane zdjęcie: odepnij tę osobę albo przepisz twarz do innej (oś czasu odświeży się po zamknięciu)
             Akcja.NIE_TA -> if (huidig != null && osobaZrodla != null) Podreczne.odepnijOsobe(huidig.id, osobaZrodla) { Edycja.odpiete[huidig.id] = true }
             Akcja.INNA -> if (huidig != null && osobaZrodla != null) { staat.diashow = false; Podreczne.przepisanie = listOf(huidig.id) to osobaZrodla }
+            Akcja.OBROC -> if (huidig != null) {
+                val st = Obroty.obroc(huidig.id)
+                staat.komunikat = if (st == 0) ctx.getString(R.string.obrot_brak) else ctx.getString(R.string.obrot_ustawiony, st)
+            }
             Akcja.WYCZYSC -> { Udostepnianie.wyczysc(); staat.komunikat = ctx.getString(R.string.zazn_wyczyszczono) }
             // to zdjęcie jako okładka albumu (w Immich i w aplikacji)
             Akcja.OKLADKA -> if (huidig != null && albumZrodla != null) {
@@ -775,19 +781,30 @@ private fun Video(a: Asset, staat: KijkerStaat, zrodlo: String = a.id, live: Boo
         // decoder pas met een echt oppervlak, dus wachten op de videomaat bleef daar eeuwig wachten (2.7: geen enkele video
         // speelde). Tot de maat bekend is de verhouding uit Immich (staande video = staand), daarna die van de video zelf.
         val r = if (verhouding > 0f) verhouding else a.ratio
-        key(gedraaid) {
+        // obrót ręczny (źle nagrany film): TextureView, bo tylko ona daje się obracać (SurfaceView = osobna warstwa sprzętowa)
+        val wlasny = Obroty.stopnie(a.id)
+        val boczny = wlasny == 90 || wlasny == 270
+        val tekstura = gedraaid || wlasny != 0
+        key(tekstura) {
+          BoxWithConstraints(
+            Modifier.align(Alignment.Center).aspectRatio((if (boczny) 1f / r else r).coerceIn(0.2f, 5f), matchHeightConstraintsFirst = true),
+            contentAlignment = Alignment.Center,
+          ) {
             AndroidView(
                 factory = { c ->
-                    if (gedraaid) TextureView(c).also { speler.setVideoTextureView(it) }
+                    if (tekstura) TextureView(c).also { speler.setVideoTextureView(it) }
                     else SurfaceView(c).also { speler.setVideoSurfaceView(it) }
                 },
                 onRelease = { v ->
                     if (v is TextureView) speler.clearVideoTextureView(v)
                     else if (v is SurfaceView) speler.clearVideoSurfaceView(v)
                 },
-                // past binnen het scherm, staand of liggend (aspectRatio probeert eerst de hoogte, anders de breedte)
-                modifier = Modifier.align(Alignment.Center).aspectRatio(r.coerceIn(0.2f, 5f), matchHeightConstraintsFirst = true),
+                // past binnen het scherm, staand of liggend (aspectRatio probeert eerst de hoogte, anders de breedte);
+                // obrócony o 90°/270°: widok ma wymiary zamienione i obraca się wokół środka
+                modifier = (if (boczny) Modifier.requiredSize(maxHeight, maxWidth) else Modifier.fillMaxSize())
+                    .graphicsLayer { rotationZ = wlasny.toFloat() },
             )
+          }
         }
         if (staat.videoFout) Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(Icons.Filled.VideocamOff, null, Modifier.size(44.dp), tint = Kleur.zacht)
@@ -1010,13 +1027,14 @@ private fun OsobyRegel(osoby: List<Persoon>) {
 }
 
 /** Akcje dolnego paska przeglądarki (▼), jak okrągłe przyciski w Immichin. */
-enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, LIVE, UDOSTEPNIJ, KOD_QR, WYCZYSC, ALBUM, Z_ALBUMU, OKLADKA, GLOWNE, NIE_TA, INNA, TWARZE, MAPA }
+enum class Akcja { POPRZEDNI, NASTEPNY, POKAZ, ULUBIONE, SZCZEGOLY, POWIEKSZ, OBROC, LIVE, UDOSTEPNIJ, KOD_QR, WYCZYSC, ALBUM, Z_ALBUMU, OKLADKA, GLOWNE, NIE_TA, INNA, TWARZE, MAPA }
 
 fun akcjeDla(a: Asset?, zMapa: Boolean, zAlbumu: Boolean = false, zOsoby: Boolean = false): List<Akcja> = if (a != null && Synology.jestSyno(a.id)) listOf(Akcja.POKAZ) else buildList {
     add(Akcja.POKAZ)
     if (a != null) add(Akcja.ULUBIONE)
     add(Akcja.SZCZEGOLY)
     if (a != null && !a.video) add(Akcja.POWIEKSZ)
+    if (a?.video == true) add(Akcja.OBROC)
     if (a?.live != null) add(Akcja.LIVE)
     if (a != null) add(Akcja.UDOSTEPNIJ)
     if (Udostepnianie.koszyk.isNotEmpty()) add(Akcja.KOD_QR)
@@ -1091,6 +1109,7 @@ private fun PasekAkcji(staat: KijkerStaat, akcje: List<Akcja>) {
                     Akcja.GLOWNE -> Icons.Filled.AccountCircle to stringResource(R.string.glowne_krotko)
                     Akcja.NIE_TA -> Icons.Filled.PersonRemove to stringResource(R.string.osoba_nie_ta_krotko)
                     Akcja.INNA -> Icons.Filled.SwapHoriz to stringResource(R.string.osoba_inna_krotko)
+                    Akcja.OBROC -> androidx.compose.material.icons.Icons.Filled.ScreenRotation to stringResource(R.string.obrot_akcja)
                     Akcja.WYCZYSC -> Icons.Filled.DeleteSweep to stringResource(R.string.zazn_wyczysc_krotko)
                     Akcja.Z_ALBUMU -> {
                         val usuniete = staat.bron.op(staat.index)?.let { staat.usunieteZAlbumu[it.id] } == true
@@ -1138,3 +1157,16 @@ fun albumNamen(id: String): List<String> =
 
 /** "Vakantie 2023", of "Vakantie 2023 + 2" bij meer albums. */
 fun albumRegel(namen: List<String>) = if (namen.size <= 1) namen.firstOrNull().orEmpty() else namen[0] + "  + " + (namen.size - 1)
+
+/** Ręczny obrót filmów (źle nagrane): zapamiętany na tym telewizorze, co 90° zgodnie z ruchem wskazówek zegara. */
+object Obroty {
+    private val mapa = androidx.compose.runtime.mutableStateMapOf<String, Int>()
+    private val prefs by lazy { Taal.ctx.getSharedPreferences("obroty", android.content.Context.MODE_PRIVATE) }
+    fun stopnie(id: String): Int = mapa[id] ?: prefs.getInt(id, 0)
+    fun obroc(id: String): Int {
+        val n = (stopnie(id) + 90) % 360
+        mapa[id] = n
+        prefs.edit().apply { if (n == 0) remove(id) else putInt(id, n) }.apply()
+        return n
+    }
+}

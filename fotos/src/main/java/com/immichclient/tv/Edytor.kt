@@ -142,15 +142,35 @@ fun DataWybor(start: LocalDateTime, ile: Int, sluit: () -> Unit, zapisz: (LocalD
     LaunchedEffect(Unit) { delay(40); runCatching { fr.requestFocus() } }
     var d by remember { mutableStateOf(start.withSecond(0).withNano(0)) }
     var pole by remember { mutableIntStateOf(0) }
+    // cyfry z pilota wpisują wartość bieżącego pola (rok 4 cyfry, reszta 2), potem przejście do następnego
+    var bufor by remember { mutableStateOf("") }
+    fun wpisz(c: Int) {
+        bufor += c
+        val v = bufor.toInt()
+        val dl = if (pole == 0) 4 else 2
+        runCatching {
+            when (pole) {
+                0 -> if (bufor.length == 4 && v in 1800..2100) d = d.withYear(v).withDayOfMonth(d.dayOfMonth.coerceAtMost(java.time.YearMonth.of(v, d.monthValue).lengthOfMonth()))
+                1 -> if (v in 1..12) d = d.withDayOfMonth(d.dayOfMonth.coerceAtMost(java.time.YearMonth.of(d.year, v).lengthOfMonth())).withMonth(v)
+                2 -> if (v in 1..d.toLocalDate().lengthOfMonth()) d = d.withDayOfMonth(v)
+                3 -> if (v in 0..23) d = d.withHour(v)
+                else -> if (v in 0..59) d = d.withMinute(v)
+            }
+        }
+        val pelne = bufor.length >= dl || (pole == 1 && v > 1) || (pole == 2 && v > 3) || (pole == 3 && v > 2) || (pole == 4 && v > 5)
+        if (pelne) { bufor = ""; pole = (pole + 1).coerceAtMost(4) }
+    }
     fun zmien(k: Int) {
+        bufor = ""
         d = when (pole) { 0 -> d.plusYears(k.toLong()); 1 -> d.plusMonths(k.toLong()); 2 -> d.plusDays(k.toLong()); 3 -> d.plusHours(k.toLong()); else -> d.plusMinutes(5L * k) }
     }
     Box(
         Modifier.fillMaxSize().background(Color(0xF20A0A0A)).focusVangen().focusRequester(fr).focusable().onPreviewKeyEvent { e ->
             if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+            cyfraKlawisza(e.key.nativeKeyCode)?.let { wpisz(it); return@onPreviewKeyEvent true }
             when (e.key.nativeKeyCode) {
-                KeyEvent.KEYCODE_DPAD_LEFT -> { pole = (pole - 1).coerceAtLeast(0); true }
-                KeyEvent.KEYCODE_DPAD_RIGHT -> { pole = (pole + 1).coerceAtMost(4); true }
+                KeyEvent.KEYCODE_DPAD_LEFT -> { bufor = ""; pole = (pole - 1).coerceAtLeast(0); true }
+                KeyEvent.KEYCODE_DPAD_RIGHT -> { bufor = ""; pole = (pole + 1).coerceAtMost(4); true }
                 KeyEvent.KEYCODE_DPAD_UP -> { zmien(1); true }
                 KeyEvent.KEYCODE_DPAD_DOWN -> { zmien(-1); true }
                 KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { if (e.nativeKeyEvent.repeatCount == 0) zapisz(d); true }
@@ -164,7 +184,7 @@ fun DataWybor(start: LocalDateTime, ile: Int, sluit: () -> Unit, zapisz: (LocalD
             val pola = listOf("%04d".format(d.year), d.month.getDisplayName(java.time.format.TextStyle.FULL_STANDALONE, Taal.locale), d.dayOfMonth.toString(), "%02d".format(d.hour), "%02d".format(d.minute))
             val etykiety = listOf(R.string.edytor_rok, R.string.edytor_miesiac, R.string.edytor_dzien, R.string.edytor_godzina, R.string.edytor_minuta)
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(top = 24.dp)) {
-                pola.forEachIndexed { i, t ->
+                pola.mapIndexed { i, t -> if (i == pole && bufor.isNotEmpty()) bufor.padEnd(if (i == 0) 4 else 2, '_') else t }.forEachIndexed { i, t ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(stringResource(etykiety[i]), style = MaterialTheme.typography.labelLarge, color = Kleur.zacht)
                         Text(

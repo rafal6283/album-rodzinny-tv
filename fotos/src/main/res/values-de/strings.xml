@@ -726,7 +726,7 @@
     <string name="zapisz">"Speichern"</string>
     <string name="anuluj">"Abbrechen"</string>
     <string name="zapisano">"Gespeichert"</string>
-    <string name="data_hint">"◀ ▶ Feld   ·   ▲ ▼ ändern   ·   OK speichern"</string>
+    <string name="data_hint">"◀ ▶ Feld   ·   ▲ ▼ ändern   ·   OK speichern   ·   ▶ vom Jahr: Tasten"</string>
     <string name="album_nowy">"Neues Album…"</string>
     <string name="album_ile">"%1$s Elemente"</string>
     <string name="album_dodaj_jedno">"Zum Album hinzufügen"</string>
@@ -1090,7 +1090,7 @@
     <string name="edytor_dzien">"Tag"</string>
     <string name="edytor_godzina">"Stunde"</string>
     <string name="edytor_minuta">"Minute"</string>
-    <string name="edytor_data_klawisze">"◀ ▶ Feld · ▲ ▼ ändern · OK speichern · Zurück abbrechen"</string>
+    <string name="edytor_data_klawisze">"◀ ▶ Feld · ▲ ▼ ändern · OK speichern · Zurück abbrechen · 0–9"</string>
     <string name="edytor_data_ok">"Datum geändert: %1$d"</string>
     <string name="edytor_miejsce_tytul">"Ort für %1$d — wie die Fotos aus:"</string>
     <string name="edytor_miejsce_ok">"Ort gesetzt: %1$s (%2$d)"</string>
@@ -1149,4 +1149,8 @@
     <string name="recht_asset_download">"Originaldateien (HDR / Dolby Vision)"</string>
     <string name="pionowe_hdr">"Hochkant-HDR-Videos in HDR"</string>
     <string name="pionowe_hdr_uitleg">"Ausschalten, wenn Hochkant-Videos auf diesem TV seitlich erscheinen (dann richtig, aber in SDR)"</string>
+    <string name="obrot_akcja">"Drehen"</string>
+    <string name="obrot_ustawiony">"Um %1$d° gedreht"</string>
+    <string name="obrot_brak">"Ursprüngliche Ausrichtung"</string>
+    <string name="data_cyfry">"Ziffern auf der Fernbedienung geben den Wert direkt ein (z. B. 1987)"</string>
 </resources>

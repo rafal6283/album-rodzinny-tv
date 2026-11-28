@@ -733,7 +733,7 @@
     <string name="zapisz">"Enregistrer"</string>
     <string name="anuluj">"Annuler"</string>
     <string name="zapisano">"Enregistré"</string>
-    <string name="data_hint">"◀ ▶ champ   ·   ▲ ▼ modifier   ·   OK enregistrer"</string>
+    <string name="data_hint">"◀ ▶ champ   ·   ▲ ▼ modifier   ·   OK enregistrer   ·   ▶ depuis l’année : boutons"</string>
     <string name="album_nowy">"Nouvel album…"</string>
     <string name="album_ile">"%1$s éléments"</string>
     <string name="album_dodaj_jedno">"Ajouter à un album"</string>
@@ -1097,7 +1097,7 @@
     <string name="edytor_dzien">"Jour"</string>
     <string name="edytor_godzina">"Heure"</string>
     <string name="edytor_minuta">"Minute"</string>
-    <string name="edytor_data_klawisze">"◀ ▶ champ · ▲ ▼ modifier · OK enregistrer · Retour annuler"</string>
+    <string name="edytor_data_klawisze">"◀ ▶ champ · ▲ ▼ modifier · OK enregistrer · Retour annuler · 0–9"</string>
     <string name="edytor_data_ok">"Date modifiée : %1$d"</string>
     <string name="edytor_miejsce_tytul">"Lieu pour %1$d — comme les photos de :"</string>
     <string name="edytor_miejsce_ok">"Lieu défini : %1$s (%2$d)"</string>
@@ -1156,4 +1156,8 @@
     <string name="recht_asset_download">"Fichiers originaux (HDR / Dolby Vision)"</string>
     <string name="pionowe_hdr">"Vidéos HDR verticales en HDR"</string>
     <string name="pionowe_hdr_uitleg">"Désactivez si les vidéos verticales s’affichent couchées sur ce téléviseur (elles seront alors correctes, mais en SDR)"</string>
+    <string name="obrot_akcja">"Pivoter"</string>
+    <string name="obrot_ustawiony">"Pivoté de %1$d°"</string>
+    <string name="obrot_brak">"Orientation d’origine"</string>
+    <string name="data_cyfry">"Les chiffres de la télécommande saisissent la valeur directement (ex. 1987)"</string>
 </resources>

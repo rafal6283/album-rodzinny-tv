@@ -733,7 +733,7 @@
     <string name="zapisz">"Guardar"</string>
     <string name="anuluj">"Cancelar"</string>
     <string name="zapisano">"Guardado"</string>
-    <string name="data_hint">"◀ ▶ campo   ·   ▲ ▼ cambiar   ·   OK guardar"</string>
+    <string name="data_hint">"◀ ▶ campo   ·   ▲ ▼ cambiar   ·   OK guardar   ·   ▶ desde el año: botones"</string>
     <string name="album_nowy">"Nuevo álbum…"</string>
     <string name="album_ile">"%1$s elementos"</string>
     <string name="album_dodaj_jedno">"Añadir a un álbum"</string>
@@ -1097,7 +1097,7 @@
     <string name="edytor_dzien">"Día"</string>
     <string name="edytor_godzina">"Hora"</string>
     <string name="edytor_minuta">"Minuto"</string>
-    <string name="edytor_data_klawisze">"◀ ▶ campo · ▲ ▼ cambiar · OK guardar · Atrás cancelar"</string>
+    <string name="edytor_data_klawisze">"◀ ▶ campo · ▲ ▼ cambiar · OK guardar · Atrás cancelar · 0–9"</string>
     <string name="edytor_data_ok">"Fecha cambiada: %1$d"</string>
     <string name="edytor_miejsce_tytul">"Lugar para %1$d — como las fotos de:"</string>
     <string name="edytor_miejsce_ok">"Lugar establecido: %1$s (%2$d)"</string>
@@ -1156,4 +1156,8 @@
     <string name="recht_asset_download">"Archivos originales (HDR / Dolby Vision)"</string>
     <string name="pionowe_hdr">"Vídeos HDR verticales en HDR"</string>
     <string name="pionowe_hdr_uitleg">"Desactívalo si los vídeos verticales aparecen de lado en este televisor (se verán bien, pero en SDR)"</string>
+    <string name="obrot_akcja">"Girar"</string>
+    <string name="obrot_ustawiony">"Girado %1$d°"</string>
+    <string name="obrot_brak">"Orientación original"</string>
+    <string name="data_cyfry">"Los números del mando escriben el valor directamente (p. ej. 1987)"</string>
 </resources>
