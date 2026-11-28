@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -292,6 +293,22 @@ fun ZoekScherm(staat: ZoekStaat, nav: Nav) {
                             shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(28.dp)),
                             colors = ClickableSurfaceDefaults.colors(containerColor = Kleur.vlakHoog, focusedContainerColor = Kleur.primair, focusedContentColor = Kleur.opPrimair),
                         ) { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Mic, stringResource(R.string.spraak)) } }
+                        // wyczyść: tekst, filtry, rodzaj i wyniki — od nowa jednym przyciskiem
+                        if (staat.tekst.isNotEmpty() || !staat.filtr.pusty || staat.type != ZoekType.ALLES || staat.res.gezocht) Surface(
+                            onClick = {
+                                staat.tekst = ""; staat.filtr = ZoekFiltr(); staat.type = ZoekType.ALLES; staat.volgorde = ZoekVolgorde.RELEVANTIE
+                                staat.res.wis()
+                                runCatching { veld.requestFocus() }
+                            },
+                            modifier = Modifier.height(56.dp),
+                            shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(28.dp)),
+                            colors = ClickableSurfaceDefaults.colors(containerColor = Kleur.vlakHoog, focusedContainerColor = Kleur.primair, focusedContentColor = Kleur.opPrimair),
+                        ) {
+                            Row(Modifier.fillMaxHeight().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Filled.Close, null)
+                                Text("  " + stringResource(R.string.toets_wissen).replaceFirstChar { it.titlecase(Taal.locale) }, style = MaterialTheme.typography.titleMedium, color = androidx.tv.material3.LocalContentColor.current)
+                            }
+                        }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         for (m in ZoekModus.entries) Keuze(selected = staat.modus == m, onClick = { staat.modus = m; staat.zoek(ctx) }, tekst = stringResource(m.label))
