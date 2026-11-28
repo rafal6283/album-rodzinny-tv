@@ -730,8 +730,13 @@ private fun Video(a: Asset, staat: KijkerStaat, zrodlo: String = a.id, live: Boo
             override fun onTracksChanged(tracks: Tracks) {
                 val f = tracks.groups.firstOrNull { it.type == C.TRACK_TYPE_VIDEO }?.getTrackFormat(0) ?: return
                 format = f
-                gedraaid = f.rotationDegrees == 90 || f.rotationDegrees == 270
-                if (gedraaid) Log.i("Fotos", "video ${a.id}: gedraaid ${f.rotationDegrees}°, TextureView")
+                // pionowy film HDR / Dolby Vision: SurfaceView (tylko ona przenosi HDR) — chyba że w ustawieniach wyłączone,
+                // bo na części telewizorów sprzęt nie obraca obrazu (film na boku); wtedy TextureView = poprawnie, ale SDR
+                val hdr = f.colorInfo?.colorTransfer.let { it == C.COLOR_TRANSFER_ST2084 || it == C.COLOR_TRANSFER_HLG } ||
+                    f.sampleMimeType == androidx.media3.common.MimeTypes.VIDEO_DOLBY_VISION
+                val obrot = f.rotationDegrees == 90 || f.rotationDegrees == 270
+                gedraaid = obrot && !(hdr && Instellingen.pionoweHdr)
+                Log.i("Fotos", "video ${a.id}: obrót ${f.rotationDegrees}°, hdr=$hdr → " + if (gedraaid) "TextureView" else "SurfaceView")
             }
             override fun onPlaybackStateChanged(s: Int) {
                 // diashow: na de video door naar de volgende

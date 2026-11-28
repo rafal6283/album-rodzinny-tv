@@ -1197,4 +1197,6 @@
     <string name="wideo_jakosc_oryginal">"Oryginał (HDR)"</string>
     <string name="wideo_jakosc_serwer">"Wersja z Immich"</string>
     <string name="recht_asset_download">"Oryginalne pliki (filmy HDR / Dolby Vision)"</string>
+    <string name="pionowe_hdr">"Pionowe filmy HDR w HDR"</string>
+    <string name="pionowe_hdr_uitleg">"Wyłącz, jeśli pionowe filmy z telefonu wyświetlają się na tym telewizorze obrócone na bok (wtedy odtworzą się poprawnie, ale w SDR)"</string>
 </resources>
