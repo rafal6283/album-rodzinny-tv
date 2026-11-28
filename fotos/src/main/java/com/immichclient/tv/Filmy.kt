@@ -73,6 +73,8 @@ fun FilmyScherm(staat: FilmyStaat, nav: Nav) {
             snapshotFlow { res.raster.lijst.layoutInfo.let { (it.visibleItemsInfo.lastOrNull()?.index ?: 0) >= it.totalItemsCount - 3 } }
                 .distinctUntilChanged().collect { if (it && rijen.isNotEmpty()) res.meer() }
         }
+        // całą listę filmów wczytujemy w tle (strona po stronie), żeby suwak po prawej sięgał od razu do najstarszych
+        LaunchedEffect(res.assets.size, res.bezig) { if (!res.bezig && res.jestWiecej && res.assets.isNotEmpty()) res.meer() }
         LaunchedEffect(rijen.isNotEmpty()) {
             if (rijen.isNotEmpty() && res.raster.laatsteFocus == null) res.raster.focusDoel = res.assets.firstOrNull()?.id
         }
@@ -117,7 +119,7 @@ fun FilmyScherm(staat: FilmyStaat, nav: Nav) {
                 if (res.fout != null && res.assets.isEmpty()) Text(stringResource(R.string.laden_mislukt, res.fout.orEmpty()), color = Kleur.zacht)
             }
         }
-        LijstBalk(res.raster, rijen, res.assets.size, res.bezig, Modifier.align(Alignment.CenterEnd))
+        FilmyBalk(res.raster, rijen, res.assets.size, res.bezig, Modifier.align(Alignment.CenterEnd))
     }
     LaunchedEffect(Unit) { delay(400); if (res.assets.isEmpty()) runCatching { pierwszy.requestFocus() } }
 
@@ -144,4 +146,78 @@ fun FilmyScherm(staat: FilmyStaat, nav: Nav) {
             ) { id, _ -> wybor = null; staat.idzDo(YearMonth.of(r, id.toInt())) }
         }
     }
+}
+
+/**
+ * Suwak po prawej jak na osi czasu Albumu Rodzinnego: krok = miesiąc, przytrzymanie = rok, lata zaznaczone na torze.
+ * Liczony z wczytanych filmów (lista wczytuje się w tle do końca).
+ */
+@Composable
+private fun FilmyBalk(raster: RasterStaat, rijen: List<Rij>, totaal: Int, bezig: Boolean, modifier: Modifier, boven: Int = 1) {
+    if (rijen.isEmpty() || totaal == 0) return
+    val lijst = raster.lijst
+    val scope = rememberCoroutineScope()
+    val eerste = remember(rijen) { eersteFotoPerRij(rijen) }
+    fun pierwszyW(r: Int) = (rijen.getOrNull(r) as? RijFotos)?.regel?.stukken?.firstOrNull()?.vakken?.firstOrNull()?.asset
+    // pierwsza rzędu każdego miesiąca (w kolejności listy) i miesiąc każdego rzędu
+    val dane = remember(rijen) {
+        val starty = ArrayList<Int>(); val klucze = ArrayList<YearMonth>()
+        val miesiacRzedu = IntArray(rijen.size)
+        var ost: YearMonth? = null
+        rijen.indices.forEach { r ->
+            val a = pierwszyW(r)
+            if (a != null) {
+                val m = YearMonth.from(a.datum)
+                if (m != ost) { ost = m; starty += r; klucze += m }
+            }
+            miesiacRzedu[r] = (klucze.size - 1).coerceAtLeast(0)
+        }
+        Triple(starty, klucze, miesiacRzedu)
+    }
+    val (starty, klucze, miesiacRzedu) = dane
+    if (starty.isEmpty()) return
+    fun rijNu() = (lijst.firstVisibleItemIndex - boven).coerceIn(0, rijen.lastIndex)
+    fun ileW(i: Int): Int = (if (i + 1 < starty.size) eerste[starty[i + 1]] else totaal) - eerste[starty[i]]
+    fun tytul(m: YearMonth) = maandTitel(m.atDay(1).toString())
+    val jaren = remember(dane, totaal) {
+        val uit = ArrayList<Pair<Float, String>>()
+        var vorig = -1
+        klucze.forEachIndexed { i, m -> if (m.year != vorig) { vorig = m.year; if (m.year > 1970) uit += eerste[starty[i]].toFloat() / totaal to m.year.toString() } }
+        uit
+    }
+    val stappen = remember(dane, totaal) {
+        BalkStappen(
+            aantal = starty.size,
+            fractie = { i -> eerste[starty[i]].toFloat() / (totaal - 1).coerceAtLeast(1) },
+            label = { i -> tytul(klucze[i]) },
+            sub = { i -> Taal.meervoud(R.plurals.items, ileW(i), ileW(i)) },
+            groot = { i, r ->
+                var j = i
+                val rok = klucze[i].year
+                if (r > 0) { while (j < klucze.lastIndex && klucze[j].year == rok) j++ }
+                else { while (j > 0 && klucze[j].year == rok) j--; while (j > 0 && klucze[j - 1].year == klucze[j].year) j-- }
+                j
+            },
+            huidige = { miesiacRzedu[rijNu()] },
+            ga = { i ->
+                val r = starty[i]
+                scope.launch {
+                    lijst.scrollToItem(r + boven)
+                    raster.focusDoel = pierwszyW(r)?.id
+                }
+            },
+            terug = { raster.focusDoel = raster.laatsteFocus?.id },
+            perMaand = true,
+        )
+    }
+    ScrolBalk(
+        fractie = { if (!lijst.canScrollForward) 1f else eerste[rijNu()].toFloat() / (totaal - 1).coerceAtLeast(1) },
+        beweging = { lijst.firstVisibleItemIndex * 7919 + lijst.firstVisibleItemScrollOffset / 200 },
+        scrolbaar = { lijst.canScrollForward || lijst.canScrollBackward },
+        label = { klucze.getOrNull(miesiacRzedu[rijNu()])?.let { tytul(it) } },
+        sub = { "${Taal.getal(eerste[rijNu()] + 1)} / ${Taal.getal(totaal)}" + if (bezig) "+" else "" },
+        markeringen = jaren,
+        modifier = modifier,
+        stappen = stappen,
+    )
 }
