@@ -71,6 +71,7 @@ import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Videocam
@@ -1108,7 +1109,7 @@ private fun PasekAkcji(staat: KijkerStaat, akcje: List<Akcja>) {
                     Akcja.GLOWNE -> Icons.Filled.AccountCircle to stringResource(R.string.glowne_krotko)
                     Akcja.NIE_TA -> Icons.Filled.PersonRemove to stringResource(R.string.osoba_nie_ta_krotko)
                     Akcja.INNA -> Icons.Filled.SwapHoriz to stringResource(R.string.osoba_inna_krotko)
-                    Akcja.OBROC -> androidx.compose.material.icons.Icons.Filled.Rotate90DegreesCw to stringResource(R.string.obrot_akcja)
+                    Akcja.OBROC -> androidx.compose.material.icons.Icons.Filled.ScreenRotation to stringResource(R.string.obrot_akcja)
                     Akcja.WYCZYSC -> Icons.Filled.DeleteSweep to stringResource(R.string.zazn_wyczysc_krotko)
                     Akcja.Z_ALBUMU -> {
                         val usuniete = staat.bron.op(staat.index)?.let { staat.usunieteZAlbumu[it.id] } == true

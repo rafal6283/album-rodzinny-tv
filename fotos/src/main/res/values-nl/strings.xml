@@ -726,7 +726,7 @@
     <string name="zapisz">"Opslaan"</string>
     <string name="anuluj">"Annuleren"</string>
     <string name="zapisano">"Opgeslagen"</string>
-    <string name="data_hint">"◀ ▶ veld   ·   ▲ ▼ wijzigen   ·   OK opslaan"</string>
+    <string name="data_hint">"◀ ▶ veld   ·   ▲ ▼ wijzigen   ·   OK opslaan   ·   ▶ vanaf het jaar: knoppen"</string>
     <string name="album_nowy">"Nieuw album…"</string>
     <string name="album_ile">"%1$s items"</string>
     <string name="album_dodaj_jedno">"Aan album toevoegen"</string>
@@ -1090,7 +1090,7 @@
     <string name="edytor_dzien">"Dag"</string>
     <string name="edytor_godzina">"Uur"</string>
     <string name="edytor_minuta">"Minuut"</string>
-    <string name="edytor_data_klawisze">"◀ ▶ veld · ▲ ▼ wijzigen · OK opslaan · Terug annuleren"</string>
+    <string name="edytor_data_klawisze">"◀ ▶ veld · ▲ ▼ wijzigen · OK opslaan · Terug annuleren · 0–9"</string>
     <string name="edytor_data_ok">"Datum gewijzigd: %1$d"</string>
     <string name="edytor_miejsce_tytul">"Plaats voor %1$d — zoals de foto’s uit:"</string>
     <string name="edytor_miejsce_ok">"Plaats ingesteld: %1$s (%2$d)"</string>
@@ -1152,4 +1152,5 @@
     <string name="obrot_akcja">"Draaien"</string>
     <string name="obrot_ustawiony">"%1$d° gedraaid"</string>
     <string name="obrot_brak">"Oorspronkelijke stand"</string>
+    <string name="data_cyfry">"Cijfers op de afstandsbediening typen de waarde direct (bijv. 1987)"</string>
 </resources>

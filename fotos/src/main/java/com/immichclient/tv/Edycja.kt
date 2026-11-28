@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -187,7 +188,17 @@ fun OsobaMenu(id: String, imie: String, ustawTytul: (String) -> Unit, poPolaczen
     }
 }
 
-/** Wybór daty urodzenia pilotem: ◀ ▶ pole (dzień / miesiąc / rok), ▲ ▼ wartość; OK zapisuje. */
+/** Cyfra z pilota (0–9, także klawiatura numeryczna); null = inny klawisz. */
+fun cyfraKlawisza(kod: Int): Int? = when (kod) {
+    in KeyEvent.KEYCODE_0..KeyEvent.KEYCODE_9 -> kod - KeyEvent.KEYCODE_0
+    in KeyEvent.KEYCODE_NUMPAD_0..KeyEvent.KEYCODE_NUMPAD_9 -> kod - KeyEvent.KEYCODE_NUMPAD_0
+    else -> null
+}
+
+/**
+ * Wybór daty urodzenia pilotem: ◀ ▶ pole (dzień / miesiąc / rok) i przyciski obok (▲ ▼ w polu zmienia wartość, więc
+ * przyciski są po prawej, nie pod spodem); cyfry z pilota wpisują wartość wprost (np. rok 1987); OK w polu zapisuje.
+ */
 @Composable
 fun DataUrodzin(kto: String, poczatek: LocalDate?, sluit: () -> Unit, zapisz: (LocalDate?) -> Unit) {
     Lagen.Open()
@@ -198,44 +209,73 @@ fun DataUrodzin(kto: String, poczatek: LocalDate?, sluit: () -> Unit, zapisz: (L
     val dzis = LocalDate.now()
     fun dni() = YearMonth.of(r, m).lengthOfMonth()
     val pola = remember { List(3) { FocusRequester() } }
+    val zapiszFr = remember { FocusRequester() }
+    // wpisywanie cyframi: bufor bieżącego pola
+    var bufor by remember { mutableStateOf("") }
+    var aktywne by remember { mutableIntStateOf(0) }
+    fun wpisz(i: Int, c: Int) {
+        if (aktywne != i) { aktywne = i; bufor = "" }
+        bufor += c
+        val v = bufor.toInt()
+        when (i) {
+            0 -> {
+                if (v in 1..31) d = v.coerceAtMost(dni())
+                if (bufor.length >= 2 || v > 3) { bufor = ""; runCatching { pola[1].requestFocus() } }
+            }
+            1 -> {
+                if (v in 1..12) { m = v; d = d.coerceAtMost(dni()) }
+                if (bufor.length >= 2 || v > 1) { bufor = ""; runCatching { pola[2].requestFocus() } }
+            }
+            else -> if (bufor.length >= 4) {
+                if (v in 1900..dzis.year) { r = v; d = d.coerceAtMost(dni()) }
+                bufor = ""; runCatching { zapiszFr.requestFocus() }
+            }
+        }
+    }
+    fun gotowa() = LocalDate.of(r, m, d.coerceAtMost(dni()))
     BackHandler { sluit() }
     LaunchedEffect(Unit) { delay(40); runCatching { pola[0].requestFocus() } }
     Box(Modifier.fillMaxSize().background(Color(0xF20A0A0A)).focusVangen().padding(horizontal = 64.dp, vertical = 40.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(stringResource(R.string.osoba_urodziny), style = MaterialTheme.typography.displaySmall)
             Text(kto + "  ·  " + stringResource(R.string.data_hint), style = MaterialTheme.typography.bodyLarge, color = Kleur.zacht)
-            Row(Modifier.padding(vertical = 18.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(Modifier.padding(vertical = 18.dp), horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
                 val miesiace = remember { java.time.format.DateTimeFormatter.ofPattern("LLLL", Taal.locale) }
-                PoleDaty(d.toString(), 110, pola[0], { d = if (d >= dni()) 1 else d + 1 }, { d = if (d <= 1) dni() else d - 1 }) { zapisz(LocalDate.of(r, m, d.coerceAtMost(dni()))) }
-                PoleDaty(LocalDate.of(2000, m, 1).format(miesiace).replaceFirstChar { it.titlecase(Taal.locale) }, 240, pola[1], { m = if (m >= 12) 1 else m + 1; d = d.coerceAtMost(dni()) }, { m = if (m <= 1) 12 else m - 1; d = d.coerceAtMost(dni()) }) {
-                    zapisz(LocalDate.of(r, m, d.coerceAtMost(dni())))
-                }
-                PoleDaty(r.toString(), 140, pola[2], { if (r < dzis.year) r++; d = d.coerceAtMost(dni()) }, { if (r > 1900) r--; d = d.coerceAtMost(dni()) }) {
-                    zapisz(LocalDate.of(r, m, d.coerceAtMost(dni())))
+                fun pokaz(i: Int, tekst: String, dl: Int) = if (aktywne == i && bufor.isNotEmpty()) bufor.padEnd(dl, '_') else tekst
+                PoleDaty(pokaz(0, d.toString(), 2), 110, pola[0], { bufor = ""; d = if (d >= dni()) 1 else d + 1 }, { bufor = ""; d = if (d <= 1) dni() else d - 1 },
+                    onFocus = { if (aktywne != 0) bufor = ""; aktywne = 0 }, cyfra = { wpisz(0, it) }) { zapisz(gotowa()) }
+                PoleDaty(pokaz(1, LocalDate.of(2000, m, 1).format(miesiace).replaceFirstChar { it.titlecase(Taal.locale) }, 2), 240, pola[1],
+                    { bufor = ""; m = if (m >= 12) 1 else m + 1; d = d.coerceAtMost(dni()) }, { bufor = ""; m = if (m <= 1) 12 else m - 1; d = d.coerceAtMost(dni()) },
+                    onFocus = { if (aktywne != 1) bufor = ""; aktywne = 1 }, cyfra = { wpisz(1, it) }) { zapisz(gotowa()) }
+                PoleDaty(pokaz(2, r.toString(), 4), 140, pola[2], { bufor = ""; if (r < dzis.year) r++; d = d.coerceAtMost(dni()) }, { bufor = ""; if (r > 1900) r--; d = d.coerceAtMost(dni()) },
+                    onFocus = { if (aktywne != 2) bufor = ""; aktywne = 2 }, cyfra = { wpisz(2, it) }) { zapisz(gotowa()) }
+                Spacer(Modifier.width(24.dp))
+                // przyciski obok pól: ▶ z roku przechodzi do nich, ▲ ▼ chodzi między nimi
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Knop(stringResource(R.string.zapisz), null, Modifier.width(240.dp).focusRequester(zapiszFr)) { zapisz(gotowa()) }
+                    if (poczatek != null) Knop(stringResource(R.string.osoba_urodziny_usun), null, Modifier.width(240.dp)) { zapisz(null) }
+                    Knop(stringResource(R.string.anuluj), null, Modifier.width(240.dp)) { sluit() }
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Knop(stringResource(R.string.zapisz), null, Modifier.width(200.dp)) { zapisz(LocalDate.of(r, m, d.coerceAtMost(dni()))) }
-                if (poczatek != null) Knop(stringResource(R.string.osoba_urodziny_usun), null, Modifier.width(240.dp)) { zapisz(null) }
-                Knop(stringResource(R.string.anuluj), null, Modifier.width(180.dp)) { sluit() }
-            }
+            Text(stringResource(R.string.data_cyfry), style = MaterialTheme.typography.labelLarge, color = Kleur.zacht)
         }
     }
 }
 
 @Composable
-private fun PoleDaty(tekst: String, szer: Int, fr: FocusRequester, wGore: () -> Unit, wDol: () -> Unit, ok: () -> Unit) {
+private fun PoleDaty(tekst: String, szer: Int, fr: FocusRequester, wGore: () -> Unit, wDol: () -> Unit, onFocus: () -> Unit = {}, cyfra: (Int) -> Unit = {}, ok: () -> Unit) {
     var focus by remember { mutableStateOf(false) }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text("▲", style = MaterialTheme.typography.titleMedium, color = if (focus) Color.White else Color.Transparent)
         Box(
-            Modifier.width(szer.dp).height(72.dp).focusRequester(fr).onFocusChanged { focus = it.isFocused }
+            Modifier.width(szer.dp).height(72.dp).focusRequester(fr).onFocusChanged { focus = it.isFocused; if (it.isFocused) onFocus() }
                 .onPreviewKeyEvent { e ->
                     if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                    cyfraKlawisza(e.key.nativeKeyCode)?.let { cyfra(it); return@onPreviewKeyEvent true }
                     when (e.key.nativeKeyCode) {
                         KeyEvent.KEYCODE_DPAD_UP -> { wGore(); true }
                         KeyEvent.KEYCODE_DPAD_DOWN -> { wDol(); true }
-                        KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { ok(); true }
+                        KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> { if (e.nativeKeyEvent.repeatCount == 0) ok(); true }
                         else -> false
                     }
                 }
