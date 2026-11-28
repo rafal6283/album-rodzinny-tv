@@ -74,6 +74,7 @@ object Rechten {
         Recht("person.create", R.string.recht_person_create),
         Recht("face.read", R.string.recht_face_read),
         Recht("face.update", R.string.recht_face_update),
+        Recht("face.create", R.string.recht_face_create),
         Recht("face.delete", R.string.recht_face_delete),
         Recht("album.create", R.string.recht_album_create),
         Recht("album.update", R.string.recht_album_update),

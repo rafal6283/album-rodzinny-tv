@@ -37,6 +37,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
@@ -237,8 +238,15 @@ fun PoprawScherm(staat: PoprawStaat, nav: Nav, wyborGlownego: Boolean = false) {
     LaunchedEffect(Unit) { delay(80); runCatching { pierwszy.requestFocus() } }
     val pierwszaTwarz = remember { FocusRequester() }
     if (wyborGlownego) LaunchedEffect(staat.lista.isNotEmpty()) { if (staat.lista.isNotEmpty()) { delay(60); runCatching { pierwszaTwarz.requestFocus() } } }
+    val siatka = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
+    var skok by remember { mutableStateOf<String?>(null) }
+    var ostatnia by remember { mutableStateOf<String?>(null) }
+    val skokFr = remember { FocusRequester() }
+    LaunchedEffect(skok) { if (skok != null) { delay(60); runCatching { skokFr.requestFocus() } } }
+    Box(Modifier.fillMaxSize()) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(140.dp),
+        state = siatka,
         contentPadding = PaddingValues(start = 24.dp, end = 40.dp, top = 20.dp, bottom = 80.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(14.dp),
         modifier = Modifier.fillMaxSize(),
@@ -282,6 +290,8 @@ fun PoprawScherm(staat: PoprawStaat, nav: Nav, wyborGlownego: Boolean = false) {
                     },
                     // przytrzymanie OK: całe zdjęcie (sprawdzić, kto to naprawdę jest)
                     modifier = (if (wyborGlownego && t === staat.lista.firstOrNull()?.second) Modifier.focusRequester(pierwszaTwarz) else Modifier)
+                        .then(if (t.id == skok) Modifier.focusRequester(skokFr) else Modifier)
+                        .onFocusChanged { if (it.isFocused) { ostatnia = t.id; if (skok == t.id) skok = null } }
                         .fillMaxWidth().aspectRatio(1f).langeOk { nav.bekijk(LijstBron(listOf(a)), 0, staat.imie, false, null) },
                     shape = CardDefaults.shape(RoundedCornerShape(16.dp)), scale = CardDefaults.scale(focusedScale = 1.08f),
                     border = CardDefaults.border(
@@ -297,6 +307,14 @@ fun PoprawScherm(staat: PoprawStaat, nav: Nav, wyborGlownego: Boolean = false) {
                 Text(a.datum.toLocalDate().format(Formaat.dagJaar), style = MaterialTheme.typography.labelSmall, color = Kleur.zacht, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
             }
         }
+    }
+    val lista = staat.lista.toList()
+    SiatkaBalk(
+        siatka, lista.size, Modifier.align(Alignment.CenterEnd),
+        label = { i -> lista.getOrNull(i)?.first?.datum?.toLocalDate()?.let { maandTitel(it.toString()) } },
+        ga = { i -> skok = lista.getOrNull(i)?.second?.id },
+        terug = { skok = ostatnia },
+    )
     }
     when (okno) {
         "akcje" -> TwarzeAkcje(staat.wybrane(), stringResource(R.string.popraw_zaznaczone, ile), sluit = { okno = null }) { staat.usunZListy(it) }

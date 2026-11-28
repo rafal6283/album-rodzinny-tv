@@ -112,6 +112,7 @@ object Edytor {
         p += Podreczne.Pozycja(s(R.string.edytor_ulubione_akcja)) { ulubioneWszystkie(l) }
         p += Podreczne.Pozycja(s(R.string.edytor_ulubione_usun_akcja)) { ulubioneUsunWszystkie(l) }
         p += Podreczne.Pozycja(s(R.string.album_akcja)) { Podreczne.doAlbumu = ids }
+        p += Podreczne.Pozycja(s(R.string.dodaj_osobe_zbiorczo, l.size)) { DodajOsobe.otworz(l) }
         // osoby: w osi czasu osoby — „to nie ona” / „to ktoś inny”; wszędzie — odepnij albo przepisz wybraną osobę
         Podreczne.osobaKontekst?.let { (oid, imie, _) ->
             p += Podreczne.Pozycja(s(R.string.zbiorczo_nie_ta, imie.ifBlank { "…" }, l.size)) { Podreczne.odepnijOsobeZ(ids, oid) }

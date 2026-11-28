@@ -1166,4 +1166,17 @@
     <string name="przed_ur_odepnij_tytul">"%1$s loskoppelen van %2$d foto’s?"</string>
     <string name="przed_ur_odepnij_tak">"Ja, %1$d loskoppelen"</string>
     <string name="przed_ur_podpowiedz">"Suggestie · geb. %1$s"</string>
+    <string name="recht_face_create">"Gezichten handmatig toevoegen"</string>
+    <string name="dodaj_osobe_akcja">"Persoon toevoegen…"</string>
+    <string name="dodaj_osobe_zbiorczo">"Persoon toevoegen aan selectie (%1$d)…"</string>
+    <string name="dodaj_osobe_tytul">"Wie staat op de foto? (%1$d)"</string>
+    <string name="dodaj_osobe_ok">"%1$s: toegevoegd aan %2$d foto’s"</string>
+    <string name="dodaj_osobe_juz">"al aanwezig: %1$d"</string>
+    <string name="dodaj_osobe_pominiete">"%1$d overgeslagen (meerdere gezichten — één voor één toevoegen)"</string>
+    <string name="dodaj_osobe_ktora">"Welk gezicht is %1$s?"</string>
+    <string name="dodaj_osobe_ktora_sub">"Immich vond meerdere naamloze gezichten op deze foto"</string>
+    <string name="dodaj_osobe_bez_twarzy">"Geen van deze — persoon aan de foto toevoegen"</string>
+    <string name="dodaj_osobe_gotowe">"Klaar"</string>
+    <string name="dodaj_osobe_gotowe_sub">"Na elke persoon komt de lijst terug — je kunt er meerdere toevoegen"</string>
+    <string name="dodaj_osobe_juz_jest">"%1$s staat al op deze foto"</string>
 </resources>

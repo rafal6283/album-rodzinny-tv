@@ -241,13 +241,11 @@ fun MappenScherm(scherm: Scherm.Mappen, nav: Nav) {
         }
     }
     val n = mappen.size + fotos.size
-    if (n > 0) ScrolBalk(
-        fractie = { fractieVan(staat.grid, 1) },
-        beweging = { staat.grid.firstVisibleItemIndex * 7919 + staat.grid.firstVisibleItemScrollOffset / 200 },
-        scrolbaar = { staat.grid.canScrollForward || staat.grid.canScrollBackward },
-        label = { mappen.getOrNull((staat.grid.firstVisibleItemIndex - 1).coerceAtLeast(0))?.naam },
-        sub = { "${Taal.getal((staat.grid.firstVisibleItemIndex - 1).coerceIn(0, n - 1) + 1)} / ${Taal.getal(n)}" },
-        modifier = Modifier.align(Alignment.CenterEnd),
+    SiatkaBalk(
+        staat.grid, n, Modifier.align(Alignment.CenterEnd),
+        label = { i -> mappen.getOrNull(i)?.naam },
+        ga = { i -> staat.focusDoel = i },
+        terug = { staat.focusDoel = staat.laatsteFocus },
     )
     }
     // terug op dit scherm (of de eerste keer): focus op het laatst gekozen vak

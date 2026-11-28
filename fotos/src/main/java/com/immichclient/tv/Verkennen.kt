@@ -69,6 +69,10 @@ class VerkenStaat(scope: CoroutineScope) {
 fun VerkenScherm(staat: VerkenStaat, nav: Nav) {
     val eerste = remember { FocusRequester() }
     val terug = remember { FocusRequester() }
+    // skok z paska: kafelek, na który przenieść fokus po przewinięciu
+    var skok by remember { mutableStateOf<String?>(null) }
+    val skokFr = remember { FocusRequester() }
+    LaunchedEffect(skok) { if (skok != null) { delay(60); runCatching { skokFr.requestFocus() }; skok = null } }
     val persoon = stringResource(R.string.persoon)
     val kopPersonen = stringResource(R.string.personen); val kopPlaatsen = stringResource(R.string.plaatsen)
     Box(Modifier.fillMaxSize()) {
@@ -94,7 +98,7 @@ fun VerkenScherm(staat: VerkenStaat, nav: Nav) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Card(
                     onClick = { nav.open(Scherm.Tijdlijn(p.naam, persoon, Filter(persoonId = p.id), true, false, nav.scope)) },
-                    modifier = mod.fillMaxWidth().aspectRatio(1f).onFocusChanged { if (it.isFocused) staat.laatsteFocus = "p" + p.id },
+                    modifier = mod.then(if ("p" + p.id == skok) Modifier.focusRequester(skokFr) else Modifier).fillMaxWidth().aspectRatio(1f).onFocusChanged { if (it.isFocused) staat.laatsteFocus = "p" + p.id },
                     shape = CardDefaults.shape(CircleShape),
                     scale = CardDefaults.scale(focusedScale = 1.08f),
                 ) { AsyncImage(beeld(Immich.gezicht(p.id)), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop) }
@@ -110,6 +114,7 @@ fun VerkenScherm(staat: VerkenStaat, nav: Nav) {
                     nav.open(Scherm.Lijst(pl.stad, pl.land, true, nav.scope) { pagina -> Immich.zoekPlaats(pl.stad, pagina) })
                 },
                 modifier = (if (("s" + pl.stad + pl.land) == staat.laatsteFocus) Modifier.focusRequester(terug) else Modifier)
+                    .then(if ("s" + pl.stad + pl.land == skok) Modifier.focusRequester(skokFr) else Modifier)
                     .fillMaxWidth().aspectRatio(1.3f).onFocusChanged { if (it.isFocused) staat.laatsteFocus = "s" + pl.stad + pl.land },
                 shape = CardDefaults.shape(RoundedCornerShape(12.dp)),
                 scale = CardDefaults.scale(focusedScale = 1.05f),
@@ -125,13 +130,16 @@ fun VerkenScherm(staat: VerkenStaat, nav: Nav) {
             }
         }
     }
-    ScrolBalk(
-        fractie = { fractieVan(staat.grid, 1) },
-        beweging = { staat.grid.firstVisibleItemIndex * 7919 + staat.grid.firstVisibleItemScrollOffset / 200 },
-        scrolbaar = { staat.grid.canScrollForward || staat.grid.canScrollBackward },
-        label = { (staat.grid.layoutInfo.visibleItemsInfo.firstOrNull()?.key as? String)?.let { if (it.startsWith("s")) kopPlaatsen else if (it.startsWith("p")) kopPersonen else null } },
-        sub = { null },
-        modifier = Modifier.align(Alignment.CenterEnd),
+    // pasek po prawej (pilotem): osoby, potem miejsca — pozycje w siatce z nagłówkami sekcji
+    val ileOsob = staat.personen.size
+    val baza = 1 + (if (staat.fout != null && staat.personen.isEmpty()) 1 else 0)
+    val poOsobach = baza + (if (ileOsob > 0) ileOsob + 1 else 0)
+    SiatkaBalk(
+        staat.grid, ileOsob + staat.plaatsen.size, Modifier.align(Alignment.CenterEnd),
+        indeks = { e -> if (e < ileOsob) baza + 1 + e else poOsobach + 1 + (e - ileOsob) },
+        label = { e -> if (e < ileOsob) staat.personen.getOrNull(e)?.naam else staat.plaatsen.getOrNull(e - ileOsob)?.stad },
+        ga = { e -> skok = if (e < ileOsob) staat.personen.getOrNull(e)?.let { "p" + it.id } else staat.plaatsen.getOrNull(e - ileOsob)?.let { "s" + it.stad + it.land } },
+        terug = { runCatching { terug.requestFocus() } },
     )
     }
     LaunchedEffect(staat.personen.isNotEmpty()) {

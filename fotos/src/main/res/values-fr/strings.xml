@@ -1173,4 +1173,17 @@
     <string name="przed_ur_odepnij_tytul">"Détacher %1$s de %2$d photos ?"</string>
     <string name="przed_ur_odepnij_tak">"Oui, détacher %1$d"</string>
     <string name="przed_ur_podpowiedz">"Suggestion · née/né en %1$s"</string>
+    <string name="recht_face_create">"Ajouter des visages manuellement"</string>
+    <string name="dodaj_osobe_akcja">"Ajouter une personne…"</string>
+    <string name="dodaj_osobe_zbiorczo">"Ajouter une personne à la sélection (%1$d)…"</string>
+    <string name="dodaj_osobe_tytul">"Qui est sur la photo ? (%1$d)"</string>
+    <string name="dodaj_osobe_ok">"%1$s : ajouté à %2$d photos"</string>
+    <string name="dodaj_osobe_juz">"déjà présent : %1$d"</string>
+    <string name="dodaj_osobe_pominiete">"%1$d ignorées (plusieurs visages — ajouter une par une)"</string>
+    <string name="dodaj_osobe_ktora">"Quel visage est %1$s ?"</string>
+    <string name="dodaj_osobe_ktora_sub">"Immich a trouvé plusieurs visages sans nom sur cette photo"</string>
+    <string name="dodaj_osobe_bez_twarzy">"Aucun — ajouter la personne à la photo"</string>
+    <string name="dodaj_osobe_gotowe">"Terminé"</string>
+    <string name="dodaj_osobe_gotowe_sub">"La liste revient après chaque personne — vous pouvez en ajouter plusieurs"</string>
+    <string name="dodaj_osobe_juz_jest">"%1$s est déjà sur cette photo"</string>
 </resources>

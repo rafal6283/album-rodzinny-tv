@@ -1188,4 +1188,17 @@
     <string name="przed_ur_odepnij_tytul">"Unassign %1$s from %2$d photos?"</string>
     <string name="przed_ur_odepnij_tak">"Yes, unassign %1$d"</string>
     <string name="przed_ur_podpowiedz">"Suggestion · born %1$s"</string>
+    <string name="recht_face_create">"Add faces manually"</string>
+    <string name="dodaj_osobe_akcja">"Add person…"</string>
+    <string name="dodaj_osobe_zbiorczo">"Add person to selected (%1$d)…"</string>
+    <string name="dodaj_osobe_tytul">"Who is in the photo? (%1$d)"</string>
+    <string name="dodaj_osobe_ok">"%1$s: added to %2$d photos"</string>
+    <string name="dodaj_osobe_juz">"already there: %1$d"</string>
+    <string name="dodaj_osobe_pominiete">"skipped %1$d (several faces — add one by one)"</string>
+    <string name="dodaj_osobe_ktora">"Which face is %1$s?"</string>
+    <string name="dodaj_osobe_ktora_sub">"Immich found several unnamed faces in this photo"</string>
+    <string name="dodaj_osobe_bez_twarzy">"None of them — add the person to the photo"</string>
+    <string name="dodaj_osobe_gotowe">"Done"</string>
+    <string name="dodaj_osobe_gotowe_sub">"The list comes back after each person — you can add several"</string>
+    <string name="dodaj_osobe_juz_jest">"%1$s is already in this photo"</string>
 </resources>

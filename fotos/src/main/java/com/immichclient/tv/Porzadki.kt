@@ -344,6 +344,7 @@ fun KoszScherm(scherm: Scherm.Kosz, nav: Nav) {
                 }
             }
         }
+        LijstBalk(res.raster, rijen, res.assets.size, res.bezig, Modifier.align(Alignment.CenterEnd))
     }
     if (potwierdz) MenuWarstwa(stringResource(R.string.kosz_oproznij_pytanie), stringResource(R.string.kosz_oproznij_info), { potwierdz = false }) { pierwszy ->
         Knop(stringResource(R.string.anuluj), null, pierwszy.width(560.dp)) { potwierdz = false }

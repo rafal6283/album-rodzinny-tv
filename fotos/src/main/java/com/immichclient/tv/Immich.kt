@@ -720,6 +720,18 @@ object Immich {
     // Immich: PUT /faces/{id osoby} z treścią {"id": id twarzy} (odwrotnie, niż sugeruje adres) — wcześniej zamienione, stąd błąd 400
     suspend fun przypiszTwarz(twarzId: String, osobaId: String) { put("/faces/$osobaId", JSONObject().put("id", twarzId)) }
 
+    /**
+     * Nowa twarz dodana ręcznie (Immich jej nie wykrył): ramka na środku kadru, przypisana do osoby — zdjęcie pojawia się
+     * u tej osoby w sekcji Ludzie (uprawnienie face.create). Współrzędne względem podanego rozmiaru obrazu.
+     */
+    suspend fun dodajTwarz(assetId: String, osobaId: String, ratio: Float, x: Float = 0.4f) {
+        val w = 1000; val h = (1000 / ratio.coerceIn(0.2f, 5f)).toInt().coerceAtLeast(1)
+        // ramka 20 % szerokości, w poziomie od [x]; kolejne ręczne twarze w innych miejscach (nie nachodzą na siebie)
+        val bok = minOf(w / 5, h * 3 / 5)
+        post("/faces", JSONObject().put("assetId", assetId).put("personId", osobaId).put("imageWidth", w).put("imageHeight", h)
+            .put("x", (x * w).toInt().coerceIn(0, w - bok)).put("y", (h - bok) / 2).put("width", bok).put("height", bok))
+    }
+
     /** Usuń twarz (wykryta omyłkowo: zabawka, plakat…). */
     suspend fun usunTwarz(twarzId: String) { delete("/faces/$twarzId", JSONObject().put("force", false)) }
 
