@@ -830,9 +830,12 @@ object Immich {
     }
 
     /** Najnowsze zdjęcia i filmy jednego albumu (kanał albumu na ekranie głównym). */
-    suspend fun zAlbumu(albumId: String, n: Int): List<Asset> = withContext(Dispatchers.Default) {
-        val a = JSONObject(get("/albums/$albumId")).optJSONArray("assets") ?: return@withContext emptyList()
-        List(a.length()) { asset(a.getJSONObject(it)) }.sortedByDescending { it.datum }.take(n)
+    suspend fun zAlbumu(albumId: String, n: Int, wgAlbumu: Boolean = false): List<Asset> = withContext(Dispatchers.Default) {
+        val o = JSONObject(get("/albums/$albumId"))
+        val a = o.optJSONArray("assets") ?: return@withContext emptyList()
+        val l = List(a.length()) { asset(a.getJSONObject(it)) }
+        // [wgAlbumu]: kolejność ustawiona w albumie (jak na jego osi czasu w aplikacji), inaczej od najnowszych
+        (if (wgAlbumu && o.optString("order") == "asc") l.sortedBy { it.datum } else l.sortedByDescending { it.datum }).take(n)
     }
 
     /** Jedno zdjęcie po id (kafelek kanału na ekranie głównym). */

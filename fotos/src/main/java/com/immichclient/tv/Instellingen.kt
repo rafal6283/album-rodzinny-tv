@@ -84,6 +84,8 @@ object Instellingen {
     var rijMaat by keuze("rij", RijMaat.NORMAAL)
     /** filmy: oryginalny plik (HDR, Dolby Vision, pełna jakość) albo wersja przekodowana przez Immich */
     var wideoJakosc by keuze("wideo_jakosc", WideoJakosc.AUTO)
+    /** kolejność zdjęć w kanałach ekranu głównego (domyślnie jak w aplikacji) */
+    var kanalyKolejnosc by keuze("kanaly_kolejnosc", KanalyKolejnosc.JAK_W_APLIKACJI)
     /** pionowe filmy HDR przez SurfaceView (zachowują HDR); wyłączyć, jeśli telewizor pokazuje je obrócone na bok */
     var pionoweHdr by bool("pionowe_hdr", true)
     /** kanały na ekranie głównym Android TV (najnowsze, losowe, tego dnia) */
@@ -217,6 +219,7 @@ object Instellingen {
 // Labels zijn string-resources (vertaald); de UI haalt ze op met stringResource(x.label).
 enum class KaartMaat(@StringRes val label: Int, val schaal: Float) { UIT(R.string.uit, 0f), KLEIN(R.string.klein, 0.62f), GROOT(R.string.groot, 1f) }
 /** AUTO = oryginał, gdy telewizor ma HDR; ORYGINAL = zawsze oryginał; SERWER = zawsze wersja z Immich (lżejsza, SDR) */
+enum class KanalyKolejnosc(@StringRes val label: Int) { JAK_W_APLIKACJI(R.string.kanaly_kol_app), NAJNOWSZE(R.string.kanaly_kol_nowe), NAJSTARSZE(R.string.kanaly_kol_stare) }
 enum class WideoJakosc(@StringRes val label: Int) { AUTO(R.string.wideo_jakosc_auto), ORYGINAL(R.string.wideo_jakosc_oryginal), SERWER(R.string.wideo_jakosc_serwer) }
 enum class RijMaat(@StringRes val label: Int, val hoogte: Float) { KLEIN(R.string.klein, 104f), NORMAAL(R.string.normaal, 138f), GROOT(R.string.groot, 186f) }
 enum class Groet(@StringRes val label: Int) { UIT(R.string.uit), AUTO(R.string.automatisch), EIGEN(R.string.eigen_tekst) }

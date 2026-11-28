@@ -1186,4 +1186,9 @@
     <string name="dodaj_osobe_gotowe">"Terminé"</string>
     <string name="dodaj_osobe_gotowe_sub">"La liste revient après chaque personne — vous pouvez en ajouter plusieurs"</string>
     <string name="dodaj_osobe_juz_jest">"%1$s est déjà sur cette photo"</string>
+    <string name="kanaly_kolejnosc">"Ordre dans les chaînes"</string>
+    <string name="kanaly_kolejnosc_uitleg">"Ce jour-là, Récentes et la chaîne d’album sur l’écran d’accueil"</string>
+    <string name="kanaly_kol_app">"Comme dans l’application"</string>
+    <string name="kanaly_kol_nowe">"Plus récentes d’abord"</string>
+    <string name="kanaly_kol_stare">"Plus anciennes d’abord"</string>
 </resources>

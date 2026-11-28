@@ -1179,4 +1179,9 @@
     <string name="dodaj_osobe_gotowe">"Klaar"</string>
     <string name="dodaj_osobe_gotowe_sub">"Na elke persoon komt de lijst terug — je kunt er meerdere toevoegen"</string>
     <string name="dodaj_osobe_juz_jest">"%1$s staat al op deze foto"</string>
+    <string name="kanaly_kolejnosc">"Volgorde in kanalen"</string>
+    <string name="kanaly_kolejnosc_uitleg">"Op deze dag, Nieuwste en het albumkanaal op het startscherm"</string>
+    <string name="kanaly_kol_app">"Zoals in de app"</string>
+    <string name="kanaly_kol_nowe">"Nieuwste eerst"</string>
+    <string name="kanaly_kol_stare">"Oudste eerst"</string>
 </resources>
