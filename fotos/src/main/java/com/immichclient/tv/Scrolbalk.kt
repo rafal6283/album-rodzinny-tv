@@ -34,6 +34,7 @@ import androidx.compose.foundation.focusable
 import android.view.KeyEvent
 import androidx.tv.material3.MaterialTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.math.max
@@ -252,4 +253,52 @@ fun eersteFotoPerRij(rijen: List<Rij>): IntArray {
     var n = 0
     rijen.forEachIndexed { i, r -> uit[i] = n; if (r is RijFotos) n += r.regel.stukken.sumOf { it.vakken.size } }
     return uit
+}
+
+/**
+ * Pasek przewijania siatki kafelków bez dat (albumy, foldery, osoby, twarze…) z obsługą pilota: ▲▼ co ~5 % listy,
+ * przytrzymanie = większy skok, OK = przewiń i oddaj fokus elementowi ([ga]). [indeks] = pozycja elementu w siatce
+ * (z nagłówkami; rosnąca), [label] = napis przy kciuku.
+ */
+@Composable
+fun SiatkaBalk(
+    grid: LazyGridState, n: Int, modifier: Modifier,
+    indeks: (Int) -> Int = { it + 1 }, label: (Int) -> String? = { null },
+    ga: (Int) -> Unit, terug: () -> Unit,
+) {
+    if (n <= 0) return
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val indeksNu = androidx.compose.runtime.rememberUpdatedState(indeks)
+    val labelNu = androidx.compose.runtime.rememberUpdatedState(label)
+    val gaNu = androidx.compose.runtime.rememberUpdatedState(ga)
+    val terugNu = androidx.compose.runtime.rememberUpdatedState(terug)
+    // element na górze ekranu (wyszukiwanie binarne po rosnących pozycjach)
+    fun element(): Int {
+        val f = grid.firstVisibleItemIndex
+        var lo = 0; var hi = n - 1
+        while (lo < hi) { val m = (lo + hi + 1) / 2; if (indeksNu.value(m) <= f) lo = m else hi = m - 1 }
+        return lo
+    }
+    val stappen = remember(n) {
+        val ankers = (0 until 20).map { it * n / 20 }.distinct()
+        BalkStappen(
+            aantal = ankers.size,
+            fractie = { i -> ankers[i].toFloat() / (n - 1).coerceAtLeast(1) },
+            label = { i -> labelNu.value(ankers[i]) },
+            sub = { i -> "${Taal.getal(ankers[i] + 1)} / ${Taal.getal(n)}" },
+            groot = grootPer(4, ankers.size),
+            huidige = { ankers.indexOfLast { it <= element() }.coerceAtLeast(0) },
+            ga = { i -> scope.launch { grid.scrollToItem(indeksNu.value(ankers[i])); delay(30); gaNu.value(ankers[i]) } },
+            terug = { terugNu.value() },
+        )
+    }
+    ScrolBalk(
+        fractie = { fractieVan(grid, 1) },
+        beweging = { grid.firstVisibleItemIndex * 7919 + grid.firstVisibleItemScrollOffset / 200 },
+        scrolbaar = { grid.canScrollForward || grid.canScrollBackward },
+        label = { labelNu.value(element()) },
+        sub = { "${Taal.getal(element() + 1)} / ${Taal.getal(n)}" },
+        modifier = modifier,
+        stappen = stappen,
+    )
 }

@@ -113,6 +113,7 @@ class SynologyStaat(private val scope: CoroutineScope) {
 
     /** kafelek do sfokusowania po wczytaniu folderów */
     var doFokusu by mutableStateOf<String?>(null)
+    val grid = androidx.compose.foundation.lazy.grid.LazyGridState()
     private var wrocDo: Int? = null
 
     fun wejdz(f: Synology.FolderSyno) { sciezka = sciezka + f; laduj() }
@@ -137,8 +138,10 @@ fun SynologyScherm(staat: SynologyStaat, nav: Nav) {
     LaunchedEffect(wersja) { if (Synology.skonfigurowane && staat.albumy == null && staat.foldery == null) staat.laduj() }
     BackHandler(enabled = staat.zakladka == SynoZakladka.WSPOLNA && staat.sciezka.size > 1) { przytrzymaj(); staat.wyzej() }
     val wspolna = staat.zakladka == SynoZakladka.WSPOLNA
+    Box(Modifier.fillMaxSize()) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(4),
+        state = staat.grid,
         contentPadding = PaddingValues(start = 24.dp, end = 40.dp, top = 20.dp, bottom = 80.dp),
         horizontalArrangement = Arrangement.spacedBy(18.dp), verticalArrangement = Arrangement.spacedBy(18.dp),
         modifier = Modifier.fillMaxSize(),
@@ -202,6 +205,16 @@ fun SynologyScherm(staat: SynologyStaat, nav: Nav) {
                 Text(listOfNotNull(pluralStringResource(R.plurals.items, a.ile, a.ile), a.wlasciciel).joinToString("  ·  "), style = MaterialTheme.typography.labelMedium, color = Kleur.zacht, maxLines = 1)
             }
         }
+    }
+    // pasek po prawej (pilotem): szybko do dalszych albumów / folderów
+    val klucze = if (wspolna) staat.foldery.orEmpty().map { "f" + it.id } else staat.albumy.orEmpty().map { "a" + it.id + it.haslo.orEmpty() }
+    val nazwy = if (wspolna) staat.foldery.orEmpty().map { it.nazwa } else staat.albumy.orEmpty().map { it.nazwa }
+    SiatkaBalk(
+        staat.grid, klucze.size, Modifier.align(Alignment.CenterEnd),
+        label = { nazwy.getOrNull(it) },
+        ga = { i -> klucze.getOrNull(i)?.let { PamiecFokusu.ustaw("synology", it) } },
+        terug = { PamiecFokusu.ostatni("synology")?.let { PamiecFokusu.ustaw("synology", it) } },
+    )
     }
     PamiecEkranu("synology")
     LaunchedEffect(Unit) { delay(60); if (PamiecFokusu.ostatni("synology") == null) runCatching { pierwszy.requestFocus() } }
